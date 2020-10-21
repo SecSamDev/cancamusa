@@ -5,6 +5,8 @@ import bios_database
 import re
 import random
 import codecs
+from mac_vendors import get_mac_list, search_wildcard_vendor, random_mac_for_vendor
+from cancamusa_common import random_guid
 
 class InteractiveHostEditor:
     
@@ -82,6 +84,9 @@ class HostInfoBios:
         self.ps_computer_name = bios['PSComputerName']
         self.smbios_bios_version = bios['SMBIOSBIOSVersion']
     
+    def __str__(self):
+        return "Manufacturer {}. Name: {}, Version: {}.".format(self.manufacturer, self.name, self.version)
+
     def edit_interactive(self):
         property_names = list(map(lambda x: str(x),dir(self)))
         class_props =  list(map(lambda x: str(x),dir(HostInfoBios)))
@@ -154,6 +159,9 @@ class HostInfoDisk:
         self.size = size
         self.free_space = free_space
     
+    def __str__(self):
+        return "{}: {} ({})".format(self.device_id, self.volume_name, size_numeric_to_textual(self.size))
+    
     def edit_interactive(self):
         answer = prompt([{'type': 'input','name': 'option','message': 'Select device ID', 'default' : self.device_id}])
         if len(answer['option']) != 1:
@@ -182,7 +190,6 @@ class HostInfoDisk:
         }
     
     def from_json(obj):
-        print(obj)
         return HostInfoDisk(obj['DeviceID'], obj['VolumeName'], obj['Size'],obj['FreeSpace'])
         
 
@@ -195,12 +202,98 @@ class HostInfoNetwork:
             self.mac_address = net_object['MACAddress']
             self.dns_domain = net_object['DNSDomain']
             self.dns_host_name = net_object['DNSHostName']
-            self.index = net_object['Index']
-            self.interfece_index = net_object['InterfaceIndex']
-            self.ip_address = net_object['IPAddress']
-    
+            self.index = int(net_object['Index'])
+            self.interface_index = int(net_object['InterfaceIndex'])
+            if net_object['IPAddress'] and isinstance(net_object['IPAddress'], list):
+                self.ip_address = net_object['IPAddress']
+            else:
+                self.ip_address = []             
+    def __str__(self):
+        return "{}: {} ({}) [{}]".format(self.index, self.description, self.mac_address, ",".join(self.ip_address))
+
     def edit_interactive(self):
-        pass
+        property_names = list(map(lambda x: str(x),dir(self)))
+        class_props =  list(map(lambda x: str(x),dir(HostInfoNetwork)))
+        for element in class_props:
+            property_names.pop(property_names.index(element))
+
+        for prop in property_names:
+            if prop.startswith("_"):
+                continue
+            if prop == 'ip_address':
+                answer = prompt([{'type': 'input','name': 'option','message': 'Edit IpAddress', 'default' :str(getattr(self,prop))}])
+                to_parse = answer['option'].strip()
+                if to_parse.startswith("["):
+                    to_parse = to_parse[1:]
+                if to_parse.endswith("]"):
+                    to_parse = to_parse[:-1]
+                split = list(map(lambda x: x.replace("'",'').strip(),to_parse.split(',')))
+                self.ip_address = split
+                continue
+            answer = prompt([{'type': 'input','name': 'option','message': 'Edit: ' +str(prop), 'default' :str(getattr(self,prop))}])
+            setattr(self,prop,answer['option'])
+        self.index = int(self.index)
+        self.interface_index = int(self.interface_index)
+        return self
+
+    def create_interactive(last_index=-1):
+        answer = prompt([{'type': 'list','name': 'option','message': 'Network edition mode', 'choices' : ['Random device', 'Search vendor','Basic']}])
+        netwrk = None
+        if answer['option'] == 'Random device':
+            device = search_wildcard_vendor(get_mac_list(),'*')
+            netwrk = HostInfoNetwork({
+                'Description' : device['vendor'],
+                'SettingID' : "{" + random_guid() + "}",
+                'MACAddress' : random_mac_for_vendor(device['mac']),
+                'DNSDomain' : '',
+                'DNSHostName' : '',
+                'Index' : int(last_index) + 1,
+                'InterfaceIndex' : int(last_index) + 1,
+                'IPAddress' : ["192.168.0.1"],
+            })
+        elif answer['option'] == 'Search vendor':
+            while True:
+                mac_list = get_mac_list()
+                device = search_wildcard_vendor(mac_list,'*')
+                answer = prompt([{'type': 'input','name': 'option','message': 'Search by vendor name'}])
+                macs = []
+                names = []
+                name = answer['option'].lower()
+                for vndr in mac_list:
+                    if name in vndr['vendor'].lower():
+                        macs.append(vndr['mac'])
+                        names.append(vndr['vendor'])
+                if len(names) == 0:
+                    print("No vendor found with this name")
+                    continue
+                answer = prompt([{'type': 'list','name': 'option','message': 'Select a vendor', 'choices' : names}])
+                pos = names.index(answer['option'])
+
+                netwrk = HostInfoNetwork({
+                    'Description' : names[pos],
+                    'SettingID' :  "{" + random_guid() + "}",
+                    'MACAddress' : random_mac_for_vendor(macs[pos]),
+                    'DNSDomain' : '',
+                    'DNSHostName' : '',
+                    'Index' : int(last_index) + 1,
+                    'InterfaceIndex' : int(last_index) + 1,
+                    'IPAddress' : ["192.168.0.1"],
+                })
+                break
+        elif answer['option'] == 'Basic':
+            netwrk = HostInfoNetwork({
+                'Description' : 'Killer E2200 Gigabit Ethernet Controller',
+                'SettingID' :  "{" + random_guid() + "}",
+                'MACAddress' : random_mac_for_vendor(search_wildcard_vendor(get_mac_list(),'FCAA14')['mac']),
+                'DNSDomain' : '',
+                'DNSHostName' : '',
+                'Index' : int(last_index) + 1,
+                'InterfaceIndex' : int(last_index) + 1,
+                'IPAddress' : ["192.168.0.1"],
+            })
+        netwrk = netwrk.edit_interactive()
+        return netwrk
+
     def to_json(self):
         return {
             'Description' : self.description,
@@ -208,8 +301,8 @@ class HostInfoNetwork:
             'MACAddress' : self.mac_address,
             'DNSDomain' : self.dns_domain,
             'DNSHostName' : self.dns_host_name,
-            'Index' : self.index,
-            'InterfaceIndex' : self.interfece_index,
+            'Index' : int(self.index),
+            'InterfaceIndex' : int(self.interface_index),
             'IPAddress' : self.ip_address,
         }
     def from_json(net_object):
@@ -224,7 +317,7 @@ class HostInfoWindowsVersion:
         self.major_revision = major_revision
         self.minor_revision = minor_revision
 
-    def __repr__(self):
+    def __str__(self):
         return "{}.{} {} ({})".format(self.major, self.minor, self.build, self.revision)
     
     def edit_interactive(self):
@@ -257,7 +350,37 @@ class HostInfoWindowsAccounts:
         self.password_required = account['PasswordRequired']
     
     def edit_interactive(self):
-        pass
+        property_names = list(map(lambda x: str(x),dir(self)))
+        class_props =  list(map(lambda x: str(x),dir(HostInfoWindowsAccounts)))
+        for element in class_props:
+            property_names.pop(property_names.index(element))
+
+        for prop in property_names:
+            if prop.startswith("_"):
+                continue
+            answer = prompt([{'type': 'input','name': 'option','message': 'Edit: ' +str(prop), 'default' :str(getattr(self,prop))}])
+            setattr(self,prop,answer['option'])
+        return self
+
+    def __str__(self):
+        return "{} : {}".format(self.name, self.description)
+
+    def create_interactive(host_name="Windows"):
+        disk = HostInfoWindowsAccounts({
+            'Name' : 'Administrator',
+            'LocalAccount' : True,
+            'AccountType' : 512,
+            'PSComputerName' : host_name,
+            'Description' : "Cuenta integrada para el acceso como invitado al equipo o dominio",
+            'SID' : 'S-1-5-21-2718119982-1426233563-2378531167-500',
+            'Lockout' : False,
+            'PasswordChangeable' : True,
+            'PasswordExpires' : False,
+            'PasswordRequired' : True
+        })
+        disk = disk.edit_interactive()
+        return disk
+
     def to_json(self):
         return {
             'Name' : self.name,
@@ -290,12 +413,40 @@ class HostInfo:
                 return
         self.disks.append(disk)
 
+    def add_network(self,net):
+        last_index = 0
+        for nt in self.networks:
+            if nt.index > last_index:
+                last_index = nt.index + 1
+        if net.index < last_index:
+            net.index = last_index
+        self.networks.append(net)
+
+    def __str__(self):
+        to_ret = "ComputerName: {}\n".format(self.computer_name)
+        to_ret += "BIOS:\n\t{}\n".format(self.bios)
+        to_ret +="Disks:\n"
+        for disk in self.disks:
+            to_ret += "\t{}\n".format(disk)
+        to_ret +="Accounts:\n"
+        for acc in self.accounts:
+            to_ret += "\t{}\n".format(acc)
+        to_ret +="Network Interfaces:\n"
+        for nt in self.networks:
+            to_ret += "\t{}\n".format(nt)
+        return to_ret
     
     def to_json(self):
         to_ret = {}
         to_ret['disks'] = []
+        to_ret['accounts'] = []
+        to_ret['networks'] = []
         for disk in self.disks:
-            to_ret['disk'].append(disk.to_json())
+            to_ret['disks'].append(disk.to_json())
+        for acc in self.accounts:
+            to_ret['accounts'].append(acc.to_json())
+        for nt in self.networks:
+            to_ret['networks'].append(nt.to_json())
         to_ret['bios'] = self.bios.to_json()
         return to_ret
 
@@ -303,22 +454,28 @@ class HostInfo:
         host = HostInfo()
         for disk in obj['disks']:
             host.disks.append(HostInfoDisk.from_json(disk))
+        for acc in obj['accounts']:
+            host.accounts.append(HostInfoWindowsAccounts.from_json(acc))
+        for nt in obj['networks']:
+            host.networks.append(HostInfoNetwork.from_json(nt))
         host.bios = HostInfoBios.from_json(obj['bios'])
+        host.computer_name = host.bios.ps_computer_name
 
         return host
 
     def edit_interactive(self):
         while True:
-            answer = prompt([{'type': 'list','name': 'option','message': 'Editing host: ' + self.computer_name, 'choices' : ['Disks','Bios','Back','Cancel']}])
+            answer = prompt([{'type': 'list','name': 'option','message': 'Editing host: ' + self.computer_name, 'choices' : ['Disks','Bios','Accounts','Network interfaces','Back','Cancel']}])
             if answer['option'] == 'Back':
                 return self
             elif answer['option'] == 'Cancel':
                 return None
             elif answer['option'] == 'Disks':
-                options =  ['Add','Back']
+                options =  ['Add']
                 if len(self.disks) > 0:
                     options.append('Edit')
                     options.append('Delete')
+                options.append('Back')
                 answer = prompt([{'type': 'list','name': 'option','message': 'Modify disks', 'choices' : options}])
 
                 if answer['option'] == 'Back':
@@ -338,7 +495,57 @@ class HostInfo:
                         self.disks.pop(pos)
             elif answer['option'] == 'Bios':
                 self.bios.edit_interactive()
+            elif answer['option'] == 'Accounts':
+                options =  ['Add']
+                if len(self.accounts) > 0:
+                    options.append('Edit')
+                    options.append('Delete')
+                    options.append('Remove service accounts')
+                options.append('Back')
+                answer = prompt([{'type': 'list','name': 'option','message': 'Modify accounts', 'choices' : options}])
 
+                if answer['option'] == 'Back':
+                    continue
+                if answer['option'] == 'Remove service accounts':
+                    self.accounts = filter_service_account(self.accounts)
+                    continue
+                elif answer['option'] == 'Add':
+                    disk = HostInfoDisk.create_interactive(self.computer_name)
+                    if disk:
+                        self.add_disk(disk)
+                else:
+                    accounts = list(map(lambda x: x.name, self.accounts))
+                    answer2 = prompt([{'type': 'list','name': 'option','message': 'Select an account to edit', 'choices' :accounts}])
+                    pos = accounts.index(answer2['option'])
+                    if answer['option'] == 'Edit':
+                        self.accounts[pos].edit_interactive()
+                    elif answer['option'] == 'Delete':
+                        self.accounts.pop(pos)
+            elif answer['option'] == 'Network interfaces':
+                options =  ['Add']
+                if len(self.networks) > 0:
+                    options.append('Edit')
+                    options.append('Delete')
+                    options.append('Remove kernel interfaces')
+                options.append('Back')
+                answer = prompt([{'type': 'list','name': 'option','message': 'Modify interfaces', 'choices' : options}])
+                if answer['option'] == 'Back':
+                    continue
+                if answer['option'] == 'Remove kernel interfaces':
+                    self.networks = filter_kernel_interfaces(self.networks)
+                    continue
+                elif answer['option'] == 'Add':
+                    ntwrk =  HostInfoNetwork.create_interactive(-1)
+                    if ntwrk:
+                        self.add_network(ntwrk)
+                else:
+                    networks = list(map(lambda x: x.description, self.networks))
+                    answer2 = prompt([{'type': 'list','name': 'option','message': 'Select an account to edit', 'choices' :networks}])
+                    pos = networks.index(answer2['option'])
+                    if answer['option'] == 'Edit':
+                        self.networks[pos].edit_interactive()
+                    elif answer['option'] == 'Delete':
+                        self.networks.pop(pos)
         return self
 
 
@@ -443,3 +650,25 @@ def size_numeric_to_textual(total_size):
         return str(size) + "K"
     
     return str(total_size)+"B" 
+
+def filter_service_account(accounts):
+    ret_acc = []
+    for acc in accounts:
+        if acc.name in ['WDAGUtilityAccount', 'DefaultAccount','Invitado','Guest']:
+            continue
+        if acc.name.startswith("SM_"):
+            continue
+        if acc.name.startswith("$_"):
+            continue
+        if acc.name.startswith("HealthMailbox"):
+            continue
+        ret_acc.append(acc)
+    return ret_acc
+
+def filter_kernel_interfaces(interfaces):
+    ret_acc = []
+    for acc in interfaces:
+        if acc.description in ['WAN Miniport']:
+            continue
+        ret_acc.append(acc)
+    return ret_acc

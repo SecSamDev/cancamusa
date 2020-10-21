@@ -150,11 +150,17 @@ class CancamusaProject:
 
     def edit_hosts(self):
         while True:
-            options =  ['Add host','Import hosts','Back']
+            options =  ['Add host','Import hosts']
             if len(self.hosts) > 0:
+                options.append('Show hosts')
                 options.append('Edit host')
                 options.append('Delete host')
+            options.append('Back')
             answer = prompt([{'type': 'list','name': 'option','message': 'Host edition mode', 'choices' : options}])
+            if answer['option'] == 'Show hosts':
+                for host in self.hosts:
+                    print(host)
+
             if answer['option'] == 'Add host':
                 host = HostInfo()
                 host = host.edit_interactive()
@@ -186,8 +192,8 @@ class CancamusaProject:
                 hosts = list(map(lambda x: x.computer_name, self.hosts))
                 answer = prompt([{'type': 'list','name': 'option','message': 'Select a host to delete', 'choices' : hosts}])
                 pos = hosts.index(answer['option'])
-                self.hosts.pop(pos,None)
-            else:
+                self.hosts.pop(pos)
+            elif answer['option'] == 'Back':
                 return
 
 

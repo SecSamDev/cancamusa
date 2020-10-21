@@ -1,3 +1,5 @@
+import uuid
+
 SYSMON_CONFIG_FILE = 'sysmon-config.xml'
 WINLOGBEAT_CONFIG_FILE = 'winlogbeat.yml'
 ELASTIC_CERTIFICATE = 'elastic_certificate.pem'
@@ -8,6 +10,8 @@ ACCOUNT_FORMAT_EXAMPLE = "Bill Doe"
 ACCOUNT_FORMAT_NAME_DOT_SURNAME = "bill.doe"
 ACCOUNT_FORMAT_LETTER_SURNAME = "bdoe"
 
+def random_guid():
+    return str(uuid.uuid4())
 
 def translate_lang(lang):
     if lang.lower() == "en":

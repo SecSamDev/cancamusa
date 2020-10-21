@@ -36,6 +36,7 @@ def compile_cloned_bios(bios,output_bios):
     Returns:
         [type]: [description]
     """
+    # TODO: escape character "
     # do git clone
     SEABIOS_PATH = tempfile.mkdtemp()
     process = subprocess.Popen(['git','clone','https://git.seabios.org/seabios.git'], stdout=subprocess.PIPE, cwd=SEABIOS_PATH)
