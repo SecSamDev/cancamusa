@@ -7,6 +7,7 @@ import random
 import codecs
 from mac_vendors import get_mac_list, search_wildcard_vendor, random_mac_for_vendor
 from cancamusa_common import random_guid
+from rol_selector import AVAILABLE_ROLES, roles_from_extracted_info
 
 class InteractiveHostEditor:
     
@@ -106,8 +107,10 @@ class HostInfoBios:
         if answer['option'] == 'Custom':
             bios = HostInfoBios(bios_database.BIOS_AMERICAN_MEGATREND_ALASKA_F5)
             bios.edit_interactive()
+            return bios
         if answer['option'] == 'Back':
             return
+        
     def to_json(self):
         return {
             'Manufacturer' : self.manufacturer,
@@ -141,6 +144,7 @@ class HostInfoPrograms:
     def edit_interactive(self):
         # Don't know what to do here
         return self
+
     def to_json(self):
         return {
             'DisplayName' : self.display_name,
@@ -151,6 +155,38 @@ class HostInfoPrograms:
 
     def from_json(obj):
         return HostInfoPrograms(obj['DisplayName'], obj['DisplayVersion'], obj['Publisher'],obj['InstallDate'])
+
+class HostInfoRoles:
+    def __init__(self, roles):
+        self.roles = roles
+    
+    def edit_interactive(self):
+        # Don't know what to do here
+        return self
+
+    def create_interactive():
+        examples = [] + AVAILABLE_ROLES + ['Back']
+        answer = prompt([{'type': 'list','name': 'option','message': 'Select a server role: ', 'choices' : examples}])
+        answ = answer['option']
+        if answ == 'Back':
+            return
+        else:
+            return [{'name' : answ}]
+
+
+    def to_json(self):
+        toRet =  []
+        for rol in self.roles:
+            toRet.append({'name' : rol['name']})
+        return toRet
+
+    def from_json(roles):
+        if len(roles) > 0 and 'DisplayName' in roles[0]:
+            # Not processed
+            role_list = roles_from_extracted_info(roles)
+        else:
+            return HostInfoRole(roles)
+
 
 class HostInfoDisk:
     def __init__(self, device_id, volume_name, size, free_space):
@@ -406,6 +442,7 @@ class HostInfo:
         self.so = HostInfoWindowsVersion(1,2,3,4,5,6)
         self.accounts = []
         self.programs = []
+        self.roles = []
     
     def add_disk(self,disk):
         for dsk in self.disks:
@@ -448,6 +485,8 @@ class HostInfo:
         for nt in self.networks:
             to_ret['networks'].append(nt.to_json())
         to_ret['bios'] = self.bios.to_json()
+        to_ret['roles'] = []
+        to_ret["computer_name"] = self.computer_name
         return to_ret
 
     def from_json(obj):
@@ -455,17 +494,21 @@ class HostInfo:
         for disk in obj['disks']:
             host.disks.append(HostInfoDisk.from_json(disk))
         for acc in obj['accounts']:
-            host.accounts.append(HostInfoWindowsAccounts.from_json(acc))
+            acc2 = HostInfoWindowsAccounts.from_json(acc)
+            acc2.ps_computer_name = obj["computer_name"]
+            host.accounts.append(acc2)
         for nt in obj['networks']:
             host.networks.append(HostInfoNetwork.from_json(nt))
         host.bios = HostInfoBios.from_json(obj['bios'])
-        host.computer_name = host.bios.ps_computer_name
+        host.bios.ps_computer_name = obj["computer_name"]
+        host.computer_name = obj["computer_name"]
+
 
         return host
 
     def edit_interactive(self):
         while True:
-            answer = prompt([{'type': 'list','name': 'option','message': 'Editing host: ' + self.computer_name, 'choices' : ['Disks','Bios','Accounts','Network interfaces','Back','Cancel']}])
+            answer = prompt([{'type': 'list','name': 'option','message': 'Editing host: ' + self.computer_name, 'choices' : ['Name','Disks','Bios','Accounts','Network interfaces','Back','Cancel']}])
             if answer['option'] == 'Back':
                 return self
             elif answer['option'] == 'Cancel':
@@ -495,6 +538,10 @@ class HostInfo:
                         self.disks.pop(pos)
             elif answer['option'] == 'Bios':
                 self.bios.edit_interactive()
+            elif answer['option'] == 'Name':
+                answer2 = prompt([{'type': 'input','name': 'option','message': 'Edit Hostname ', 'default' :str(self.computer_name)}])
+                self.computer_name = answer2['option']
+                self.bios.ps_computer_name = answer2['option']
             elif answer['option'] == 'Accounts':
                 options =  ['Add']
                 if len(self.accounts) > 0:
@@ -510,9 +557,9 @@ class HostInfo:
                     self.accounts = filter_service_account(self.accounts)
                     continue
                 elif answer['option'] == 'Add':
-                    disk = HostInfoDisk.create_interactive(self.computer_name)
-                    if disk:
-                        self.add_disk(disk)
+                    acc = HostInfoWindowsAccounts.create_interactive(self.computer_name)
+                    if acc:
+                        self.accounts.append(acc)
                 else:
                     accounts = list(map(lambda x: x.name, self.accounts))
                     answer2 = prompt([{'type': 'list','name': 'option','message': 'Select an account to edit', 'choices' :accounts}])
@@ -540,7 +587,7 @@ class HostInfo:
                         self.add_network(ntwrk)
                 else:
                     networks = list(map(lambda x: x.description, self.networks))
-                    answer2 = prompt([{'type': 'list','name': 'option','message': 'Select an account to edit', 'choices' :networks}])
+                    answer2 = prompt([{'type': 'list','name': 'option','message': 'Select a interface to edit', 'choices' :networks}])
                     pos = networks.index(answer2['option'])
                     if answer['option'] == 'Edit':
                         self.networks[pos].edit_interactive()
@@ -636,6 +683,7 @@ def random_free_size(total_size):
     return random.randint(20*total_size, 60*total_size)
 
 def next_letter(letter):
+    print(letter)
     return chr(ord(letter) + 1) 
 
 def size_numeric_to_textual(total_size):

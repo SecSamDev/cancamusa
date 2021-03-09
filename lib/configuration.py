@@ -89,7 +89,7 @@ def configuration_mode():
             exit()
         elif answers['option'] == 'Edit registered Windows Images':
             if len(cancamusa_config.win_images) == 0:
-                print("No registered WIndows Images")
+                print("No registered Windows Images")
             else:
                 answers = prompt([{'type': 'list','name': 'selected_image','message': 'Registered images:', 'choices' : cancamusa_config.win_images.keys()},{'type' : 'list', 'name' : 'action', 'message' : 'What do you want to do?', 'choices' : ['Unregister image', 'Show']}])
                 if answers['action'] == 'Unregister image':

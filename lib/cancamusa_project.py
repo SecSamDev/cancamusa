@@ -5,6 +5,7 @@ import cancamusa_common
 import errno
 import requests
 from cancamusa_host import HostInfo
+from host_builder import WindowsHostBuilder
 
 class CancamusaProject:
     """ Loads and stores information about a Cancamusa project """
@@ -199,7 +200,7 @@ class CancamusaProject:
 
     def edit_project_interactive(self):
         while True:
-            answer = prompt([{'type': 'list','name': 'option','message': 'Select a project property:', 'choices' : ['Description','Edit hosts','Sysmon', 'Elasticsearch','Logstash', 'Account Generator', 'Winlogbeat','Exit'], 'value' : "none"}])
+            answer = prompt([{'type': 'list','name': 'option','message': 'Select a project property:', 'choices' : ['Description','Edit hosts','Sysmon', 'Elasticsearch','Logstash', 'Account Generator', 'Winlogbeat','Build','Deploy','Exit'], 'value' : "none"}])
             if answer['option'] == 'Exit':
                 self.save()
                 return
@@ -207,6 +208,15 @@ class CancamusaProject:
                 self.edit_hosts()
             elif answer['option'] == 'Sysmon':
                 self.edit_sysmon()
+            elif answer['option'] == 'Build':
+                # Building the project: Creating ISOs, fill templates based on project specifications
+                builder = WindowsHostBuilder(self.config_path)
+                for host in self.hosts:
+                    builder.build_host_image(host)
+            elif answer['option'] == 'Deploy':
+                # Depending if the project is alredy builded it deploys the project in Proxmox etc
+                pass
+                
             elif answer['option'] == 'Elasticsearch':
                 self.edit_elasticsearch() 
             elif answer['option'] == 'Logstash':
