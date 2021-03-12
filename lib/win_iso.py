@@ -33,22 +33,31 @@ def get_windows_list(content):
     try:
         if platform == 'win32':
             matched = re.findall(pattern, str(content.decode('iso-8859-1')))
-            return {
-                'id' : matched[0][0],
-                'name' : matched[0][1]
-            }
+            to_ret = []
+            for mtch in matched:
+                to_ret.append({
+                    'id' : mtch[0],
+                    'name' : mtch[1]
+                })
+            return to_ret
         else:
             matched = re.findall(pattern, content.decode(sys.stdin.encoding))
-            return {
-                'id' : matched[0][0],
-                'name' : matched[0][1]
-            }
+            to_ret = []
+            for mtch in matched:
+                to_ret.append({
+                    'id' : mtch[0],
+                    'name' : mtch[1]
+                })
+            return to_ret
     except:
         matched = re.findall(pattern, str(content.decode("utf-8") ))
-        return {
-            'id' : matched[0][0],
-            'name' : matched[0][1]
-        }
+        to_ret = []
+        for mtch in matched:
+            to_ret.append({
+                'id' : mtch[0],
+                'name' : mtch[1]
+            })
+        return to_ret
 
 def process_windows_image(win_image):
     print('Calculating MD5 of ISO image...')
