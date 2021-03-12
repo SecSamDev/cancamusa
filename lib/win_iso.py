@@ -3,6 +3,7 @@ from sys import platform
 import json
 import re
 import os
+import sys
 from cancamusa_common import get_win_type
 import subprocess
 
@@ -27,26 +28,26 @@ def md5(fname):
     return hash_md5.hexdigest()
 
 def get_windows_list(content):
-    pattrn = 'Index\s*:\s*([0-9]+)\s*Name\s*:\s*(.*)'
+    pattrn = 'Index\\s*:\\s*([0-9]+)\\s*Name\\s*:\\s*(.*)'
     pattern = re.compile(pattrn, re.MULTILINE)
     try:
         if platform == 'win32':
             matched = re.findall(pattern, str(content.decode('iso-8859-1')))
             return {
-                'id' : matched[0],
-                'name' : matched[1]
+                'id' : matched[0][0],
+                'name' : matched[0][1]
             }
         else:
             matched = re.findall(pattern, content.decode(sys.stdin.encoding))
             return {
-                'id' : matched[0],
-                'name' : matched[1]
+                'id' : matched[0][0],
+                'name' : matched[0][1]
             }
     except:
-        matched = re.findall(pattern, str(content))
+        matched = re.findall(pattern, str(content.decode("utf-8") ))
         return {
-            'id' : matched[0],
-            'name' : matched[1]
+            'id' : matched[0][0],
+            'name' : matched[0][1]
         }
 
 def process_windows_image(win_image):
@@ -79,7 +80,7 @@ def process_windows_image(win_image):
     windows_list = get_windows_list(output)
 
     print('Available windows images:')
-    for img in windowsList:
+    for img in windows_list:
         print(img['id'] + " " + img['name'])
         win_type = get_win_type(img['name'])
     return {"iso" : win_image, "md5" : md5_value, "win_type" : win_type, "images" : windows_list}
