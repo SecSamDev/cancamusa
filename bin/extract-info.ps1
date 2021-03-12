@@ -24,7 +24,7 @@ catch { "An error occurred." }
 # CPU
 Get-WmiObject -Class Win32_Processor | Select-Object -Property Name, Number* | ConvertTo-Json | Out-File -Encoding UTF8 $hostname'\cpu.json'
 # RAM
-Get-WmiObject win32_physicalmemory | Format-Table Manufacturer,Banklabel,Configuredclockspeed,Devicelocator,Capacity,Serialnumber -autosize | ConvertTo-Json | Out-File -Encoding UTF8 $hostname'\cpu.json'
+Get-WmiObject win32_physicalmemory | Select-Object Manufacturer,Banklabel,Configuredclockspeed,Devicelocator,Capacity,Serialnumber | ConvertTo-Json | Out-File -Encoding UTF8 $hostname'\cpu.json'
 
 # Directorios sobre Program Files
 

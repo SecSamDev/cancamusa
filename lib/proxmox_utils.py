@@ -21,7 +21,7 @@ def get_proxmox_storages():
             storage_type = None
             storage_name = None
             storage_path = None
-            dir_pattern = '^([^:]+)\s*:\s*(.*?)\$'
+            dir_pattern = '^(dir)\s*:\s*(.*?)\$'
             dir_pattern = re.compile(dir_pattern)
             for line in info:
                 matched = regex_match(dir_pattern, line)
@@ -32,9 +32,11 @@ def get_proxmox_storages():
                             'name' : storage_name,
                             'type' : storage_type
                         })
-                    storage_name = None
-                    storage_type = None
-                    storage_path = None
+                        storage_name = None
+                        storage_type = None
+                        storage_path = None
+                    continue
+                
                 if matched:
                     storage_name = matched[1]
                 else:
