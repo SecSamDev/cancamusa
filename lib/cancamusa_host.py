@@ -433,6 +433,12 @@ class HostInfoWindowsAccounts:
     def from_json(account):
         return HostInfoWindowsAccounts(account)
 
+
+
+
+
+
+
 class HostInfo:
     def __init__(self):
         self.disks = []

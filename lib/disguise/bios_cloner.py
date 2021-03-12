@@ -3,6 +3,17 @@ import re
 from random import randrange
 from cancamusa_host import HostInfoBios
 import tempfile
+import subprocess
+import os, shutil
+
+def copytree(src, dst, symlinks=False, ignore=None):
+    for item in os.listdir(src):
+        s = os.path.join(src, item)
+        d = os.path.join(dst, item)
+        if os.path.isdir(s):
+            shutil.copytree(s, d, symlinks, ignore)
+        else:
+            shutil.copy2(s, d)
 
 def replace_files(file_list=[], replacer_list=[]):
     for file_name in file_list:
@@ -24,8 +35,16 @@ def process_release_date(released):
 # qemu -bios out/bios.bin
 # https://gist.github.com/doomedraven/41af84c8cf93ba63cea933a80e898fb6
 
+def download_seabios():
+    SEABIOS_PATH = tempfile.mkdtemp()
+    process = subprocess.Popen(['git','clone','https://git.seabios.org/seabios.git'], stdout=subprocess.PIPE, cwd=SEABIOS_PATH)
+    output, error = process.communicate()
+    p_status = process.wait()
+    process.terminate()
+    SEABIOS_PATH = os.path.join(SEABIOS_PATH,'seabios')
+    return SEABIOS_PATH
 
-def compile_cloned_bios(bios,output_bios):
+def compile_cloned_bios(bios,output_bios, SEABIOS_PATH=None):
     """[summary]
     Use information extracted from a Windows machine to compile a seabios that shows the same
     information as te original one.
@@ -36,14 +55,19 @@ def compile_cloned_bios(bios,output_bios):
     Returns:
         [type]: [description]
     """
-    # TODO: escape character "
-    # do git clone
-    SEABIOS_PATH = tempfile.mkdtemp()
-    process = subprocess.Popen(['git','clone','https://git.seabios.org/seabios.git'], stdout=subprocess.PIPE, cwd=SEABIOS_PATH)
-    output, error = process.communicate()
-    p_status = process.wait()
-    process.terminate()
-    SEABIOS_PATH = os.path.join(SEABIOS_PATH,'seabios')
+    if not SEABIOS_PATH:
+        # TODO: escape character "
+        # do git clone
+        SEABIOS_PATH = tempfile.mkdtemp()
+        process = subprocess.Popen(['git','clone','https://git.seabios.org/seabios.git'], stdout=subprocess.PIPE, cwd=SEABIOS_PATH)
+        output, error = process.communicate()
+        p_status = process.wait()
+        process.terminate()
+        SEABIOS_PATH = os.path.join(SEABIOS_PATH,'seabios')
+    else:
+        SEABIOS_PATH2 = tempfile.mkdtemp()
+        copytree(SEABIOS_PATH,SEABIOS_PATH2)
+        SEABIOS_PATH = SEABIOS_PATH2
 
     SRC_CONFIG_H = os.path.join(SEABIOS_PATH, "src", "config.h")
     SRC_FW_SSDT_MISC_DSL = os.path.join(SEABIOS_PATH, "src", "fw", "ssdt-misc.dsl")
@@ -59,7 +83,8 @@ def compile_cloned_bios(bios,output_bios):
     SRC_FW_SSDT_PROC_DSL = os.path.join(SEABIOS_PATH, "src", "fw", "ssdt-proc.dsl")
     SRC_FW_PCIINIT_c = os.path.join(SEABIOS_PATH, "src", "fw", "pciinit.c")
     SRC_FW_BIOSTABLES_c = os.path.join(SEABIOS_PATH, "src", "fw", "biostables.c")
-    SRC_FW_CSMC_C = os.path.join(SEABIOS_PATH, "src", "fw", "csmc.c")
+    SRC_FW_CSMC_C = os.path.join(SEABIOS_PATH, "src", "fw", "csm.c")
+    SRC_OUTPUT_C = os.path.join(SEABIOS_PATH, "src", "output.c")
 
     NEW_BIOS_NAME_UPPER = bios.version.split(" ")[0]
     NEW_BIOS_NAME = NEW_BIOS_NAME_UPPER[0] + (NEW_BIOS_NAME_UPPER[1:]).lower()
@@ -140,6 +165,6 @@ def compile_cloned_bios(bios,output_bios):
     process.terminate()
 
     # Move bios to new location
-    with open(output_bios,'w') as write_file:
-        with open(os.path.join(SEABIOS_PATH,"out","bios.bin"),'r') as read_file:
+    with open(output_bios,'wb') as write_file:
+        with open(os.path.join(SEABIOS_PATH,"out","bios.bin"),'rb') as read_file:
             write_file.write(read_file.read())

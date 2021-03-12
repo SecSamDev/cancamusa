@@ -212,7 +212,7 @@ class CancamusaProject:
                 self.edit_siem_config()
             elif answer['option'] == 'Build':
                 # Building the project: Creating ISOs, fill templates based on project specifications
-                builder = WindowsHostBuilder(self.config_path)
+                builder = WindowsHostBuilder(self)
                 for host in self.hosts:
                     builder.build_host_image(host)
             elif answer['option'] == 'Deploy':
