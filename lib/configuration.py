@@ -86,6 +86,7 @@ def configuration_mode():
                 cancamusa_config.proxmox_templates = os.path.abspath(answers["template_location"])
 
         elif answers['option'] == 'Exit':
+            cancamusa_config.save()
             exit()
         elif answers['option'] == 'Edit registered Windows Images':
             if len(cancamusa_config.win_images) == 0:

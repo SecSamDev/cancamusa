@@ -7,6 +7,7 @@ import argparse
 sys.path.append(os.path.join(os.path.dirname(__file__), 'lib'))
 sys.path.append(os.path.join(os.path.dirname(__file__), 'lib','disguise'))
 sys.path.append(os.path.join(os.path.dirname(__file__), 'lib','scripter'))
+sys.path.append(os.path.join(os.path.dirname(__file__), 'lib','scripter'))
 from cancamusa_project import CancamusaProject
 from configuration import configuration_mode, CancamusaConfiguration
 from win_iso import process_windows_image

@@ -6,9 +6,10 @@ ELASTIC_CERTIFICATE = 'elastic_certificate.pem'
 ELASTIC_CERTIFICATE_KEY = 'elastic_certificate.key'
 
 # For random account generation
-ACCOUNT_FORMAT_EXAMPLE = "Bill Doe"
+ACCOUNT_FORMAT_EXAMPLE = "Bill Doe Ferguson"
 ACCOUNT_FORMAT_NAME_DOT_SURNAME = "bill.doe"
 ACCOUNT_FORMAT_LETTER_SURNAME = "bdoe"
+ACCOUNT_FORMAT_TRHEE_LETTERS = "bildoefer"
 
 def random_guid():
     return str(uuid.uuid4())

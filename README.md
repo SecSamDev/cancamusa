@@ -3,6 +3,9 @@
 
 A Deception Platform
 
+## Configuration
+The cancamusa configuration is stored by default in `~/.cancamusa/preferences.json` and can be changed using the ENV_VAR **CANCAMUSA_HOME**
+
 ## How to use it
 
 Set cancamusa command as a bash alias:

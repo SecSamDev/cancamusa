@@ -6,6 +6,7 @@ import errno
 import requests
 from cancamusa_host import HostInfo
 from host_builder import WindowsHostBuilder
+from cancamusa_domain import CancamusaDomain
 
 class CancamusaProject:
     """ Loads and stores information about a Cancamusa project """
@@ -14,6 +15,7 @@ class CancamusaProject:
         self.description = "A simple lab project"
         self.config_path = config_path
         self.virtio = 'stable'
+        self.domain = CancamusaDomain()
         self.config = {
             'siem' : {},
             'account_generator' : cancamusa_common.ACCOUNT_FORMAT_NAME_DOT_SURNAME
@@ -35,7 +37,8 @@ class CancamusaProject:
                 'description' : self.description,
                 'config' : self.config,
                 'virtio' : self.virtio,
-                'hosts' : []
+                'hosts' : [],
+                'domain' : self.domain.to_json()
             }
             for host in self.hosts:
                 to_write['hosts'].append(host.to_json())
@@ -49,6 +52,7 @@ class CancamusaProject:
         cancamusa.virtio = obj['virtio']
         cancamusa.config = obj['config']
         cancamusa.hosts = []
+        cancamusa.domain = CancamusaDomain.load_from_object(obj['domain'])
         for host in obj['hosts']:
             cancamusa.add_host(HostInfo.from_json(host))
         return cancamusa
@@ -122,10 +126,6 @@ class CancamusaProject:
             self.set_sysmon_conf(answers['sysmon_conf'])
             copy_config_file(self.config_path,answers['sysmon_conf'],cancamusa_common.SYSMON_CONFIG_FILE)
 
-    def edit_account_generator(self):
-        answers = prompt([{'type': 'list','name': 'selection','message': 'Method used to generate random accounts. Ex: ' + cancamusa_common.ACCOUNT_FORMAT_EXAMPLE, 'choices' : [cancamusa_common.ACCOUNT_FORMAT_LETTER_SURNAME, cancamusa_common.ACCOUNT_FORMAT_NAME_DOT_SURNAME]}])
-        self.config['account_generator'] = answers['selection']
-
     def new_project_in_path(pth):
         cancamusa = CancamusaProject(pth)
         create_config_path_if_not_exists(pth)
@@ -197,17 +197,19 @@ class CancamusaProject:
             elif answer['option'] == 'Back':
                 return
 
+    def edit_domain_config(self): 
+        self.domain.edit_interactive()
 
     def edit_project_interactive(self):
         while True:
-            answer = prompt([{'type': 'list','name': 'option','message': 'Select a project property:', 'choices' : ['Description','Edit hosts','Sysmon', 'Elasticsearch','Logstash', 'Account Generator', 'Winlogbeat','Build','Deploy','Exit'], 'value' : "none"}])
+            answer = prompt([{'type': 'list','name': 'option','message': 'Select a project property:', 'choices' : ['Description','Edit hosts','AD','Build','Deploy','Exit'], 'value' : "none"}])
             if answer['option'] == 'Exit':
                 self.save()
                 return
             elif answer['option'] == 'Edit hosts':
                 self.edit_hosts()
-            elif answer['option'] == 'Sysmon':
-                self.edit_sysmon()
+            elif answer['option'] == 'SIEM':
+                self.edit_siem_config()
             elif answer['option'] == 'Build':
                 # Building the project: Creating ISOs, fill templates based on project specifications
                 builder = WindowsHostBuilder(self.config_path)
@@ -216,18 +218,26 @@ class CancamusaProject:
             elif answer['option'] == 'Deploy':
                 # Depending if the project is alredy builded it deploys the project in Proxmox etc
                 pass
-                
+            elif answer['option'] == 'AD':  
+                self.edit_domain_config()
+            elif answer['option'] == 'Description':  
+                answer = prompt([{'type': 'input','name': 'description','message': 'Description of the project', 'default' : self.description}])
+                self.description = answer['description']
+
+    def edit_siem_config(self):
+        while True:
+            answer = prompt([{'type': 'list','name': 'option','message': 'Select a SIEM property:', 'choices' : ['Sysmon', 'Elasticsearch','Logstash','Winlogbeat','Back'], 'value' : "none"}])
+            if answer['option'] == 'Back':
+                self.save()
+                return
+            elif answer['option'] == 'Sysmon':
+                self.edit_sysmon() 
             elif answer['option'] == 'Elasticsearch':
                 self.edit_elasticsearch() 
             elif answer['option'] == 'Logstash':
                 self.edit_logstash() 
             elif answer['option'] == 'Winlogbeat':  
-                self.edit_winlogbeat() 
-            elif answer['option'] == 'Account Generator':  
-                self.edit_account_generator() 
-            elif answer['option'] == 'Description':  
-                answer = prompt([{'type': 'input','name': 'description','message': 'Description of the project', 'default' : self.description}])
-                self.description = answer['description']
+                self.edit_winlogbeat()
 
     def new_project_in_current_path():
         current_dir = os.getcwd()
