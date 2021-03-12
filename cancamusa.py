@@ -28,9 +28,11 @@ if args.configuration :
     exit()
 if args.register_iso :
     cancamusa_config = CancamusaConfiguration.load_or_create(None)
-    win_image = process_windows_image()
+    
     if not cancamusa_config.iso_in_proxmox_path(args.register_iso) and cancamusa_config.is_proxmox:
         print("Iso Image not in a valid Proxmox storage folder")
+    win_image = process_windows_image(args.register_iso)
+    cancamusa_config.add_win_image(win_image)
     exit()
 
 cancamusa = None

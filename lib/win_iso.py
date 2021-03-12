@@ -6,9 +6,10 @@ from cancamusa_common import get_win_type
 import subprocess
 
 class WindowsImage:
-    def __init__(self,iso,md5,images):
+    def __init__(self,iso,md5,win_type,images):
         self.iso = iso
         self.md5 = md5
+        self.win_type = win_type
         self.images = images
     
     def __repr__(self):
@@ -69,7 +70,7 @@ def process_windows_image(win_image):
     p_status = process.wait()
     process.terminate()
     # Unmount image
-    unmountCommand = 'sudo umount ' + isoMountPath
+    unmountCommand = 'umount ' + isoMountPath
     process = subprocess.Popen(unmountCommand.split(), stdout=subprocess.PIPE)
     out, err = process.communicate()
     p_status = process.wait()
@@ -80,4 +81,4 @@ def process_windows_image(win_image):
     for img in windowsList:
         print(img['id'] + " " + img['name'])
     win_type = get_win_type( windowsList[0])
-    return WindowsImage(win_image, md5_value, windows_list) 
+    return {"iso" : win_image, "md5" : md5_value, "win_type" : win_type, "images" : windows_list}

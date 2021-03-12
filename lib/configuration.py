@@ -23,14 +23,14 @@ class CancamusaConfiguration:
     def __init__(self, config_path):
         self.config_path = config_path
         self.proxmox_templates = None
-        self.proxmox_iso_storage = "data"
+        self.proxmox_iso_storage = "local"
         self.packer_location = None
         self.bios_location = None
         self.is_proxmox = False
         self.proxmox_storages = []
         self.win_images = {}
-        self.proxmox_image_storage = "data"
-        self.proxmox_iso_extra_storage = "data"
+        self.proxmox_image_storage = "local"
+        self.proxmox_iso_extra_storage = "local"
     
     def save(self):
         if not self.config_path:
@@ -43,7 +43,8 @@ class CancamusaConfiguration:
                 'proxmox_storages' : self.proxmox_storages,
                 'proxmox_iso_storage' : self.proxmox_iso_storage,
                 'proxmox_iso_extra_storage' : self.proxmox_iso_extra_storage,
-                'proxmox_image_storage' : self.proxmox_image_storage
+                'proxmox_image_storage' : self.proxmox_image_storage,
+                'win_images' : self.win_images
             },indent=4,))
         return self
     
@@ -74,7 +75,7 @@ class CancamusaConfiguration:
             cancamusa.proxmox_storages = cancamusa_config['proxmox_storages']
             cancamusa.proxmox_iso_storage = cancamusa_config['proxmox_iso_storage']
             cancamusa.proxmox_image_storage = cancamusa_config['proxmox_image_storage']
-        except:
+        except Exception as e:
             cancamusa = CancamusaConfiguration(pth)
         cancamusa.is_proxmox = is_proxmox_system()
         cancamusa.proxmox_storages = get_proxmox_storages()
@@ -107,18 +108,20 @@ class CancamusaConfiguration:
 def configuration_mode():
     cancamusa_config = CancamusaConfiguration.load_or_create(None)
     while True:
-        answers = prompt([{'type': 'list','name': 'option','message': 'Select an option', 'choices' : ['Set proxmox template location', 'Edit registered Windows Images', 'Exit']}])
+        answers = prompt([{'type': 'list','name': 'option','message': 'Select an option', 'choices' : ['Set proxmox template location', 'Select proxmox ISO location', 'Select proxmox Extra ISO location', 'Edit registered Windows Images', 'Exit']}])
+        storages = list(map(lambda x: x['name'], cancamusa_config.proxmox_storages))
         if answers['option'] == 'Set proxmox template location':
-            if not is_proxmox_system():
-                print("Not a valid proxmox server")
-                continue
-            answers =  prompt([{'type': 'input','name': 'template_location','message': 'Where is the new proxmox template location?'}])
-            valid_path = valid_proxmox_template_location(answers["template_location"])
-            if not valid_path:
-                print("Invalid path selected: " + answers["template_location"])
-            else:
-                cancamusa_config.proxmox_templates = os.path.abspath(answers["template_location"])
-
+            answers = prompt([{'type': 'list','name': 'option','message': 'Select storage:', 'choices' : storages}])
+            pos = storages.index(answers['option'])
+            cancamusa_config.proxmox_templates = cancamusa_config.proxmox_storages[pos]['name']
+        elif answers['option'] == 'Select proxmox ISO location':
+            answers = prompt([{'type': 'list','name': 'option','message': 'Select storage:', 'choices' : storages}])
+            pos = storages.index(answers['option'])
+            cancamusa_config.proxmox_iso_storage = cancamusa_config.proxmox_storages[pos]['name']
+        elif answers['option'] == 'Select proxmox Extra ISO location':
+            answers = prompt([{'type': 'list','name': 'option','message': 'Select storage:', 'choices' : storages}])
+            pos = storages.index(answers['option'])
+            cancamusa_config.proxmox_iso_extra_storage = cancamusa_config.proxmox_storages[pos]['name']
         elif answers['option'] == 'Exit':
             cancamusa_config.save()
             exit()

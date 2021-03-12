@@ -1,17 +1,9 @@
 import os
+import re
 from sys import platform
 
 def is_proxmox_system():
     return os.path.isdir('/etc/pve')
-
-def regex_match(pattern,content):
-    try:
-        if platform == 'win32':
-            return re.findall(pattern, str(content.decode('iso-8859-1')))
-        else:
-            return re.findall(pattern, content.decode(sys.stdin.encoding))
-    except:
-        return re.findall(pattern, str(content))
 
 def get_proxmox_storages():
     try:
@@ -21,11 +13,11 @@ def get_proxmox_storages():
             storage_type = None
             storage_name = None
             storage_path = None
-            dir_pattern = '^(dir)\s*:\s*(.*?)\$'
+            dir_pattern = '^dir\\s*:\\s*(.*)'
             dir_pattern = re.compile(dir_pattern)
             for line in info:
-                matched = regex_match(dir_pattern, line)
-                if line.trim() == "":
+                matched = re.match(dir_pattern, line)
+                if line.strip() == "":
                     if storage_type:
                         storages.append({
                             'path' : storage_path,
@@ -36,14 +28,13 @@ def get_proxmox_storages():
                         storage_type = None
                         storage_path = None
                     continue
-                
                 if matched:
                     storage_name = matched[1]
                 else:
                     if 'path ' in line:
-                        storage_path = line.split('path ')[1]
+                        storage_path = line.split('path ')[1].strip()
                     elif 'content ' in line:
-                        storage_type = line.split('content ')[1].split(',')
+                        storage_type = list(map(lambda x: x.strip(), line.split('content ')[1].split(',')))
             if storage_type:
                 storages.append({
                     'path' : storage_path,
@@ -51,7 +42,8 @@ def get_proxmox_storages():
                     'type' : storage_type
                 })
             return storages
-    except:
+    except Exception as e:
+        print(e)
         return []
                 
 
