@@ -81,6 +81,6 @@ def process_windows_image(win_image):
 
     print('Available windows images:')
     for img in windows_list:
-        print(img['id'] + " " + img['name'])
+        print(str(img['id']) + " " + img['name'])
         win_type = get_win_type(img['name'])
     return {"iso" : win_image, "md5" : md5_value, "win_type" : win_type, "images" : windows_list}
