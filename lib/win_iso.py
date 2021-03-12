@@ -2,6 +2,7 @@ import hashlib
 from sys import platform
 import json
 import re
+import os
 from cancamusa_common import get_win_type
 import subprocess
 

@@ -13,6 +13,11 @@ Set cancamusa command as a bash alias:
 alias cancamusa='python3 ~/Workspace/cancamusa/cancamusa.py'
 ```
 
+Required wimlib to register WindowsImages:
+```
+apt-get install wimtools
+```
+
 Inside an empty directory type `cancamusa`:
 ```
 test1@Test1:~/cancamusa-labs/test2$ cancamusa
