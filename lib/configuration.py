@@ -22,11 +22,15 @@ def get_cancamusa_home():
 class CancamusaConfiguration:
     def __init__(self, config_path):
         self.config_path = config_path
-        self.proxmox_templates = ""
-        self.packer_location = ""
+        self.proxmox_templates = None
+        self.proxmox_iso_storage = "data"
+        self.packer_location = None
+        self.bios_location = None
         self.is_proxmox = False
         self.proxmox_storages = []
         self.win_images = {}
+        self.proxmox_image_storage = "data"
+        self.proxmox_iso_extra_storage = "data"
     
     def save(self):
         if not self.config_path:
@@ -34,7 +38,12 @@ class CancamusaConfiguration:
         with open(self.config_path, 'w') as config_file:
             config_file.write(json.dumps({
                 'proxmox_templates' : self.proxmox_templates,
-                'packer_location' : self.packer_location
+                'packer_location' : self.packer_location,
+                'bios_location' : self.bios_location,
+                'proxmox_storages' : self.proxmox_storages,
+                'proxmox_iso_storage' : self.proxmox_iso_storage,
+                'proxmox_iso_extra_storage' : self.proxmox_iso_extra_storage,
+                'proxmox_image_storage' : self.proxmox_image_storage
             },indent=4,))
         return self
     
@@ -59,14 +68,39 @@ class CancamusaConfiguration:
             with open(pth,'r') as cancamusa_file:
                 cancamusa_config = json.loads(cancamusa_file.read())
             cancamusa.config_path = pth
-            cancamusa.proxmox_templates = cancamusa_config.proxmox_templates
-            cancamusa.packer_location = cancamusa_config.packer_location
+            cancamusa.proxmox_templates = cancamusa_config['proxmox_templates']
+            cancamusa.packer_location = cancamusa_config['packer_location']
+            cancamusa.bios_location = cancamusa_config['bios_location']
+            cancamusa.proxmox_storages = cancamusa_config['proxmox_storages']
+            cancamusa.proxmox_iso_storage = cancamusa_config['proxmox_iso_storage']
+            cancamusa.proxmox_image_storage = cancamusa_config['proxmox_image_storage']
         except:
             cancamusa = CancamusaConfiguration(pth)
         cancamusa.is_proxmox = is_proxmox_system()
         cancamusa.proxmox_storages = get_proxmox_storages()
         cancamusa.save()
         return cancamusa
+
+    def select_win_image(self, host,debug=False):
+        """Selects the best windows image for a given host
+
+        Args:
+            host (HostInfo): Windows HOST
+        """
+        
+        for name, image in self.win_images.items():
+            if image["windows"]["major"] == host.so.major:
+                return image
+        if debug:
+            return {
+                'windows' : {
+                    'major' : 10,
+                    'minor' : 0,
+                },
+                'versions' : ["Enterprise"],
+                'path' : '/data/templates/iso/Windows10.iso'
+            }
+        raise Exception("Could not find a suitable image for the host {} with Windows {}".format(host.computer_name, host.so.major))
 
 
 

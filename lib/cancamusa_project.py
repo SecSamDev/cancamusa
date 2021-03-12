@@ -20,12 +20,24 @@ class CancamusaProject:
             'siem' : {},
             'account_generator' : cancamusa_common.ACCOUNT_FORMAT_NAME_DOT_SURNAME
         }
+        # QEMU machine ID
+        self.host_id_start = 1000
+        self.host_id_counter = 1000
         self.hosts = []
+
+    def change_host_id_start(self, new_value):
+        start_dif = new_value - self.host_id_start
+        self.host_id_counter = self.host_id_counter + start_dif
+        self.host_id_start = new_value
+        for host in self.hosts:
+            host.host_id = host.host_id + start_dif
     
 
     def add_host(self,host):
         # Do validation/transformation
+        host.host_id = self.host_id_counter
         self.hosts.append(host)
+        self.host_id_counter = self.host_id_counter + 1
         return self
 
     def save(self):
@@ -38,10 +50,16 @@ class CancamusaProject:
                 'config' : self.config,
                 'virtio' : self.virtio,
                 'hosts' : [],
-                'domain' : self.domain.to_json()
+                'domain' : self.domain.to_json(),
+                'host_id_counter' : self.host_id_counter,
+                'host_id_start' : self.host_id_start
             }
             for host in self.hosts:
-                to_write['hosts'].append(host.to_json())
+                host = host.to_json()
+                if not 'host_id' in host:
+                    host['host_id'] = self.host_id_counter
+                    self.host_id_counter = self.host_id_counter + 1
+                to_write['hosts'].append(host)
             config_file.write(json.dumps(to_write,indent=4,))
         return self
 
@@ -53,8 +71,10 @@ class CancamusaProject:
         cancamusa.config = obj['config']
         cancamusa.hosts = []
         cancamusa.domain = CancamusaDomain.load_from_object(obj['domain'])
+        cancamusa.host_id_start = int(obj['host_id_start']) if 'host_id_start' in obj else 1000
+        cancamusa.host_id_counter = int(obj['host_id_counter']) if 'host_id_counter' in obj else cancamusa.host_id_start
         for host in obj['hosts']:
-            cancamusa.add_host(HostInfo.from_json(host))
+            cancamusa.hosts.append(HostInfo.from_json(host))
         return cancamusa
 
     def set_elasticsearch_siem(self, host, security):
@@ -160,10 +180,10 @@ class CancamusaProject:
             answer = prompt([{'type': 'list','name': 'option','message': 'Host edition mode', 'choices' : options}])
             if answer['option'] == 'Show hosts':
                 for host in self.hosts:
-                    print(host)
+                    print(host.computer_name)
 
             if answer['option'] == 'Add host':
-                host = HostInfo()
+                host = HostInfo(self.host_id_counter)
                 host = host.edit_interactive()
                 if host:
                     self.add_host(host)
@@ -172,16 +192,16 @@ class CancamusaProject:
                 if os.path.isdir(answer['option']):
                     host_list = os.listdir(answer['option'])
                     for host in host_list:
-                        #try:
-                        new_host = HostInfo.host_info_from_directory(os.path.join(answer['option'],host))
-                        if new_host != None:
-                            self.add_host(new_host)
-                            print("Imported host: {}".format(host))
-                        else:
+                        try:
+                            new_host = HostInfo.host_info_from_directory(os.path.join(answer['option'],host))
+                            if new_host != None:
+                                self.add_host(new_host)
+                                print("Imported host: {}".format(host))
+                            else:
+                                print('ERROR: Cannot import host {}'.format(host))
+                        except Exception as e:
+                            print(e)
                             print('ERROR: Cannot import host {}'.format(host))
-                        #except Exception as e:
-                        #    print(e)
-                        #    print('ERROR: Cannot import host {}'.format(host))
                 else:
                     print('Invalid path: ' + answer['option'])
             elif answer['option'] == 'Edit host':
@@ -202,12 +222,16 @@ class CancamusaProject:
 
     def edit_project_interactive(self):
         while True:
-            answer = prompt([{'type': 'list','name': 'option','message': 'Select a project property:', 'choices' : ['Description','Edit hosts','AD','Build','Deploy','Exit'], 'value' : "none"}])
+            answer = prompt([{'type': 'list','name': 'option','message': 'Select a project property:', 'choices' : ['Description','Edit hosts','AD','SIEM','Build','Deploy','Exit'], 'value' : "none"}])
             if answer['option'] == 'Exit':
                 self.save()
                 return
             elif answer['option'] == 'Edit hosts':
                 self.edit_hosts()
+            elif answer['option'] == 'Edit QEMU start ID':
+                answer = prompt([{'type': 'input','name': 'hostid','message': 'New Start value for hosts:', 'default' : self.host_id_start}])
+                if answer['hostid']:
+                    self.change_host_id_start(answer['hostid'])
             elif answer['option'] == 'SIEM':
                 self.edit_siem_config()
             elif answer['option'] == 'Build':

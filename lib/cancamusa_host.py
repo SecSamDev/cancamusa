@@ -9,6 +9,8 @@ from mac_vendors import get_mac_list, search_wildcard_vendor, random_mac_for_ven
 from cancamusa_common import random_guid
 from rol_selector import AVAILABLE_ROLES, roles_from_extracted_info
 
+from processors import list_processors
+
 class InteractiveHostEditor:
     
     def edit_hosts(cancamusa):
@@ -372,6 +374,53 @@ class HostInfoWindowsVersion:
     def from_json(version_file):
         return HostInfoWindowsVersion(version_file['Major'],version_file['Minor'],version_file['Build'],version_file['Revision'], version_file['MajorRevision'],version_file['MinorRevision'])
 
+
+class HostInfoCpu:
+    def __init__(self, name,cores,threads):
+        self.name = name
+        self.family = "Intel"
+        self.cores = cores
+        self.threads = threads
+        self.processor_type = "Haswell"
+
+    def __str__(self):
+        return "{} {}/{}".format(self.name, self.cores, self.threads)
+    
+    def edit_interactive(self):
+        answer = prompt([{'type': 'input','name': 'option','message': 'Select CPU name', 'default' : self.name}])
+        self.name = answer['option']
+        self.detect_cpu_family()
+        answer = prompt([{'type': 'input','name': 'option','message': 'Cores:', 'default' : str(self.cores)}])
+        self.cores = int(answer['option'])
+        answer = prompt([{'type': 'input','name': 'option','message': 'Threads: ', 'default' : str(self.threads)}])
+        self.threads = int(answer['option'])
+        answer = prompt([{'type': 'list','name': 'option','message': 'Select a QEMU cpu type:', 'choices' :list_processors(self.family)}])
+        self.processor_type = answer['option']
+        return self
+
+    def detect_cpu_family(self):
+        if 'Intel' in self.name:
+            self.family = "Intel"
+        elif 'AMD' in self.name:
+            self.family = "AMD"
+        else:
+            self.family = None
+
+
+    def to_json(self):
+        return {
+            'Name' : self.name,
+            'NumberOfCores' : self.cores,
+            'NumberOfLogicalProcessors' : self.threads,
+            'Family' : self.family,
+            'CpuType' : self.processor_type
+        }
+    
+    def from_json(version_file):
+
+        return HostInfoCpu(version_file['Name'],version_file['NumberOfCores'],version_file['NumberOfLogicalProcessors'])
+
+
 class HostInfoWindowsAccounts:
     def __init__(self, account):
         self.name = account['Name']
@@ -440,15 +489,17 @@ class HostInfoWindowsAccounts:
 
 
 class HostInfo:
-    def __init__(self):
+    def __init__(self,host_id=1000):
+        self.host_id = host_id
         self.disks = []
         self.bios = HostInfoBios(bios_database.BIOS_AMERICAN_MEGATREND_ALASKA_F5)
         self.computer_name = "Windows"
         self.networks = []
-        self.so = HostInfoWindowsVersion(1,2,3,4,5,6)
+        self.os = HostInfoWindowsVersion(10,0,0,0,0,0)
         self.accounts = []
         self.programs = []
         self.roles = []
+        self.cpus = []
     
     def add_disk(self,disk):
         for dsk in self.disks:
@@ -477,10 +528,16 @@ class HostInfo:
         to_ret +="Network Interfaces:\n"
         for nt in self.networks:
             to_ret += "\t{}\n".format(nt)
+        to_ret +="CPUs:\n"
+        for nt in self.cpus:
+            to_ret += "\t{}\n".format(nt)
         return to_ret
     
     def to_json(self):
-        to_ret = {}
+        to_ret = {
+            'host_id' : self.host_id,
+            'cpus' : []
+        }
         to_ret['disks'] = []
         to_ret['accounts'] = []
         to_ret['networks'] = []
@@ -490,8 +547,11 @@ class HostInfo:
             to_ret['accounts'].append(acc.to_json())
         for nt in self.networks:
             to_ret['networks'].append(nt.to_json())
+        for cpu in self.cpus:
+            to_ret['cpus'].append(cpu.to_json())
         to_ret['bios'] = self.bios.to_json()
         to_ret['roles'] = []
+        to_ret["os"] = self.os.to_json()
         to_ret["computer_name"] = self.computer_name
         return to_ret
 
@@ -505,18 +565,29 @@ class HostInfo:
             host.accounts.append(acc2)
         for nt in obj['networks']:
             host.networks.append(HostInfoNetwork.from_json(nt))
+        if 'cpus' in obj:
+            for cpu in obj['cpus']:
+                host.cpus.append(HostInfoCpu.from_json(cpu))
+        if len(host.cpus) == 0:
+            host.cpus.append(HostInfoCpu("Intel(R) Xeon(R) CPU E5-2430L v2 @ 2.40GHz",6,12))
         host.bios = HostInfoBios.from_json(obj['bios'])
         host.bios.ps_computer_name = obj["computer_name"]
         host.computer_name = obj["computer_name"]
-
+        if 'os' in obj:
+            host.os = HostInfoWindowsVersion.from_json(obj["os"])
+        else:
+            host.os = HostInfoWindowsVersion(10,0,0,0,0,0)
+        host.host_id = int(obj["host_id"]) if 'host_id' in obj  else 1000
 
         return host
 
     def edit_interactive(self):
         while True:
-            answer = prompt([{'type': 'list','name': 'option','message': 'Editing host: ' + self.computer_name, 'choices' : ['Name','Disks','Bios','Accounts','Network interfaces','Back','Cancel']}])
+            answer = prompt([{'type': 'list','name': 'option','message': 'Editing host: ' + self.computer_name, 'choices' : ['Name','Disks','Bios','CPUs','Accounts','Network interfaces','Resume','Back','Cancel']}])
             if answer['option'] == 'Back':
                 return self
+            elif answer['option'] == 'Resume':
+                print(self)
             elif answer['option'] == 'Cancel':
                 return None
             elif answer['option'] == 'Disks':
@@ -579,13 +650,13 @@ class HostInfo:
                 if len(self.networks) > 0:
                     options.append('Edit')
                     options.append('Delete')
-                    options.append('Remove kernel interfaces')
+                    options.append('Remove interfaces')
                 options.append('Back')
                 answer = prompt([{'type': 'list','name': 'option','message': 'Modify interfaces', 'choices' : options}])
                 if answer['option'] == 'Back':
                     continue
-                if answer['option'] == 'Remove kernel interfaces':
-                    self.networks = filter_kernel_interfaces(self.networks)
+                if answer['option'] == 'Remove interfaces':
+                    self.networks = []
                     continue
                 elif answer['option'] == 'Add':
                     ntwrk =  HostInfoNetwork.create_interactive(-1)
@@ -593,12 +664,36 @@ class HostInfo:
                         self.add_network(ntwrk)
                 else:
                     networks = list(map(lambda x: x.description, self.networks))
-                    answer2 = prompt([{'type': 'list','name': 'option','message': 'Select a interface to edit', 'choices' :networks}])
+                    answer2 = prompt([{'type': 'list','name': 'option','message': 'Select a interface to ' + answer['option'], 'choices' :networks}])
                     pos = networks.index(answer2['option'])
                     if answer['option'] == 'Edit':
                         self.networks[pos].edit_interactive()
                     elif answer['option'] == 'Delete':
                         self.networks.pop(pos)
+
+            elif answer['option'] == 'CPUs':
+                print("CPUs:\n" + "\n".join(list(map(lambda x: x.name, self.cpus))))
+                options =  ['Add']
+                if len(self.cpus) > 0:
+                    options.append('Edit')
+                    options.append('Delete')
+                options.append('Back')
+                answer = prompt([{'type': 'list','name': 'option','message': 'Modify CPUs', 'choices' : options}])
+                if answer['option'] == 'Back':
+                    continue
+                elif answer['option'] == 'Add':
+                    cpu =  HostInfoCpu("Intel(R) Core(TM) i5-8265U CPU @ 1.60GHz",4,8)
+                    cpu = cpu.edit_interactive()
+                    if cpu:
+                        self.cpus.append(cpu)
+                else:
+                    cpus = list(map(lambda x: x.name, self.cpus))
+                    answer2 = prompt([{'type': 'list','name': 'option','message': 'Select a CPU to ' + answer['option'], 'choices' :cpus}])
+                    pos = cpus.index(answer2['option'])
+                    if answer['option'] == 'Edit':
+                        self.cpus[pos].edit_interactive()
+                    elif answer['option'] == 'Delete':
+                        self.cpus.pop(pos)
         return self
 
 

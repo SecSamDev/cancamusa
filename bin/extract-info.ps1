@@ -20,6 +20,12 @@ Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uni
 # Roles instalados 
 try{Get-WindowsFeature | Where-Object {$_.InstallState -eq 'Installed'} | Select-Object DisplayName, Name | ConvertTo-Json | Out-File -Encoding UTF8 $hostname'\roles.json'}
 catch { "An error occurred." }
+
+# CPU
+Get-WmiObject -Class Win32_Processor | Select-Object -Property Name, Number* | ConvertTo-Json | Out-File -Encoding UTF8 $hostname'\cpu.json'
+# RAM
+Get-WmiObject win32_physicalmemory | Format-Table Manufacturer,Banklabel,Configuredclockspeed,Devicelocator,Capacity,Serialnumber -autosize | ConvertTo-Json | Out-File -Encoding UTF8 $hostname'\cpu.json'
+
 # Directorios sobre Program Files
 
 $pf64 = Get-ChildItem 'C:\Program Files'
