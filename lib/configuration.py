@@ -99,7 +99,7 @@ class CancamusaConfiguration:
                         return image
         if debug:
             return {
-                'win_type' : 'win10'
+                'win_type' : 'win10',
                 'md5' : '00000',
                 'images' : {'0' : 'Windows 10 Professional', '1' : 'Windows 10 Enterprise'},
                 'path' : '/data/templates/iso/Windows10.iso'
