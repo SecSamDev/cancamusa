@@ -138,7 +138,7 @@ def qemu_disk_qcow2(pth,size):
     parent = os.path.dirname(pth)
     if not os.path.exists(parent):
         os.mkdir(parent)
-    process = subprocess.Popen(["qemu-img","create","-f","qcow2",pth,size], stdout=subprocess.PIPE)
+    process = subprocess.Popen(["qemu-img","create","-f","qcow2",pth,str(size)], stdout=subprocess.PIPE)
     output, error = process.communicate()
     p_status = process.wait()
     process.terminate()
