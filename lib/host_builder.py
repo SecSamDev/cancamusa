@@ -71,7 +71,7 @@ class WindowsHostBuilder:
                 qemu_disk_qcow2("{}/images/{}/vm-{}-disk-{}.qcow2".format(storage_path,host.host_id,host.host_id,dcisc_i), hnet.size)
                 dcisc_i = dcisc_i + 1
             qemu_template.write('scsihw: virtio-scsi-pci\n')
-            qemu_template_file.write('args:-bios {}\n'.format(os.path.join(host_path,"bios.bin")))
+            qemu_template.write('args:-bios {}\n'.format(os.path.join(host_path,"bios.bin")))
         print('QEMU template for proxmox created: ' + qemu_template_file)
 
     def build_extra_iso(self, host):
