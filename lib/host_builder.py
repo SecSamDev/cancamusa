@@ -5,6 +5,7 @@ import bios_cloner
 from configuration import CancamusaConfiguration
 from script_iso import ScriptIsoBuilder
 from jinja2 import Template
+import subprocess
 
 class WindowsHostBuilder:
     def __init__(self, project):
