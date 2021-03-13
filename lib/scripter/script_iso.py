@@ -11,9 +11,8 @@ class ScriptIsoBuilder:
     """Allow to easily create custom ISOs with all the scripts and configuration files
         needed to build the full Windows Machine.
     """
-    def __init__(self,machine, scripts, configs):
-        self.machine = machine
-        self.iso = None
+    def __init__(self,host, scripts, configs):
+        self.host = host
         self.scripts = set()
         self.configs = set()
         for scr in scripts:
@@ -53,10 +52,14 @@ class ScriptIsoBuilder:
         iso.add_fp(BytesIO(init_script), len(init_script), '/init_script.bat.;1')
 
         for scr in self.scripts:
-            iso.add_file(scr,'/'+os.path.basename(scr)+'.;1')
+            with open(scr,'rb') as file_r:
+                content = file_r.read()
+                iso.add_fp(BytesIO(content), len(content),'/'+os.path.basename(scr)+'.;1')
 
         for cfg in self.configs:
-            iso.add_file(cfg,'/'+os.path.basename(cfg)+'.;1')
+            with open(cfg,'rb') as file_r:
+                content = file_r.read()
+                iso.add_fp(BytesIO(content), len(content),'/'+os.path.basename(cfg)+'.;1')
         
-        iso.write(os.path.join(output_dir, self.endpoint + ".iso"))
+        iso.write(os.path.join(output_dir, self.host.host_id + ".iso"))
         iso.close()

@@ -3,6 +3,8 @@ import os
 from cancamusa_host import HostInfo
 import bios_cloner
 from configuration import CancamusaConfiguration
+from script_iso import ScriptIsoBuilder
+from jinja2 import Template
 
 class WindowsHostBuilder:
     def __init__(self, project):
@@ -44,7 +46,7 @@ class WindowsHostBuilder:
         qemu_template_file = os.path.join(host_path, str(host.host_id) + ".conf")
         with open(qemu_template_file, 'w') as qemu_template:
             compatible_win_image = self.configuration.select_win_image(host,'CANCAMUSA_DEBUG' in os.environ)
-            qemu_template.write("ide0: {}:iso/{},media=cdrom\n".format(self.configuration.proxmox_iso_storage,os.path.basename(compatible_win_image["path"]) ))
+            qemu_template.write("ide0: {}:iso/{},media=cdrom\n".format(self.configuration.proxmox_iso_storage,os.path.basename(compatible_win_image["path"])))
             qemu_template.write('bootdisk: virtio0\n')
             qemu_template.write('vcpus: {}\n'.format(host.cpus[0].threads))
             qemu_template.write('cores: {}\n'.format(host.cpus[0].cores))
@@ -68,6 +70,63 @@ class WindowsHostBuilder:
             qemu_template.write('scsihw: virtio-scsi-pci\n')
             qemu_template_file.write('args:-bios {}\n'.format(os.path.join(host_path,"bios.bin")))
         print('QEMU template for proxmox created: ' + qemu_template_file)
+
+    def build_extra_iso(self, host):
+        builder = ScriptIsoBuilder(host,[],[])
+        host_path = os.path.join(self.project_path, host.computer_name)
+
+        # Build Autounattend
+        compatible_win_image = self.configuration.select_win_image(host,'CANCAMUSA_DEBUG' in os.environ)
+        with open(os.path.join(os.path.dirname(__file__),'scripter','templates',compatible_win_image['win_type'],'Autounattend.xml.jinja'), 'r') as file_r:
+            template = Template(file_r.read())
+            lang = {
+                'principal' : 'ES',
+                'fall' : 'EN'
+            }
+            principal_disk = None
+            disk_list = []
+            for disk in host.disks:
+                if disk.device_id == 'C':
+                    principal_disk = disk
+                else:
+                    disk_list.append(disk)
+
+            if host.domain:
+                domains = list(map(lambda x: x.domain, self.project.domain.domains))
+                host_domain = domains.index(host.domain)
+                if not host_domain:
+                    raise Exception("Invalid domain {} for host {}".format(host.domain,host.computer_name))
+                principal_user = {
+                    'name' : host_domain.default_local_admin,
+                    'password' : host_domain.default_local_admin_password,
+                    'group' : 'Administrators',
+                    'organization' : host_domain.domain
+                }
+            else:
+                if len(host.accounts) > 0:
+                    principal_user = {
+                        'name' : host.accounts[0].name,
+                        'password' : "Cancamusa123Rocks!",
+                        'group' : 'Administrators',
+                        'organization' : host.computer_name
+                    }
+                else:
+                    principal_user = {
+                        'name' : 'Administrator',
+                        'password' : "Cancamusa123Rocks!",
+                        'group' : 'Administrators',
+                        'organization' : host.computer_name
+                    }
+
+
+            with open(os.path.join(host_path, 'Autounattend.xml'), 'w') as file_w:
+                file_w.write(template.render(lang=lang,principal_disk=principal_disk,disk_list=disk_list,computer_name=host.computer_name,principal_user=principal_user))
+
+            builder.add_config(os.path.join(host_path, 'Autounattend.xml'))
+        
+        
+        extra_iso_path = os.path.join(host_path, str(host.host_id) + ".iso")
+        builder.build(extra_iso_path)
 
 
 def qemu_disk_qcow2(pth,size):

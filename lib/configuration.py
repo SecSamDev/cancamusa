@@ -90,13 +90,22 @@ class CancamusaConfiguration:
         Args:
             host (HostInfo): Windows HOST
         """
-        win_type = get_win_type("win" +  str(host.so.major))
-        win_image = get_win_image_type(str(host.so.name))
+        win_type = get_win_type("win" +  str(host.os.major))
+        win_image = get_win_image_type(str(host.os.name))
         for name, image in self.win_images.items():
             if image["win_type"] == win_type:
                 for img_id, img_name in image.items():
                     if get_win_image_type(img_name) == win_image:
-                        return image
+                        # Specific image
+                        return {
+                            'path' : image['path'],
+                            'win_type' : image['win_type'],
+                            'md5' : image['md5'],
+                            'images' : {
+                                img_id : img_name
+                            }
+                        }
+                return image
         if debug:
             return {
                 'win_type' : 'win10',
@@ -104,7 +113,7 @@ class CancamusaConfiguration:
                 'images' : {'0' : 'Windows 10 Professional', '1' : 'Windows 10 Enterprise'},
                 'path' : '/data/templates/iso/Windows10.iso'
             }
-        raise Exception("Could not find a suitable image for the host {} with Windows {}".format(host.computer_name, host.so.major))
+        raise Exception("Could not find a suitable image for the host {} with Windows {}".format(host.computer_name, host.os.major))
 
 
 

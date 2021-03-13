@@ -32,6 +32,10 @@ def get_win_type(win_image):
         return 'win10'
     if 'windows 7' in win_image.lower():
         return 'win7'
+    if '10' in win_image.lower():
+        return 'win10'
+    if '7' in win_image.lower():
+        return 'win7'
     raise Exception('Cannot identify Windows OS version: ' + win_image)
 
 def replaceArgumentsFunction(content, arguments):

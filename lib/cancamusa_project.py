@@ -184,7 +184,7 @@ class CancamusaProject:
 
             if answer['option'] == 'Add host':
                 host = HostInfo(self.host_id_counter)
-                host = host.edit_interactive()
+                host = host.edit_interactive(project=self)
                 if host:
                     self.add_host(host)
             if answer['option'] == 'Import hosts':
@@ -208,7 +208,7 @@ class CancamusaProject:
                 hosts = list(map(lambda x: x.computer_name, self.hosts))
                 answer = prompt([{'type': 'list','name': 'option','message': 'Select a host to edit', 'choices' :hosts}])
                 pos = hosts.index(answer['option'])
-                self.hosts[pos].edit_interactive()
+                self.hosts[pos].edit_interactive(project=self)
             elif answer['option'] == 'Delete host':
                 hosts = list(map(lambda x: x.computer_name, self.hosts))
                 answer = prompt([{'type': 'list','name': 'option','message': 'Select a host to delete', 'choices' : hosts}])
