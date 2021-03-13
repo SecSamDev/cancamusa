@@ -347,7 +347,8 @@ class HostInfoNetwork:
         return HostInfoNetwork(net_object)
 
 class HostInfoWindowsVersion:
-    def __init__(self, major,minor,build,revision,major_revision,minor_revision):
+    def __init__(self,name, major,minor,build,revision,major_revision,minor_revision):
+        self.name = name
         self.major = major
         self.minor = minor
         self.build = build
@@ -356,13 +357,14 @@ class HostInfoWindowsVersion:
         self.minor_revision = minor_revision
 
     def __str__(self):
-        return "{}.{} {} ({})".format(self.major, self.minor, self.build, self.revision)
+        return "{} ({})".format(self.name,self.build)
     
     def edit_interactive(self):
         pass
 
     def to_json(self):
         return {
+            'Name' : self.name,
             'Major' : self.major,
             'Minor' : self.minor,
             'Build' : self.build,
@@ -372,7 +374,9 @@ class HostInfoWindowsVersion:
         }
     
     def from_json(version_file):
-        return HostInfoWindowsVersion(version_file['Major'],version_file['Minor'],version_file['Build'],version_file['Revision'], version_file['MajorRevision'],version_file['MinorRevision'])
+        if not 'Name' in version_file:
+            version_file['name'] = 'Windows 10 Enterprise'
+        return HostInfoWindowsVersion(version_file['Name'],version_file['Major'],version_file['Minor'],version_file['Build'],version_file['Revision'], version_file['MajorRevision'],version_file['MinorRevision'])
 
 
 class HostInfoCpu:

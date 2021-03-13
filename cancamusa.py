@@ -33,6 +33,7 @@ if args.register_iso :
         print("Iso Image not in a valid Proxmox storage folder")
     win_image = process_windows_image(args.register_iso)
     cancamusa_config.add_win_image(win_image)
+    cancamusa_config.save()
     exit()
 
 cancamusa = None

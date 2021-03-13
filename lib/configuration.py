@@ -3,6 +3,7 @@ from PyInquirer import prompt, print_json
 import os
 import json
 from proxmox_utils import valid_proxmox_template_location, get_proxmox_storages, is_proxmox_system
+from cancamusa_common import get_win_type, get_win_image_type
 
 def get_cancamusa_home():
     if 'CANCAMUSA_HOME' in os.environ:
@@ -75,6 +76,7 @@ class CancamusaConfiguration:
             cancamusa.proxmox_storages = cancamusa_config['proxmox_storages']
             cancamusa.proxmox_iso_storage = cancamusa_config['proxmox_iso_storage']
             cancamusa.proxmox_image_storage = cancamusa_config['proxmox_image_storage']
+            cancamusa.win_images = cancamusa_config['win_images']
         except Exception as e:
             cancamusa = CancamusaConfiguration(pth)
         cancamusa.is_proxmox = is_proxmox_system()
@@ -88,17 +90,18 @@ class CancamusaConfiguration:
         Args:
             host (HostInfo): Windows HOST
         """
-        
+        win_type = get_win_type("win" +  str(host.so.major))
+        win_image = get_win_image_type(str(host.so.name))
         for name, image in self.win_images.items():
-            if image["windows"]["major"] == host.so.major:
-                return image
+            if image["win_type"] == win_type:
+                for img_id, img_name in image.items():
+                    if get_win_image_type(img_name) == win_image:
+                        return image
         if debug:
             return {
-                'windows' : {
-                    'major' : 10,
-                    'minor' : 0,
-                },
-                'versions' : ["Enterprise"],
+                'win_type' : 'win10'
+                'md5' : '00000',
+                'images' : {'0' : 'Windows 10 Professional', '1' : 'Windows 10 Enterprise'},
                 'path' : '/data/templates/iso/Windows10.iso'
             }
         raise Exception("Could not find a suitable image for the host {} with Windows {}".format(host.computer_name, host.so.major))
