@@ -76,6 +76,7 @@ class CancamusaConfiguration:
             cancamusa.proxmox_storages = cancamusa_config['proxmox_storages']
             cancamusa.proxmox_iso_storage = cancamusa_config['proxmox_iso_storage']
             cancamusa.proxmox_image_storage = cancamusa_config['proxmox_image_storage']
+            cancamusa.proxmox_iso_extra_storage = cancamusa_config['proxmox_iso_extra_storage']
             cancamusa.win_images = cancamusa_config['win_images']
         except Exception as e:
             cancamusa = CancamusaConfiguration(pth)
@@ -120,7 +121,7 @@ class CancamusaConfiguration:
 def configuration_mode():
     cancamusa_config = CancamusaConfiguration.load_or_create(None)
     while True:
-        answers = prompt([{'type': 'list','name': 'option','message': 'Select an option', 'choices' : ['Set proxmox template location', 'Select proxmox ISO location', 'Select proxmox Extra ISO location', 'Edit registered Windows Images', 'Exit']}])
+        answers = prompt([{'type': 'list','name': 'option','message': 'Select an option', 'choices' : ['Set proxmox template location', 'Select proxmox ISO location', 'Select proxmox Extra ISO location','Select proxmox Image location', 'Edit registered Windows Images', 'Exit']}])
         storages = list(map(lambda x: x['name'], cancamusa_config.proxmox_storages))
         if answers['option'] == 'Set proxmox template location':
             answers = prompt([{'type': 'list','name': 'option','message': 'Select storage:', 'choices' : storages}])
@@ -134,6 +135,10 @@ def configuration_mode():
             answers = prompt([{'type': 'list','name': 'option','message': 'Select storage:', 'choices' : storages}])
             pos = storages.index(answers['option'])
             cancamusa_config.proxmox_iso_extra_storage = cancamusa_config.proxmox_storages[pos]['name']
+        elif answers['option'] == 'Select proxmox Image location':
+            answers = prompt([{'type': 'list','name': 'option','message': 'Select storage:', 'choices' : storages}])
+            pos = storages.index(answers['option'])
+            cancamusa_config.proxmox_image_storage = cancamusa_config.proxmox_storages[pos]['name']
         elif answers['option'] == 'Exit':
             cancamusa_config.save()
             exit()
