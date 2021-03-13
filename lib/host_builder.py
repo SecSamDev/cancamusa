@@ -28,6 +28,7 @@ class WindowsHostBuilder:
         #TODO: create floppy ISO
 
         self.build_qemu_template(host)
+        self.build_extra_iso(host)
 
         if not self.seabios_path:
             self.seabios_path = bios_cloner.download_seabios()
@@ -127,6 +128,7 @@ class WindowsHostBuilder:
 
             builder.add_config(os.path.join(host_path, 'Autounattend.xml'))
         
+        #TODO: build role scripts
         
         extra_iso_path = os.path.join(host_path, str(host.host_id) + ".iso")
         builder.build(extra_iso_path)
