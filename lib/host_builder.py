@@ -88,7 +88,7 @@ class WindowsHostBuilder:
                 'fall' : 'EN'
             }
             win_image = {
-                'image' : compatible_win_image['images'].keys()['0']
+                'image' : list(compatible_win_image['images'].keys())['0']
             }
             principal_disk = None
             disk_list = []
