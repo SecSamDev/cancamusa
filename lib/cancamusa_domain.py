@@ -92,7 +92,7 @@ class ADStructure:
             'ou' : {},
             'domain' : self.domain,
             'default_local_admin' : self.default_local_admin,
-            'default_local_admin_password' : seld.default_local_admin_password
+            'default_local_admin_password' : self.default_local_admin_password
         }
         for name, ou in self.ou.items():
             ret['ou'][name] = ou.to_json(full=True)
