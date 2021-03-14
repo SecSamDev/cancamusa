@@ -98,8 +98,9 @@ class WindowsHostBuilder:
             if host.domain:
                 domains = list(map(lambda x: x.domain, self.project.domain.domains))
                 print(domains)
-                host_domain = domains.index(host.domain)
-                if not host_domain:
+                host_domain_pos = domains.index(host.domain)
+                host_domain = self.project.domain.domains[host_domain_pos]
+                if not host_domain_pos or not host_domain:
                     raise Exception("Invalid domain {} for host {}".format(host.domain,host.computer_name))
                 principal_user = {
                     'name' : host_domain.default_local_admin,
