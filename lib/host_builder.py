@@ -97,6 +97,7 @@ class WindowsHostBuilder:
 
             if host.domain:
                 domains = list(map(lambda x: x.domain, self.project.domain.domains))
+                print(domains)
                 host_domain = domains.index(host.domain)
                 if not host_domain:
                     raise Exception("Invalid domain {} for host {}".format(host.domain,host.computer_name))
