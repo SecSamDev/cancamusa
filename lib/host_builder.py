@@ -87,6 +87,9 @@ class WindowsHostBuilder:
                 'principal' : 'ES',
                 'fall' : 'EN'
             }
+            win_image = {
+                'image' : compatible_win_image['images'].keys()['0']
+            }
             principal_disk = None
             disk_list = []
             for disk in host.disks:
@@ -126,7 +129,7 @@ class WindowsHostBuilder:
 
 
             with open(os.path.join(host_path, 'Autounattend.xml'), 'w') as file_w:
-                file_w.write(template.render(lang=lang,principal_disk=principal_disk,disk_list=disk_list,computer_name=host.computer_name,principal_user=principal_user))
+                file_w.write(template.render(lang=lang,principal_disk=principal_disk,disk_list=disk_list,computer_name=host.computer_name,principal_user=principal_user, win_image=win_image))
 
             builder.add_config(os.path.join(host_path, 'Autounattend.xml'))
         
