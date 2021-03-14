@@ -69,6 +69,7 @@ class ADStructure:
         self.path = dc_path_string
         self.default_local_admin = 'LocalAdmin'
         self.account_generator = cancamusa_common.ACCOUNT_FORMAT_NAME_DOT_SURNAME
+        self.default_local_admin_password = 'CancamusaRocks123!'
     
     def from_json(obj):
         ret = ADStructure(obj["domain"])
@@ -79,6 +80,8 @@ class ADStructure:
             ret.default_local_admin = obj['default_local_admin']
         if 'account_generator' in obj:
             ret.account_generator = obj['account_generator']
+        if 'default_local_admin_password' in obj:
+            ret.default_local_admin_password = obj['default_local_admin_password']
         return ret
 
     def __str__(self):
@@ -88,7 +91,8 @@ class ADStructure:
         ret = {
             'ou' : {},
             'domain' : self.domain,
-            'default_local_admin' : self.default_local_admin
+            'default_local_admin' : self.default_local_admin,
+            'default_local_admin_password' : seld.default_local_admin_password
         }
         for name, ou in self.ou.items():
             ret['ou'][name] = ou.to_json(full=True)
@@ -117,6 +121,7 @@ class ADStructure:
                     options.append('Delete OU')
                 options.append('Account Generator')
                 options.append('Default Local Admin')
+                options.append('Default Local Admin Password')
                 options.append('Back')
                 options.append('Cancel')
                 answer = prompt([{'type': 'list','name': 'option','message': 'OrganizationalUnit edition mode', 'choices' : options}])
@@ -139,8 +144,11 @@ class ADStructure:
                     answers = prompt([{'type': 'list','name': 'selection','message': 'Method used to generate random accounts. Ex: ' + cancamusa_common.ACCOUNT_FORMAT_EXAMPLE, 'choices' : [cancamusa_common.ACCOUNT_FORMAT_LETTER_SURNAME, cancamusa_common.ACCOUNT_FORMAT_NAME_DOT_SURNAME, cancamusa_common.ACCOUNT_FORMAT_TRHEE_LETTERS]}])
                     self.account_generator = answers['selection']
                 elif answer['option'] == 'Default Local Admin':
-                    answer = prompt([{'type': 'input','name': 'option','message': 'OU name:', 'default' : self.default_local_admin}])
+                    answer = prompt([{'type': 'input','name': 'option','message': 'Admin name:', 'default' : self.default_local_admin}])
                     self.default_local_admin = answer["option"]
+                elif answer['option'] == 'Default Local Admin Password':
+                    answer = prompt([{'type': 'input','name': 'option','message': 'Admin password:', 'default' : self.default_local_admin_password}])
+                    self.default_local_admin_password = answer["option"]
                 elif answer['option'] == 'Delete OU':
                     answer = prompt([{'type': 'list','name': 'option','message': 'Select a OU to delete', 'choices' :self.ou.keys()}])
                     self.ou.pop(answer["option"], None)
