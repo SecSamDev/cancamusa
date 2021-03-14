@@ -100,7 +100,6 @@ class WindowsHostBuilder:
 
             if host.domain:
                 domains = list(map(lambda x: x.domain, self.project.domain.domains))
-                print(domains)
                 host_domain_pos = domains.index(host.domain)
                 host_domain = self.project.domain.domains[host_domain_pos]
                 if not host_domain:
