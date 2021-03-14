@@ -54,11 +54,13 @@ class ScriptIsoBuilder:
         for scr in self.scripts:
             with open(scr,'rb') as file_r:
                 content = file_r.read()
+                print("Filename " + str(os.path.basename(scr)))
                 iso.add_fp(BytesIO(content), len(content),'/'+os.path.basename(scr)+';1')
 
         for cfg in self.configs:
             with open(cfg,'rb') as file_r:
                 content = file_r.read()
+                print("Filename " + str(os.path.basename(cfg)))
                 iso.add_fp(BytesIO(content), len(content),'/'+os.path.basename(cfg)+';1')
         
         iso.write(os.path.join(output_dir, self.host.host_id + ".iso"))
