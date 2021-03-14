@@ -47,7 +47,7 @@ class ScriptIsoBuilder:
             output_dir (string): Where to create the ISO file
         """
         iso = pycdlib.PyCdlib()
-        iso.new(rock_ridge="1.09")
+        iso.new(joliet=3)
         init_script = self.init_script()
         iso.add_fp(BytesIO(init_script), len(init_script), '/init_script.bat.;1')
 
