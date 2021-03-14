@@ -61,5 +61,5 @@ class ScriptIsoBuilder:
                 content = file_r.read()
                 iso.add_fp(BytesIO(content), len(content),'/'+os.path.basename(cfg).upper()+';1')
         
-        iso.write(os.path.join(output_dir, str(self.host.host_id) + ".iso"))
+        iso.write(output_dir)
         iso.close()
