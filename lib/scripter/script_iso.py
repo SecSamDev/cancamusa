@@ -49,17 +49,18 @@ class ScriptIsoBuilder:
         iso = pycdlib.PyCdlib()
         iso.new(interchange_level=3 ,joliet=3)
         init_script = self.init_script()
-        iso.add_fp(BytesIO(init_script), len(init_script), '/init_script.bat;1'.upper())
+        iso.add_fp(BytesIO(init_script), len(init_script), joliet_path='/init_script.bat;1')
 
         for scr in self.scripts:
             with open(scr,'rb') as file_r:
                 content = file_r.read()
-                iso.add_fp(BytesIO(content), len(content),'/'+os.path.basename(scr).upper()+';1')
+                iso.add_fp(BytesIO(content), len(content),joliet_path='/'+os.path.basename(scr)';1')
 
         for cfg in self.configs:
             with open(cfg,'rb') as file_r:
                 content = file_r.read()
-                iso.add_fp(BytesIO(content), len(content),'/'+os.path.basename(cfg).upper()+';1')
+                iso.add_fp(BytesIO(content), len(content),joliet_path='/'+os.path.basename(cfg)';1')
         
         iso.write(output_dir)
+        # mkisofs -o /tmp/cd.iso /tmp/directory/
         iso.close()
