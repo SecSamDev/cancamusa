@@ -43,7 +43,7 @@ class ScriptIsoBuilder:
     def build_geniso(self, output_dir):
         init_script = self.init_script()
         tmp_dir = tempfile.mkdtemp()
-        with open(os.path.join(tmp_dir, 'init_script.bat'), 'w') as file_w:
+        with open(os.path.join(tmp_dir, 'init_script.bat'), 'wb') as file_w:
             file_w.write(init_script)
         for scr in self.scripts:
             with open(scr,'r') as file_r:
