@@ -26,9 +26,10 @@ class ProxmoxDeployer:
                 file_w.write(file_r.read())
         
         dcisc_i = 0 
+        img_storage = [x for x in  self.configuration.proxmox_storages if x['name'] == self.configuration.proxmox_image_storage][0]['path']
         # Create qcow2 images
         for hdisk in host.disks:
-            qemu_disk_qcow2("/{}/images/{}/vm-{}-disk-{}.qcow2".format(self.configuration.proxmox_image_storage,host.host_id,host.host_id,dcisc_i), hdisk.size)
+            qemu_disk_qcow2("{}/images/{}/vm-{}-disk-{}.qcow2".format(img_storage,host.host_id,host.host_id,dcisc_i), hdisk.size)
             dcisc_i = dcisc_i + 1
         
         
