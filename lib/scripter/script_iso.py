@@ -47,20 +47,27 @@ class ScriptIsoBuilder:
             output_dir (string): Where to create the ISO file
         """
         iso = pycdlib.PyCdlib()
-        iso.new(interchange_level=3 ,joliet=3)
+        iso.new(interchange_level=3,
+            joliet=3,
+            rock_ridge='1.09',
+            vol_ident='cidata',
+            sys_ident='LINUX')
         init_script = self.init_script()
-        iso.add_fp(BytesIO(init_script), len(init_script), joliet_path='/init_script.bat;1')
 
+        iso.add_fp(BytesIO(init_script), len(init_script),'/INIT.;1',rr_name="init_script.bat",joliet_path='init_script.bat')
+
+        file_id = 1
         for scr in self.scripts:
             with open(scr,'rb') as file_r:
                 content = file_r.read()
-                iso.add_fp(BytesIO(content), len(content),joliet_path='/'+os.path.basename(scr) + ';1')
-
+                iso.add_fp(BytesIO(content), len(content),iso_patth= '/F' + str(file_id) + '.;1',
+                rr_name=os.path.basename(scr) ,joliet_path='/'+os.path.basename(scr))
+            file_id = file_id + 1
         for cfg in self.configs:
             with open(cfg,'rb') as file_r:
                 content = file_r.read()
-                iso.add_fp(BytesIO(content), len(content),joliet_path='/'+os.path.basename(cfg) + ';1')
-        print(str(iso.list_children(iso_path="/")))
+                iso.add_fp(BytesIO(content), len(content),iso_patth= '/F' + str(file_id) + '.;1',
+                rr_name=os.path.basename(cfg) ,joliet_path='/'+os.path.basename(cfg))
         iso.write(output_dir)
         # mkisofs -o /tmp/cd.iso /tmp/directory/
         iso.close()
