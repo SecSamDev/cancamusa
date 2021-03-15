@@ -36,7 +36,8 @@ class WindowsHostBuilder:
         host_path = os.path.join(self.project_path,host.computer_name)
         if not os.path.exists(host_path):
             os.mkdir(host_path)
-        bios_cloner.compile_cloned_bios(host.bios, os.path.join(host_path,"bios.bin"),SEABIOS_PATH=self.seabios_path)
+        if not os.path.exists(os.path.join(host_path,"bios.bin")):
+            bios_cloner.compile_cloned_bios(host.bios, os.path.join(host_path,"bios.bin"),SEABIOS_PATH=self.seabios_path)
         
 
 
