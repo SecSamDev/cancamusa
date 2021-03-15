@@ -3,6 +3,7 @@ import os
 from cancamusa_host import HostInfo
 import bios_cloner
 from configuration import CancamusaConfiguration
+import subprocess
 
 class ProxmoxDeployer:
     def __init__(self, project):
