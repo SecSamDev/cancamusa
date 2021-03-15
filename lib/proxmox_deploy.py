@@ -23,7 +23,7 @@ class ProxmoxDeployer:
         # Copy QEMU template
         with open(qemu_template_file, 'r') as file_r:
             with open(os.path.join(self.configuration.proxmox_templates, os.path.basename(qemu_template_file)), 'w') as file_w:
-                file_w.write(file_r)
+                file_w.write(file_r.read())
         
         dcisc_i = 0 
         # Create qcow2 images
