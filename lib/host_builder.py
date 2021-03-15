@@ -48,13 +48,11 @@ class WindowsHostBuilder:
         qemu_template_file = os.path.join(host_path, str(host.host_id) + ".conf")
         with open(qemu_template_file, 'w') as qemu_template:
             compatible_win_image = self.configuration.select_win_image(host,'CANCAMUSA_DEBUG' in os.environ)
-            qemu_template.write("ide0: {}:iso/{},media=cdrom\n".format(self.configuration.proxmox_iso_storage,os.path.basename(compatible_win_image["path"])))
-            qemu_template.write('bootdisk: virtio0\n')
+            qemu_template.write('bootdisk: ide0\n')
             qemu_template.write('vcpus: {}\n'.format(host.cpus[0].threads))
             qemu_template.write('cores: {}\n'.format(host.cpus[0].cores))
             qemu_template.write('sockets: {}\n'.format(str(len(host.cpus))))
             qemu_template.write('memory: {}\n'.format(host.ram.to_mib()))
-            qemu_template.write("ide1: {}:iso/{},media=cdrom\n".format(self.configuration.proxmox_iso_extra_storage,str(host.host_id) + ".iso"))
             qemu_template.write('name: {}\n'.format(host.computer_name.replace("-","").replace("_","")))
             net_i = 0
             for hnet in host.networks:
@@ -65,12 +63,14 @@ class WindowsHostBuilder:
 
             dcisc_i = 0
             for hnet in host.disks:
-                #scsi1:106/vm-106-disk-0.qcow2,size=128G
-                qemu_template.write('virtio{}:{}/vm-{}-disk-{}.qcow2,size={}\n'.format(dcisc_i, self.configuration.proxmox_image_storage,host.host_id,dcisc_i,hnet.size))
-                
+                #ide0:106/vm-106-disk-0.qcow2,size=128G
+                qemu_template.write('ide{}:{}/vm-{}-disk-{}.qcow2,size={}\n'.format(dcisc_i, self.configuration.proxmox_image_storage,host.host_id,dcisc_i,hnet.size))
                 storage_path = [x for x in  self.configuration.proxmox_storages if x['name'] == self.configuration.proxmox_image_storage][0]['path']
                 qemu_disk_qcow2("{}/images/{}/vm-{}-disk-{}.qcow2".format(storage_path,host.host_id,host.host_id,dcisc_i), hnet.size)
                 dcisc_i = dcisc_i + 1
+            qemu_template.write("ide{}: {}:iso/{},media=cdrom\n".format(dcisc_i,self.configuration.proxmox_iso_storage,os.path.basename(compatible_win_image["path"])))
+            dcisc_i = dcisc_i + 1
+            qemu_template.write("ide{}: {}:iso/{},media=cdrom\n".format(dcisc_i,self.configuration.proxmox_iso_extra_storage,str(host.host_id) + ".iso"))
             qemu_template.write('scsihw: virtio-scsi-pci\n')
             qemu_template.write('args:-bios {}\n'.format(os.path.join(host_path,"bios.bin")))
         print('QEMU template for proxmox created: ' + qemu_template_file)
