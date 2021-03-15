@@ -54,12 +54,12 @@ class ScriptIsoBuilder:
         for scr in self.scripts:
             with open(scr,'rb') as file_r:
                 content = file_r.read()
-                iso.add_fp(BytesIO(content), len(content),joliet_path='/'+os.path.basename(scr)';1')
+                iso.add_fp(BytesIO(content), len(content),joliet_path='/'+os.path.basename(scr) + ';1')
 
         for cfg in self.configs:
             with open(cfg,'rb') as file_r:
                 content = file_r.read()
-                iso.add_fp(BytesIO(content), len(content),joliet_path='/'+os.path.basename(cfg)';1')
+                iso.add_fp(BytesIO(content), len(content),joliet_path='/'+os.path.basename(cfg) + ';1')
         print(str(iso.list_children("/")))
         iso.write(output_dir)
         # mkisofs -o /tmp/cd.iso /tmp/directory/
