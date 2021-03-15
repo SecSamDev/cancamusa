@@ -124,6 +124,14 @@ def configuration_mode():
         answers = prompt([{'type': 'list','name': 'option','message': 'Select an option', 'choices' : ['Set proxmox template location', 'Select proxmox ISO location', 'Select proxmox Extra ISO location','Select proxmox Image location', 'Edit registered Windows Images', 'Exit']}])
         storages = list(map(lambda x: x['name'], cancamusa_config.proxmox_storages))
         if answers['option'] == 'Set proxmox template location':
+            storages = []
+            for strg in cancamusa_config.proxmox_storages:
+                if 'template' in strg['type']:
+                    storages.append(x['name'])
+            if len(storages) == 0:
+                print("Using default template location: /etc/pve/qemu-server/")
+                cancamusa_config.proxmox_templates = '/etc/pve/qemu-server/'
+                continue
             answers = prompt([{'type': 'list','name': 'option','message': 'Select storage:', 'choices' : storages}])
             pos = storages.index(answers['option'])
             cancamusa_config.proxmox_templates = cancamusa_config.proxmox_storages[pos]['path']
