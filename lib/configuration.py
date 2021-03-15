@@ -126,7 +126,7 @@ def configuration_mode():
         if answers['option'] == 'Set proxmox template location':
             answers = prompt([{'type': 'list','name': 'option','message': 'Select storage:', 'choices' : storages}])
             pos = storages.index(answers['option'])
-            cancamusa_config.proxmox_templates = cancamusa_config.proxmox_storages[pos]['name']
+            cancamusa_config.proxmox_templates = cancamusa_config.proxmox_storages[pos]['path']
         elif answers['option'] == 'Select proxmox ISO location':
             answers = prompt([{'type': 'list','name': 'option','message': 'Select storage:', 'choices' : storages}])
             pos = storages.index(answers['option'])
