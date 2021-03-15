@@ -472,7 +472,7 @@ class HostInfoRAM:
 
     def to_mib(self):
         # To mebibite
-        return int(self.capacity / 8388605.216827638)
+        return int(self.capacity * 0.953674316)
 
     def to_json(self):
         return {
