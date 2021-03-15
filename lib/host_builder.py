@@ -53,7 +53,7 @@ class WindowsHostBuilder:
             qemu_template.write('vcpus: {}\n'.format(host.cpus[0].threads))
             qemu_template.write('cores: {}\n'.format(host.cpus[0].cores))
             qemu_template.write('sockets: {}\n'.format(str(len(host.cpus))))
-            qemu_template.write('memory: {}\n'.format(8))
+            qemu_template.write('memory: {}\n'.format(host.ram.to_mib()))
             qemu_template.write("ide1: {}:iso/{},media=cdrom\n".format(self.configuration.proxmox_iso_extra_storage,str(host.host_id) + ".iso"))
             qemu_template.write('name: {}\n'.format(host.computer_name.replace("-","").replace("_","")))
             net_i = 0
