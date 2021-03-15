@@ -7,6 +7,8 @@ import requests
 from cancamusa_host import HostInfo
 from host_builder import WindowsHostBuilder
 from cancamusa_domain import CancamusaDomain
+from proxmox_deploy import ProxmoxDeployer
+
 
 class CancamusaProject:
     """ Loads and stores information about a Cancamusa project """
@@ -242,7 +244,10 @@ class CancamusaProject:
                 return
             elif answer['option'] == 'Deploy':
                 # Depending if the project is alredy builded it deploys the project in Proxmox etc
-                pass
+                deployer = ProxmoxDeployer(self)
+                for host in self.hosts:
+                    deployer.deploy_host(host)
+                return
             elif answer['option'] == 'AD':  
                 self.edit_domain_config()
             elif answer['option'] == 'Description':  
