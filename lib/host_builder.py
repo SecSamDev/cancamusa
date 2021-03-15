@@ -135,7 +135,7 @@ class WindowsHostBuilder:
         #TODO: build role scripts
         
         extra_iso_path = os.path.join(host_path, str(host.host_id) + ".iso")
-        builder.build(extra_iso_path)
+        builder.build_geniso(extra_iso_path)
 
 
 def qemu_disk_qcow2(pth,size):

@@ -5,7 +5,8 @@ except ImportError:
 
 import pycdlib
 import os
-
+import tempfile
+import subprocess
 
 class ScriptIsoBuilder:
     """Allow to easily create custom ISOs with all the scripts and configuration files
@@ -38,6 +39,25 @@ class ScriptIsoBuilder:
             elif scr.endswith(".py"):
                 script += b'SET RUN_DOTPY=python.exe ' + scr + '\nset SCRIPT=\nIF EXIST "python.exe" (\n\tSET SCRIPT=%RUN_DOTPY%\n)\n%SCRIPT%'
         return script
+
+    def build_geniso(self, output_dir):
+        init_script = self.init_script()
+        tmp_dir = tempfile.mkdtemp()
+        for scr in self.scripts:
+            with open(scr,'rb') as file_r:
+                with open(os.path.join(tmp_dir, os.path.basename(scr)), 'wb') as file_w:
+                    file_w.write(file_r.read())
+            file_id = file_id + 1
+        for cfg in self.configs:
+            with open(cfg,'rb') as file_r:
+                with open(os.path.join(tmp_dir, os.path.basename(cfg)), 'wb') as file_w:
+                    file_w.write(file_r.read())
+        
+        unmountCommand = 'genisoimage -o ' + output_dir + ' ' + str(tmp_dir)
+        process = subprocess.Popen(unmountCommand.split(), stdout=subprocess.PIPE)
+        out, err = process.communicate()
+        p_status = process.wait()
+        process.terminate()
             
 
     def build(self,output_dir):
