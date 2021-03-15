@@ -65,7 +65,7 @@ class WindowsHostBuilder:
             dcisc_i = 0
             for hnet in host.disks:
                 #ide0:106/vm-106-disk-0.qcow2,size=128G
-                qemu_template.write('ide{}:{}/vm-{}-disk-{}.qcow2,size={}\n'.format(dcisc_i, self.configuration.proxmox_image_storage,host.host_id,dcisc_i,hnet.size))
+                qemu_template.write('ide{}: {}:{}/vm-{}-disk-{}.qcow2,size={}\n'.format(dcisc_i, self.configuration.proxmox_image_storage,host.host_id,host.host_id,dcisc_i,hnet.size))
                 storage_path = [x for x in  self.configuration.proxmox_storages if x['name'] == self.configuration.proxmox_image_storage][0]['path']
                 qemu_disk_qcow2("{}/images/{}/vm-{}-disk-{}.qcow2".format(storage_path,host.host_id,host.host_id,dcisc_i), hnet.size)
                 dcisc_i = dcisc_i + 1
