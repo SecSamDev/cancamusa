@@ -431,6 +431,9 @@ class HostInfoCpu:
                           'message': 'Select a QEMU cpu type:', 'choices': list_processors(self.family)}])
         self.processor_type = answer['option']
         return self
+    
+    def safe_name(self):
+        return re.sub(r'[^a-zA-Z0-9]',"",self.name)
 
     def detect_cpu_family(self):
         if 'Intel' in self.name:

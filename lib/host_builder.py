@@ -50,6 +50,8 @@ class WindowsHostBuilder:
         with open(qemu_template_file, 'w') as qemu_template:
             compatible_win_image = self.configuration.select_win_image(host,'CANCAMUSA_DEBUG' in os.environ)
             qemu_template.write('bootdisk: ide0\n')
+            # Custom CPU with QEMU flags that hides virtualization
+            qemu_template.write('cpu: {}\n'.format(host.cpus[0].safe_name()))
             qemu_template.write('vcpus: {}\n'.format(host.cpus[0].threads))
             qemu_template.write('cores: {}\n'.format(host.cpus[0].cores))
             qemu_template.write('sockets: {}\n'.format(str(len(host.cpus))))
@@ -67,7 +69,7 @@ class WindowsHostBuilder:
                 #ide0:106/vm-106-disk-0.qcow2,size=128G
                 qemu_template.write('ide{}: {}:{}/vm-{}-disk-{}.qcow2,size={}\n'.format(dcisc_i, self.configuration.proxmox_image_storage,host.host_id,host.host_id,dcisc_i,hnet.size))
                 storage_path = [x for x in  self.configuration.proxmox_storages if x['name'] == self.configuration.proxmox_image_storage][0]['path']
-                qemu_disk_qcow2("{}/images/{}/vm-{}-disk-{}.qcow2".format(storage_path,host.host_id,host.host_id,dcisc_i), hnet.size)
+                #qemu_disk_qcow2("{}/images/{}/vm-{}-disk-{}.qcow2".format(storage_path,host.host_id,host.host_id,dcisc_i), hnet.size)
                 dcisc_i = dcisc_i + 1
             qemu_template.write("ide{}: {}:iso/{},media=cdrom\n".format(dcisc_i,self.configuration.proxmox_iso_storage,os.path.basename(compatible_win_image["path"])))
             dcisc_i = dcisc_i + 1

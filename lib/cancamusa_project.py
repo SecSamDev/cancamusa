@@ -247,6 +247,8 @@ class CancamusaProject:
                 deployer = ProxmoxDeployer(self)
                 for host in self.hosts:
                     deployer.deploy_host(host)
+                # Create resource pool
+                deployer.create_pool()
                 return
             elif answer['option'] == 'AD':  
                 self.edit_domain_config()

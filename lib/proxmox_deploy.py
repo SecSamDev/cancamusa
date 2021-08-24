@@ -33,8 +33,29 @@ class ProxmoxDeployer:
             qemu_disk_qcow2("{}/images/{}/vm-{}-disk-{}.qcow2".format(img_storage,host.host_id,host.host_id,dcisc_i), hdisk.size)
             dcisc_i = dcisc_i + 1
         
+    def create_pool(self):
+        usr_cfg = "/etc/pve/user.cfg"
+        name = safe_pool_name(self.project.project_name)
+        mv_list = list(map(lambda x: x.host_id, self.project.hosts))
+        usr_cfg_edit = ""
+        with open(usr_cfg, 'r') as file_r:
+            usr_cfg_edit = file_r.read()
+        pool_pos = usr_cfg_edit.find("pool:{}::".format(name))
+        if pool_pos < 0:
+            usr_cfg_edit + "\npool:{}::{}::\n".format(name,",".join(mv_list))
+        else:
+            new_line_pos = usr_cfg_edit[pool_pos:].find("\n")
+            if new_line_pos >= 0:
+                usr_cfg_edit = usr_cfg_edit[:pool_pos] + "\npool:{}::{}::\n".format(name,",".join(mv_list)) + usr_cfg_edit[pool_pos + new_line_pos:]
+            else:
+                usr_cfg_edit = usr_cfg_edit[:pool_pos] + "\npool:{}::{}::\n".format(name,",".join(mv_list))
+        with open(usr_cfg, 'w') as file_w:
+                file_w.write(usr_cfg_edit)
         
 
+def safe_pool_name(name):
+    # TODO: improve safeguard
+    return name.replace(" ","").replace("-","_")
 
 def qemu_disk_qcow2(pth,size):
     if 'CANCAMUSA_DEBUG' in os.environ:
