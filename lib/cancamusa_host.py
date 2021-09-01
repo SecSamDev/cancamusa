@@ -6,7 +6,7 @@ import re
 import random
 import codecs
 from mac_vendors import get_mac_list, search_wildcard_vendor, random_mac_for_vendor
-from cancamusa_common import random_guid
+from cancamusa_common import random_guid, get_win_type
 from rol_selector import AVAILABLE_ROLES, roles_from_extracted_info
 
 from processors import list_processors
@@ -381,11 +381,79 @@ class HostInfoWindowsVersion:
         self.revision = revision
         self.major_revision = major_revision
         self.minor_revision = minor_revision
+        self.win_type = get_win_type(self.name)
 
     def __str__(self):
         return "{} ({})".format(self.name, self.build)
 
     def edit_interactive(self):
+        answer = prompt([{'type': 'list', 'name': 'option',
+            'message': 'Select a QEMU cpu type:', 'choices': ['Basic Edit','Full Edit']}])
+        if answer['option'] == 'Basic Edit':
+            answer = prompt([{'type': 'list', 'name': 'option',
+            'message': 'Select a QEMU cpu type:', 'choices': ['Win10','Win7','Win2012','Win2016','Win2019']}])
+            if answer['option'] == 'Win10':
+                self.name = 'Windows 10'
+                self.major = 10
+                self.minor = 0
+                self.build = 1909
+                self.revision = 18363
+                self.major_revision = 1
+                self.minor_revision = 0
+            elif answer['option'] == 'Win7':
+                self.name = 'Windows 7'
+                self.major = 6
+                self.minor = 1
+                self.build = 7600
+                self.revision = 1
+                self.major_revision = 1
+                self.minor_revision = 0
+            elif answer['option'] == 'Win2012':
+                self.name = 'Windows Server 2012'
+                self.major = 6
+                self.minor = 2
+                self.build = 7600
+                self.revision = 1
+                self.major_revision = 1
+                self.minor_revision = 0
+            elif answer['option'] == 'Win2016':
+                self.name = 'Windows Server 2016'
+                self.major = 10
+                self.minor = 0
+                self.build = 14393
+                self.revision = 1607
+                self.major_revision = 1
+                self.minor_revision = 0
+            elif answer['option'] == 'Win2019':
+                self.name = 'Windows Server 2019'
+                self.major = 10
+                self.minor = 0
+                self.build = 19041
+                self.revision = 1
+                self.major_revision = 1
+                self.minor_revision = 0
+        else:
+            answer = prompt([{'type': 'input', 'name': 'option',
+                'message': 'Select OS name', 'default': self.name}])
+            self.name = answer['option']
+            answer = prompt([{'type': 'input', 'name': 'option',
+                'message': 'Select OS Major Version', 'default': self.major}])
+            self.major = answer['option']
+            answer = prompt([{'type': 'input', 'name': 'option',
+                'message': 'Select OS Minor Version', 'default': self.minor}])
+            self.minor = answer['option']
+            answer = prompt([{'type': 'input', 'name': 'option',
+                'message': 'Select OS Build Version', 'default': self.build}])
+            self.build = answer['option']
+            answer = prompt([{'type': 'input', 'name': 'option',
+                'message': 'Select OS revision Version', 'default': self.revision}])
+            self.revision = answer['option']
+            answer = prompt([{'type': 'input', 'name': 'option',
+                'message': 'Select OS major revision Version', 'default': self.major_revision}])
+            self.major_revision = answer['option']
+            answer = prompt([{'type': 'input', 'name': 'option',
+                'message': 'Select OS minor revision Version', 'default': self.minor_revision}])
+            self.minor_revision = answer['option']
         pass
 
     def to_json(self):
@@ -654,7 +722,7 @@ class HostInfo:
     def edit_interactive(self, project=None):
         while True:
             answer = prompt([{'type': 'list', 'name': 'option', 'message': 'Editing host: ' + self.computer_name, 'choices': [
-                            'Name', 'Disks', 'Bios','RAM', 'CPUs', 'Accounts','Domain', 'Network interfaces', 'Resume', 'Back', 'Cancel']}])
+                            'Name', 'Disks', 'Bios','RAM', 'CPUs', 'Accounts','Domain', 'Network interfaces', 'OS Version', 'Resume', 'Back', 'Cancel']}])
             if answer['option'] == 'Back':
                 return self
             elif answer['option'] == 'Resume':
@@ -703,6 +771,8 @@ class HostInfo:
                     print("No domains available...")
             elif answer['option'] == 'RAM':
                 self.ram.edit_interactive()
+            elif answer['option'] == 'OS Version':
+                self.os.edit_interactive()
             elif answer['option'] == 'Name':
                 answer2 = prompt([{'type': 'input', 'name': 'option',
                                    'message': 'Edit Hostname ', 'default': str(self.computer_name)}])

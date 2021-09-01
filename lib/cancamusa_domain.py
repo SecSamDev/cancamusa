@@ -70,7 +70,8 @@ class ADStructure:
         self.default_local_admin = 'LocalAdmin'
         self.account_generator = cancamusa_common.ACCOUNT_FORMAT_NAME_DOT_SURNAME
         self.default_local_admin_password = 'CancamusaRocks123!'
-    
+        self.dc_ip = '10.0.0.1'
+
     def from_json(obj):
         ret = ADStructure(obj["domain"])
         for name, ou in obj["ou"].items():
@@ -82,6 +83,8 @@ class ADStructure:
             ret.account_generator = obj['account_generator']
         if 'default_local_admin_password' in obj:
             ret.default_local_admin_password = obj['default_local_admin_password']
+        if 'dc_ip' in obj:
+            ret.dc_ip = obj['dc_ip']
         return ret
 
     def __str__(self):
@@ -92,7 +95,8 @@ class ADStructure:
             'ou' : {},
             'domain' : self.domain,
             'default_local_admin' : self.default_local_admin,
-            'default_local_admin_password' : self.default_local_admin_password
+            'default_local_admin_password' : self.default_local_admin_password,
+            'dc_ip' : self.dc_ip
         }
         for name, ou in self.ou.items():
             ret['ou'][name] = ou.to_json(full=True)
@@ -122,6 +126,7 @@ class ADStructure:
                 options.append('Account Generator')
                 options.append('Default Local Admin')
                 options.append('Default Local Admin Password')
+                options.append('Set DC IP')
                 options.append('Back')
                 options.append('Cancel')
                 answer = prompt([{'type': 'list','name': 'option','message': 'OrganizationalUnit edition mode', 'choices' : options}])
@@ -154,6 +159,9 @@ class ADStructure:
                     self.ou.pop(answer["option"], None)
                 elif answer['option'] == 'Back':
                     return self
+                elif answer['option'] == 'Set DC IP':
+                    answer = prompt([{'type': 'input','name': 'option','message': 'Principal DC IP:', 'default' : self.dc_ip}])
+                    self.dc_ip = answer["option"]
                 elif answer['option'] == 'Cancel':
                     return None
             except KeyboardInterrupt as e:
