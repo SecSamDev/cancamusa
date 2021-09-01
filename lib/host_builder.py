@@ -152,9 +152,9 @@ class WindowsHostBuilder:
 
         if len(self.project.domain.domains) > 0:
             # There are domains
-            with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'Autounattend.xml.jinja'), 'r') as file_r:
+            with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'join-domain.ps1.jinja'), 'r') as file_r:
                 template = Template(file_r.read())
-                with open(os.path.join(host_path, host.os.win_version, 'join-domain.ps1'), 'w') as file_w:
+                with open(os.path.join(host_path, 'join-domain.ps1'), 'w') as file_w:
                     for domain in self.project.domain.domains:
                         file_w.write(template.render(domain_dc_ip=domain.dc_ip,username=domain.default_local_admin,password=domain.default_local_admin_password,domain_name=domain.domain))
             
