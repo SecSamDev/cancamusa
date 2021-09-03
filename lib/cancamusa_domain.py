@@ -452,6 +452,6 @@ class ADUser:
         for prop in property_names:
             if prop.startswith("_"):
                 continue
-            answer = prompt([{'type': 'input','name': 'option','message': "Editing {} user".format(self.name), 'default' :str(getattr(self,prop))}])
+            answer = prompt([{'type': 'input','name': 'option','message': "Editing {} user".format(self.account_name), 'default' :str(getattr(self,prop))}])
             setattr(self,prop,answer['option'])
         return self
