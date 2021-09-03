@@ -333,6 +333,7 @@ class ADOrganizationalUnit:
                 elif answer['option'] == 'Delete Groups':
                     answer = prompt([{'type': 'list','name': 'option','message': 'Select a Group to delete', 'choices' :self.groups.keys()}])
                     self.groups.pop(answer["option"], None)
+                
                 elif answer['option'] == 'Add Users':
                     answer = prompt([{'type': 'input','name': 'option','message': 'User name:', 'default' : ""}])
                     grp = ADUser(self,answer["option"],answer["option"],answer["option"],"","")
@@ -354,7 +355,8 @@ class ADOrganizationalUnit:
                     return None
             except KeyboardInterrupt as e:
                 return
-            except:
+            except Exception as e:
+                print(str(e))
                 pass
 
 class ADGroup:
