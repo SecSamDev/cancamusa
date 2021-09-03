@@ -235,12 +235,10 @@ class ADOrganizationalUnit:
     
     def tree_str(self,level=0):
         to_join = ["{}>{}".format("  "*level, self.name)]
+
         for name, ou in self.ou.items():
             to_join.append(ou.tree_str(level=(level+1)))
-        for name, grp in self.groups.items():
-            to_join.append("{}>{} (Group)".format("  "*(level+1), grp.name))
-        for name, usr in self.users.items():
-            to_join.append("{}>{} (User)".format("  "*(level+1), usr.account_name))
+
         return "\n".join(to_join)
 
     def list_child_ou(self):
