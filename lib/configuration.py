@@ -95,23 +95,44 @@ class CancamusaConfiguration:
         win_image = get_win_image_type(str(host.os.name))
         for name, image in self.win_images.items():
             if image["win_type"] == win_type:
-                for img_id, img_name in image['images'].items():
-                    if get_win_image_type(img_name) == win_image:
-                        # Specific image
-                        return {
-                            'path' : image['path'],
-                            'win_type' : image['win_type'],
-                            'md5' : image['md5'],
-                            'images' : {
-                                img_id : img_name
+                if win_image:
+                    images = []
+                    for img_id, img_name in image['images'].items():
+                        images.append(img_name)
+                        if get_win_image_type(img_name) == win_image:
+                            # Specific image
+                            return {
+                                'path' : image['path'],
+                                'win_type' : image['win_type'],
+                                'md5' : image['md5'],
+                                'selected_img' : img_id,
+                                'images' : {
+                                    img_id : img_name
+                                }
                             }
-                        }
-                return image
+                    answer = prompt([{'type': 'list', 'name': 'option',
+                          'message': 'Select a Windows Image:', 'choices': images}])
+                    pos = images.index(answer['option'])
+                    image = image.copy()
+                    image['selected_img'] = pos
+                    return image
+                else:
+                    images = []
+                    for img_id, img_name in image['images'].items():
+                        images.append(img_name)
+                    answer = prompt([{'type': 'list', 'name': 'option',
+                          'message': 'Select a Windows Image:', 'choices': images}])
+                    pos = images.index(answer['option'])
+                    image = image.copy()
+                    image['selected_img'] = pos
+                    return image
+
         if debug:
             return {
                 'win_type' : 'win10',
                 'md5' : '00000',
                 'images' : {'0' : 'Windows 10 Professional', '1' : 'Windows 10 Enterprise'},
+                'selected_img' : 0,
                 'path' : '/data/templates/iso/Windows10.iso'
             }
         raise Exception("Could not find a suitable image for the host {} with Windows {}".format(host.computer_name, host.os.name))

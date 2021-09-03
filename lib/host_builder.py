@@ -136,7 +136,7 @@ iface vmbr{} inet static
                 'fall': 'EN'
             }
             win_image = {
-                'image': list(compatible_win_image['images'].keys())[0]
+                'image': compatible_win_image['selected_img']
             }
             principal_disk = None
             disk_list = []

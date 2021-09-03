@@ -61,10 +61,8 @@ def get_win_image_type(win_image):
         return 'SERVERDATACENTERCORE'
     elif 'SERVERDATACENTER' in win_image:
         return 'SERVERDATACENTER'
-    elif 'Server' in win_image:
-        return 'Server'
     else:
-        return 'Pro'
+        return None
 
 def generate_account_name(full_name,alg):
     if alg == ACCOUNT_FORMAT_NAME_DOT_SURNAME:
