@@ -150,8 +150,9 @@ class ADStructure:
                     for ou_name in self.ou.keys():
                         print(ou_name)
                 if answer['option'] == 'Show OU Tree':
+                    print(">" + ou.name)
                     for ou_name, ou in self.ou.items():
-                        print(ou.tree_str())
+                        print(ou.tree_str(1))
                 elif answer['option'] == 'Add OU':
                     answer = prompt([{'type': 'input','name': 'option','message': 'OU name:', 'default' : "CancamusaLab"}])
                     ou = ADOrganizationalUnit(answer['option'],self)
@@ -236,6 +237,10 @@ class ADOrganizationalUnit:
         to_join = ["{}>{}".format("  "*level, self.name)]
         for name, ou in self.ou.items():
             to_join.append(ou.tree_str(level=(level+1)))
+        for name, grp in self.groups.items():
+            to_join.append("{}>{} (Group)".format("  "*(level+1), grp.name))
+        for name, usr in self.users.items():
+            to_join.append("{}>{} (User)".format("  "*(level+1), usr.account_name))
         return "\n".join(to_join)
 
     def list_child_ou(self):
