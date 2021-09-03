@@ -77,7 +77,7 @@ iface vmbr{} inet static
                 host, 'CANCAMUSA_DEBUG' in os.environ,False)
             qemu_template.write('bootdisk: ide0\n')
             # Custom CPU with QEMU flags that hides virtualization
-            qemu_template.write('cpu: Cancamusa\n')
+            qemu_template.write('cpu: custom-Cancamusa\n')
             qemu_template.write('vcpus: {}\n'.format(host.cpus[0].threads))
             qemu_template.write('cores: {}\n'.format(host.cpus[0].cores))
             qemu_template.write('sockets: {}\n'.format(str(len(host.cpus))))
