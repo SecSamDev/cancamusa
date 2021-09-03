@@ -230,6 +230,8 @@ class ADOrganizationalUnit:
                 ret['ou'][name] = ou.to_json(full=True)
             for name, grp in self.groups.items():
                 ret['groups'][name] = grp.to_json()
+            for name, usr in self.users.items():
+                ret['users'][usr.account_name] = usr.to_json()
             return ret
         return { "name" : self.name, "path" : self.path, "parent_path" : self.parent_path}
     
