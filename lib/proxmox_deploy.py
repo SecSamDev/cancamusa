@@ -4,6 +4,10 @@ from cancamusa_host import HostInfo
 import bios_cloner
 from configuration import CancamusaConfiguration
 import subprocess
+from proxmox_utils import get_host_processor
+from processors import list_processors
+from PyInquirer import prompt
+
 
 class ProxmoxDeployer:
     def __init__(self, project):
@@ -51,7 +55,37 @@ class ProxmoxDeployer:
                 usr_cfg_edit = usr_cfg_edit[:pool_pos] + "\npool:{}::{}::\n".format(name,",".join(mv_list))
         with open(usr_cfg, 'w') as file_w:
                 file_w.write(usr_cfg_edit)
-        
+    
+    def create_cpu_if_not_exists(self):
+        # Creates a new Proxmox CPU in /etc/pve/virtual-guest/cpu-models.conf called Cancamusa
+        if 'CANCAMUSA_DEBUG' in os.environ:
+            return
+            
+        cpu_edit = ""
+        try:
+            with open("/etc/pve/virtual-guest/cpu-models.conf", 'r') as file_r:
+                cpu_edit = file_r.read()
+        except:
+            pass
+        cpu_pos = cpu_edit.find("cpu-model: Cancamusa")
+        if cpu_pos < 0:
+            try:
+                processor = get_host_processor()
+            except:
+                answer = prompt([{'type': 'list', 'name': 'option',
+                          'message': 'Creating the "Cancamusa" processor. Select a QEMU cpu type:', 'choices': list_processors(self.family)}])
+                processor = answer['option']
+            cpu_edit += """
+cpu-model: Cancamusa
+    flags +sse;+sse2;-hypervisor
+    phys-bits host
+    hidden 1
+    hv-vendor-id GenuineIntel
+    reported-model {}
+
+""".format(processor)
+        with open("/etc/pve/virtual-guest/cpu-models.conf", 'w+') as file_w:
+            file_w.write(cpu_edit)
 
 def safe_pool_name(name):
     # TODO: improve safeguard

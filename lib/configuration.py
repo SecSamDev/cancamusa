@@ -91,7 +91,7 @@ class CancamusaConfiguration:
         Args:
             host (HostInfo): Windows HOST
         """
-        win_type = get_win_type("win" +  str(host.os.major))
+        win_type = get_win_type(host.os.name)
         win_image = get_win_image_type(str(host.os.name))
         for name, image in self.win_images.items():
             if image["win_type"] == win_type:

@@ -53,7 +53,7 @@ class WindowsHostBuilder:
                 host, 'CANCAMUSA_DEBUG' in os.environ)
             qemu_template.write('bootdisk: ide0\n')
             # Custom CPU with QEMU flags that hides virtualization
-            qemu_template.write('cpu: {}\n'.format(host.cpus[0].safe_name()))
+            qemu_template.write('cpu: Cancamusa\n')
             qemu_template.write('vcpus: {}\n'.format(host.cpus[0].threads))
             qemu_template.write('cores: {}\n'.format(host.cpus[0].cores))
             qemu_template.write('sockets: {}\n'.format(str(len(host.cpus))))
@@ -150,6 +150,7 @@ class WindowsHostBuilder:
 
         # TODO: build role scripts
 
+        # Join Domain
         if len(self.project.domain.domains) > 0:
             # There are domains
             with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'join-domain.ps1.jinja'), 'r') as file_r:

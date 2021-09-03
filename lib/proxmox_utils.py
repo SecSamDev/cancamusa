@@ -1,9 +1,18 @@
 import os
 import re
+import subprocess
 from sys import platform
+from processors import get_processor
 
 def is_proxmox_system():
     return os.path.isdir('/etc/pve')
+
+
+def get_host_processor():
+    all_info = subprocess.check_output("cat /sys/devices/cpu/caps/pmu_name", shell=True).strip()
+    if all_info == "" and not 'CANCAMUSA_DEBUG' in os.environ:
+        raise Exception("Cannot read processor type")
+    return get_processor(all_info)
 
 def get_proxmox_storages():
     try:

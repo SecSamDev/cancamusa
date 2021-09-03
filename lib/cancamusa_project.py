@@ -245,6 +245,7 @@ class CancamusaProject:
             elif answer['option'] == 'Deploy':
                 # Depending if the project is alredy builded it deploys the project in Proxmox etc
                 deployer = ProxmoxDeployer(self)
+                deployer.create_cpu_if_not_exists()
                 for host in self.hosts:
                     deployer.deploy_host(host)
                 # Create resource pool

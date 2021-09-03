@@ -404,8 +404,8 @@ class HostInfoWindowsVersion:
                 self.name = 'Windows 7'
                 self.major = 6
                 self.minor = 1
-                self.build = 7600
-                self.revision = 1
+                self.build = 7601
+                self.revision = 65536
                 self.major_revision = 1
                 self.minor_revision = 0
             elif answer['option'] == 'Win2012':
@@ -432,6 +432,8 @@ class HostInfoWindowsVersion:
                 self.revision = 1
                 self.major_revision = 1
                 self.minor_revision = 0
+            
+            self.win_type = answer['option']
         else:
             answer = prompt([{'type': 'input', 'name': 'option',
                 'message': 'Select OS name', 'default': self.name}])

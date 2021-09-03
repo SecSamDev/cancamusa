@@ -62,3 +62,10 @@ def list_processors(family=None):
             continue
         to_ret.append(el["processor"])
     return to_ret
+
+def get_processor(name):
+    name = name.lower() 
+    for el in PROCESSORS:
+        if name in el['processor'].lower():
+            return el
+    raise Exception("Cannot find a compatible Processor")
