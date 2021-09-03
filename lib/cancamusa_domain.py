@@ -280,7 +280,7 @@ class ADOrganizationalUnit:
     def edit_interactive(self):
         while True:
             try:
-                options =  ['Edit name','Show path','Add OU','Import OUs', 'Add group', 'Import Groups','Add users']
+                options =  ['Edit name','Show path','Add OU','Import OUs', 'Add group', 'Import Groups','Add Users']
                 if len(self.ou) > 0:
                     options.append('Show OUs')
                     options.append('Edit OU')
@@ -333,7 +333,21 @@ class ADOrganizationalUnit:
                 elif answer['option'] == 'Delete Groups':
                     answer = prompt([{'type': 'list','name': 'option','message': 'Select a Group to delete', 'choices' :self.groups.keys()}])
                     self.groups.pop(answer["option"], None)
-
+                elif answer['option'] == 'Add Users':
+                    answer = prompt([{'type': 'input','name': 'option','message': 'User name:', 'default' : ""}])
+                    grp = ADUser(self,answer["option"],answer["option"],answer["option"],"","")
+                    grp = grp.edit_interactive()
+                    if grp:
+                        self.users[grp.account_name] = grp
+                elif answer['option'] == 'Show Users':
+                    for ou_name in self.users.keys():
+                        print(ou_name)
+                elif answer['option'] == 'Edit Users':
+                    answer = prompt([{'type': 'list','name': 'option','message': 'Select a User to edit', 'choices' :self.users.keys()}])
+                    self.users[answer['option']].edit_interactive()
+                elif answer['option'] == 'Delete Users':
+                    answer = prompt([{'type': 'list','name': 'option','message': 'Select a User to delete', 'choices' :self.users.keys()}])
+                    self.users.pop(answer["option"], None)
                 elif answer['option'] == 'Back':
                     return self
                 elif answer['option'] == 'Cancel':
@@ -393,9 +407,10 @@ class ADGroup:
 
 
 class ADUser:
-    def __init__(self, parent, name, account_name,display_name, password):
+    def __init__(self, parent, first_name,second_name, account_name,display_name, password):
         self.parent = parent
-        self.name = name
+        self.first_name = first_name
+        self.second_name = second_name
         self.account_name = account_name
         self.display_name = display_name
         self.password = password
@@ -404,11 +419,12 @@ class ADUser:
             self.path = parent.path
     
     def from_json(obj,parent=None):
-        return ADUser(parent,obj["name"],obj["account_name"],obj["display_name"],obj["password"])
+        return ADUser(parent,obj["first_name"],obj["account_name"],obj["display_name"],obj["password"])
 
     def to_json(self):
         return { 
-            "name" : self.name, 
+            "first_name" : self.first_name, 
+            "second_name" : self.second_name,
             "account_name" : self.account_name,
             "display_name" : self.display_name,
             "password" : self.password,
@@ -421,7 +437,7 @@ class ADUser:
             self.path = self.parent.path
 
     def create_interactive(parent=None):
-        grp = ADUser(parent,"","","")
+        grp = ADUser(parent,"","","","","")
         grp = grp.edit_interactive()
         return grp
     
