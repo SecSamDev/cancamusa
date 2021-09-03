@@ -156,6 +156,7 @@ class ADStructure:
                 elif answer['option'] == 'Add OU':
                     answer = prompt([{'type': 'input','name': 'option','message': 'OU name:', 'default' : "CancamusaLab"}])
                     ou = ADOrganizationalUnit(answer['option'],self)
+                    ou.account_generator = self.account_generator
                     ou = ou.edit_interactive()
                     if ou:
                         self.ou[ou.name] = ou
@@ -164,6 +165,7 @@ class ADStructure:
                     self.name = answer["option"]
                 elif answer['option'] == 'Edit OU':
                     answer = prompt([{'type': 'list','name': 'option','message': 'Select a OU to edit', 'choices' :self.ou.keys()}])
+                    self.ou[answer['option']].account_generator = self.account_generator
                     self.ou[answer['option']].edit_interactive()
                 elif answer['option'] == 'Account Generator':
                     answers = prompt([{'type': 'list','name': 'selection','message': 'Method used to generate random accounts. Ex: ' + cancamusa_common.ACCOUNT_FORMAT_EXAMPLE, 'choices' : [cancamusa_common.ACCOUNT_FORMAT_LETTER_SURNAME, cancamusa_common.ACCOUNT_FORMAT_NAME_DOT_SURNAME, cancamusa_common.ACCOUNT_FORMAT_TRHEE_LETTERS]}])
@@ -203,6 +205,7 @@ class ADOrganizationalUnit:
             self.parent_path = None
         self.path = ""
         self.syn_path()
+        self.account_generator = None
     
     def from_json(obj, parent=None):
         ret = ADOrganizationalUnit(obj["name"],parent)
@@ -217,6 +220,7 @@ class ADOrganizationalUnit:
             parsed_grp.parent = ret
             ret.groups[name] = parsed_grp
         return ret
+    
     
     def to_json(self, full=False):
         if full:
@@ -315,11 +319,13 @@ class ADOrganizationalUnit:
                 elif answer['option'] == 'Add OU':
                     answer = prompt([{'type': 'input','name': 'option','message': 'OU name:', 'default' : ""}])
                     ou = ADOrganizationalUnit(answer['option'],self)
+                    ou.account_generator = self.account_generator
                     ou = ou.edit_interactive()
                     if ou:
                         self.ou[ou.name] = ou
                 elif answer['option'] == 'Edit OU':
                     answer = prompt([{'type': 'list','name': 'option','message': 'Select a OU to edit', 'choices' :self.ou.keys()}])
+                    self.ou[answer['option']].account_generator = self.account_generator
                     self.ou[answer['option']].edit_interactive()
                 elif answer['option'] == 'Delete OU':
                     answer = prompt([{'type': 'list','name': 'option','message': 'Select a OU to delete', 'choices' :self.ou.keys()}])
@@ -343,7 +349,7 @@ class ADOrganizationalUnit:
                 
                 elif answer['option'] == 'Add Users':
                     answer = prompt([{'type': 'input','name': 'option','message': 'User name:', 'default' : ""}])
-                    grp = ADUser(self,answer["option"],answer["option"],answer["option"],"","")
+                    grp = ADUser(self,answer["option"],answer["option"],answer["option"],"","",self.account_generator)
                     grp = grp.edit_interactive()
                     if grp:
                         self.users[grp.account_name] = grp
@@ -407,7 +413,7 @@ class ADGroup:
             property_names.pop(property_names.index(element))
 
         for prop in property_names:
-            if prop.startswith("_") or prop == 'parent':
+            if prop.startswith("_") or prop == 'parent' or prop == 'path':
                 continue
             answer = prompt([{'type': 'input','name': 'option','message': "Editing {} Group".format(prop), 'default' :str(getattr(self,prop))}])
             setattr(self,prop,answer['option'])
@@ -415,11 +421,14 @@ class ADGroup:
 
 
 class ADUser:
-    def __init__(self, parent, first_name,second_name, account_name,display_name, password):
+    def __init__(self, parent, first_name,second_name, account_name,display_name, password, account_generator=None):
         self.parent = parent
         self.first_name = first_name
         self.second_name = second_name
-        self.account_name = account_name
+        if ' ' in first_name and 'account_name' == '' and account_generator:
+            self.account_name = cancamusa_common.generate_account_name(first_name, account_generator)
+        else:  
+            self.account_name = account_name
         self.display_name = display_name
         self.password = password
         self.path = ""
@@ -456,7 +465,7 @@ class ADUser:
             property_names.pop(property_names.index(element))
 
         for prop in property_names:
-            if prop.startswith("_") or prop == 'parent':
+            if prop.startswith("_") or prop == 'parent' or prop == 'path':
                 continue
             answer = prompt([{'type': 'input','name': 'option','message': "Editing {}".format(prop), 'default' :str(getattr(self,prop))}])
             setattr(self,prop,answer['option'])

@@ -53,3 +53,15 @@ def get_win_image_type(win_image):
         return 'Educational'
     else:
         return 'Pro'
+
+def generate_account_name(full_name,alg):
+    if alg == ACCOUNT_FORMAT_NAME_DOT_SURNAME:
+        return full_name.lower().split(" ")[:-1].join(".")
+    elif alg == ACCOUNT_FORMAT_TRHEE_LETTERS:
+        arr = full_name.lower().split(" ")
+        return arr[0][:3] + arr[1][:3]
+    elif alg == ACCOUNT_FORMAT_LETTER_SURNAME:
+        arr = full_name.lower().split(" ")
+        return arr[0][0] + arr[1]
+    else:
+        return full_name
