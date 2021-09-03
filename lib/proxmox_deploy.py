@@ -40,7 +40,7 @@ class ProxmoxDeployer:
     def create_pool(self):
         usr_cfg = "/etc/pve/user.cfg"
         name = safe_pool_name(self.project.project_name)
-        mv_list = list(map(lambda x: x.host_id, self.project.hosts))
+        mv_list = list(map(lambda x: str(x.host_id), self.project.hosts))
         usr_cfg_edit = ""
         with open(usr_cfg, 'r') as file_r:
             usr_cfg_edit = file_r.read()
