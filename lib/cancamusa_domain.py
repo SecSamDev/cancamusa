@@ -402,7 +402,7 @@ class ADGroup:
         for prop in property_names:
             if prop.startswith("_"):
                 continue
-            answer = prompt([{'type': 'input','name': 'option','message': "Editing {} Group".format(self.prop), 'default' :str(getattr(self,prop))}])
+            answer = prompt([{'type': 'input','name': 'option','message': "Editing {} Group".format(prop), 'default' :str(getattr(self,prop))}])
             setattr(self,prop,answer['option'])
         return self
 
@@ -451,6 +451,6 @@ class ADUser:
         for prop in property_names:
             if prop.startswith("_"):
                 continue
-            answer = prompt([{'type': 'input','name': 'option','message': "Editing {}".format(self.prop), 'default' :str(getattr(self,prop))}])
+            answer = prompt([{'type': 'input','name': 'option','message': "Editing {}".format(prop), 'default' :str(getattr(self,prop))}])
             setattr(self,prop,answer['option'])
         return self
