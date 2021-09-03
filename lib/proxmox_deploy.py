@@ -46,7 +46,7 @@ class ProxmoxDeployer:
             usr_cfg_edit = file_r.read()
         pool_pos = usr_cfg_edit.find("pool:{}::".format(name))
         if pool_pos < 0:
-            usr_cfg_edit + "\npool:{}::{}::\n".format(name,",".join(mv_list))
+            usr_cfg_edit += "\npool:{}::{}::\n".format(name,",".join(mv_list))
         else:
             new_line_pos = usr_cfg_edit[pool_pos:].find("\n")
             if new_line_pos >= 0:
