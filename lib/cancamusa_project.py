@@ -241,6 +241,8 @@ class CancamusaProject:
                 builder = WindowsHostBuilder(self)
                 for host in self.hosts:
                     builder.build_host_image(host)
+                builder.build_net_interfaces()
+                
                 return
             elif answer['option'] == 'Deploy':
                 # Depending if the project is alredy builded it deploys the project in Proxmox etc

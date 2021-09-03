@@ -3,7 +3,7 @@ $hostname = hostname
 mkdir $hostname
 $Usuario = [Environment]::UserName
 # Configuracion de red
-Get-WmiObject -Class Win32_NetworkAdapterConfiguration | Select-Object Description, SettingID, MACAddress, DNSDomain, DNSHostName, Index, InterfaceIndex, IPAddress | ConvertTo-Json | Out-File -Encoding UTF8 $hostname'\net.json'
+Get-WmiObject -Class Win32_NetworkAdapterConfiguration | Select-Object Description, SettingID, MACAddress, DNSDomain, DNSHostName, Index, InterfaceIndex, IPAddress, IPSubnet, DefaultIPGateway | ConvertTo-Json | Out-File -Encoding UTF8 $hostname'\net.json'
 # Discos instalados
 Get-WmiObject -Class Win32_LogicalDisk | Select-Object DeviceID, DriveType, FreeSpace, Size, VolumeName | ConvertTo-Json | Out-File -Encoding UTF8 $hostname'\disk.json'
 # Cuentas de usuario en el equipo, tanto locales como de dominio

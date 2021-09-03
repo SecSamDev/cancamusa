@@ -29,16 +29,16 @@ class ScriptIsoBuilder:
         self.scripts.add(script_path)
 
     def init_script(self):
-        script = b""
+        script = ""
         for scr in self.scripts:
             scr = os.path.basename(scr)
             if scr.endswith("ps1"):
-                script += b'Powershell.exe -executionpolicy remotesigned -File .\\' + scr + "\n"
+                script += 'Powershell.exe -executionpolicy remotesigned -File .\\' + scr + "\n"
             elif scr.endswith(".bat"):
-                script += b'call .\\' + scr + "\n"
+                script += 'call .\\' + scr + "\n"
             elif scr.endswith(".py"):
-                script += b'SET RUN_DOTPY=python.exe ' + scr + '\nset SCRIPT=\nIF EXIST "python.exe" (\n\tSET SCRIPT=%RUN_DOTPY%\n)\n%SCRIPT%'
-        return script
+                script += 'SET RUN_DOTPY=python.exe ' + scr + '\nset SCRIPT=\nIF EXIST "python.exe" (\n\tSET SCRIPT=%RUN_DOTPY%\n)\n%SCRIPT%'
+        return bytearray(script, "utf8")
 
     def build_geniso(self, output_dir):
         init_script = self.init_script()
@@ -54,7 +54,7 @@ class ScriptIsoBuilder:
                 with open(os.path.join(tmp_dir, os.path.basename(cfg)), 'w') as file_w:
                     file_w.write(file_r.read())
         
-        unmountCommand = 'genisoimage -o ' + output_dir + ' ' + str(tmp_dir)
+        unmountCommand = 'genisoimage -o ' + output_dir + ' -J -R -l ' + str(tmp_dir)
         process = subprocess.Popen(unmountCommand.split(), stdout=subprocess.PIPE)
         out, err = process.communicate()
         p_status = process.wait()

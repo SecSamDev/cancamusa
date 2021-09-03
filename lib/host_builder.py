@@ -6,7 +6,7 @@ from configuration import CancamusaConfiguration
 from script_iso import ScriptIsoBuilder
 from jinja2 import Template
 import subprocess
-
+import ipaddress
 
 class WindowsHostBuilder:
     def __init__(self, project):
@@ -17,6 +17,30 @@ class WindowsHostBuilder:
             os.mkdir(self.project_path)
         self.configuration = CancamusaConfiguration.load_or_create(None)
         self.seabios_path = None
+        self.networks = set()
+    
+    def build_net_interfaces(self):
+        vmbrX = 1
+        net_file = "# To be added in /etc/network/interfaces"
+        for net in self.networks:
+            net_file += """
+auto vmbr{}
+iface vmbr{} inet static
+	address {}
+	bridge-ports none
+	bridge-stp off
+	bridge-fd 0
+	bridge-vlan-aware yes
+	bridge-vids 2-4094
+
+""".format(vmbrX,vmbrX,str(net))
+            vmbrX = vmbrX + 1
+        
+        net_path = os.path.join(self.project_path,'net_interfaces')
+        print("Creating network configuration in: {}".format(net_path))
+        with open(net_path,'w') as file_w:
+            file_w.write(net_file)
+
 
     def build_host_image(self, host):
         """Build host scripts and templates
@@ -91,10 +115,20 @@ class WindowsHostBuilder:
     def build_extra_iso(self, host):
         builder = ScriptIsoBuilder(host, [], [])
         host_path = os.path.join(self.project_path, host.computer_name)
-
+        
+        if not os.path.exists(os.path.join(host_path,'iso_file')):
+            os.mkdir(os.path.join(host_path,'iso_file'))
+        
         # Build Autounattend
         compatible_win_image = self.configuration.select_win_image(
             host, 'CANCAMUSA_DEBUG' in os.environ)
+        
+        # Copy all scripts and configs that are not templates into the ISO file
+        for (dirpath, dirnames, filenames) in os.walk(os.path.join(os.path.dirname(__file__), 'scripter', 'scripts', compatible_win_image['win_type'])):
+            for file in filenames:
+                # This scripts must not be added to the initial execution script
+                builder.add_config(os.path.join(dirpath, file))
+
         with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'Autounattend.xml.jinja'), 'r') as file_r:
             template = Template(file_r.read())
             lang = {
@@ -142,23 +176,40 @@ class WindowsHostBuilder:
                         'organization': host.computer_name
                     }
 
-            with open(os.path.join(host_path, 'Autounattend.xml'), 'w') as file_w:
+            with open(os.path.join(host_path,'iso_file', 'Autounattend.xml'), 'w') as file_w:
                 file_w.write(template.render(lang=lang, principal_disk=principal_disk, disk_list=disk_list,
                                              computer_name=host.computer_name, principal_user=principal_user, win_image=win_image))
 
-            builder.add_config(os.path.join(host_path, 'Autounattend.xml'))
+            builder.add_config(os.path.join(host_path,'iso_file', 'Autounattend.xml'))
 
         # TODO: build role scripts
 
         # Join Domain
         if len(self.project.domain.domains) > 0:
             # There are domains
+            
             with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'join-domain.ps1.jinja'), 'r') as file_r:
                 template = Template(file_r.read())
-                with open(os.path.join(host_path, 'join-domain.ps1'), 'w') as file_w:
+                actual_file_out_path = os.path.join(host_path,'iso_file', 'join-domain.ps1')
+                with open(actual_file_out_path, 'w') as file_w:
                     for domain in self.project.domain.domains:
                         file_w.write(template.render(domain_dc_ip=domain.dc_ip,username=domain.default_local_admin,password=domain.default_local_admin_password,domain_name=domain.domain))
-            
+                builder.add_script(actual_file_out_path)
+        
+        
+        # Setup Network -> O = Nombre de Adaptador, 2 = Direccion Fisica
+        #"$headers = (getmac /fo csv /v | Select-Object -First 1).replace('\"','').split(',')"
+        actual_file_out_path = os.path.join(host_path, 'iso_file', 'setup-net.ps1')
+        with open(actual_file_out_path, 'w') as file_w:
+            net_script = ""
+            for netw in host.networks:
+                net_script += "$elements = (getmac /fo csv /v | Select-Object -Skip 1).replace('\"','').split([Environment]::NewLine\n"
+                net_script += "foreach($el in $elements) { if($el.split(',')[2] -eq \"" + netw.mac_address.replace(":","-").upper() + "\") {netsh interface ip set address $el.split(',')[0] static " + netw.ip_address[0] + " " + netw.ip_subnet[0] + " " + netw.ip_gateway[0] + '}}\n'
+                self.networks.add(str(ipaddress.ip_network('{}/{}'.format(netw.ip_address[0],netw.ip_subnet[0]),False)))
+                
+            file_w.write(net_script)
+        builder.add_script(actual_file_out_path)
+        
         extra_iso_path = os.path.join(host_path, str(host.host_id) + ".iso")
         builder.build_geniso(extra_iso_path)
 

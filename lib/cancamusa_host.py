@@ -262,7 +262,16 @@ class HostInfoNetwork:
             if net_object['IPAddress'] and isinstance(net_object['IPAddress'], list):
                 self.ip_address = net_object['IPAddress']
             else:
-                self.ip_address = []
+                self.ip_address = ['192.168.0.2']
+            if 'IPSubnet' in net_object and net_object['IPSubnet'] and isinstance(net_object['IPSubnet'], list):
+                self.ip_subnet = net_object['IPSubnet']
+            else:
+                self.ip_subnet = ['255.255.255.0']
+            if 'DefaultIPGateway' in net_object and net_object['DefaultIPGateway'] and isinstance(net_object['DefaultIPGateway'], list):
+                self.ip_gateway = net_object['DefaultIPGateway']
+            else:
+                self.ip_gateway = ['192.168.0.1']
+                
 
     def __str__(self):
         return "{}: {} ({}) [{}]".format(self.index, self.description, self.mac_address, ",".join(self.ip_address))
@@ -288,6 +297,30 @@ class HostInfoNetwork:
                     "'", '').strip(), to_parse.split(',')))
                 self.ip_address = split
                 continue
+            if prop == 'ip_subnet':
+                answer = prompt([{'type': 'input', 'name': 'option',
+                                  'message': 'Edit Subnet', 'default': str(getattr(self, prop))}])
+                to_parse = answer['option'].strip()
+                if to_parse.startswith("["):
+                    to_parse = to_parse[1:]
+                if to_parse.endswith("]"):
+                    to_parse = to_parse[:-1]
+                split = list(map(lambda x: x.replace(
+                    "'", '').strip(), to_parse.split(',')))
+                self.ip_subnet = split
+                continue
+            if prop == 'ip_gateway':
+                answer = prompt([{'type': 'input', 'name': 'option',
+                                  'message': 'Edit Gateway', 'default': str(getattr(self, prop))}])
+                to_parse = answer['option'].strip()
+                if to_parse.startswith("["):
+                    to_parse = to_parse[1:]
+                if to_parse.endswith("]"):
+                    to_parse = to_parse[:-1]
+                split = list(map(lambda x: x.replace(
+                    "'", '').strip(), to_parse.split(',')))
+                self.ip_gateway = split
+                continue
             answer = prompt([{'type': 'input', 'name': 'option', 'message': 'Edit: ' +
                               str(prop), 'default': str(getattr(self, prop))}])
             setattr(self, prop, answer['option'])
@@ -309,7 +342,9 @@ class HostInfoNetwork:
                 'DNSHostName': '',
                 'Index': int(last_index) + 1,
                 'InterfaceIndex': int(last_index) + 1,
-                'IPAddress': ["192.168.0.1"],
+                'IPAddress': ["192.168.0.2"],
+                'IPSubnet' : ["255.255.255.0"],
+                'DefaultIPGateway' : ["192.168.0.1"]
             })
         elif answer['option'] == 'Search vendor':
             while True:
@@ -339,7 +374,9 @@ class HostInfoNetwork:
                     'DNSHostName': '',
                     'Index': int(last_index) + 1,
                     'InterfaceIndex': int(last_index) + 1,
-                    'IPAddress': ["192.168.0.1"],
+                    'IPAddress': ["192.168.0.2"],
+                    'IPSubnet' : ["255.255.255.0"],
+                    'DefaultIPGateway' : ["192.168.0.1"]
                 })
                 break
         elif answer['option'] == 'Basic':
@@ -351,7 +388,9 @@ class HostInfoNetwork:
                 'DNSHostName': '',
                 'Index': int(last_index) + 1,
                 'InterfaceIndex': int(last_index) + 1,
-                'IPAddress': ["192.168.0.1"],
+                'IPAddress': ["192.168.0.2"],
+                'IPSubnet' : ["255.255.255.0"],
+                'DefaultIPGateway' : ["192.168.0.1"]
             })
         netwrk = netwrk.edit_interactive()
         return netwrk
@@ -366,6 +405,8 @@ class HostInfoNetwork:
             'Index': int(self.index),
             'InterfaceIndex': int(self.interface_index),
             'IPAddress': self.ip_address,
+            'IPSubnet' : self.ip_subnet,
+            'DefaultIPGateway' : self.ip_gateway
         }
 
     def from_json(net_object):
