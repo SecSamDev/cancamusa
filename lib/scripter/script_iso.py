@@ -46,12 +46,12 @@ class ScriptIsoBuilder:
         with open(os.path.join(tmp_dir, 'init_script.bat'), 'wb') as file_w:
             file_w.write(init_script)
         for scr in self.scripts:
-            with open(scr,'r') as file_r:
-                with open(os.path.join(tmp_dir, os.path.basename(scr)), 'w') as file_w:
+            with open(scr,'rb') as file_r:
+                with open(os.path.join(tmp_dir, os.path.basename(scr)), 'wb') as file_w:
                     file_w.write(file_r.read())
         for cfg in self.configs:
-            with open(cfg,'r') as file_r:
-                with open(os.path.join(tmp_dir, os.path.basename(cfg)), 'w') as file_w:
+            with open(cfg,'rb') as file_r:
+                with open(os.path.join(tmp_dir, os.path.basename(cfg)), 'wb') as file_w:
                     file_w.write(file_r.read())
         
         unmountCommand = 'genisoimage -o ' + output_dir + ' -J -R -l ' + str(tmp_dir)
