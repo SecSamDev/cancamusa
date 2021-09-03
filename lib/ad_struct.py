@@ -31,6 +31,7 @@ class ADOrganizationalUnit:
         self.ou = {}
         self.name = name
         self.groups = {}
+        self.users = {}
         self.parent = parent
         self.parent_path = parent.path
         if  isinstance(parent, ADStructure):

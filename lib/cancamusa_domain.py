@@ -16,6 +16,12 @@ class CancamusaDomain:
     def add_domain(self,domain):
         self.domains.append(domain)
 
+    def exists_domain(self, short_name):
+        for dmn in self.domains:
+            if short_name == dmn.name:
+                return True
+        return False
+
     def edit_interactive(self):
         print("Domains:")
         for domain in self.domains:
@@ -65,6 +71,7 @@ class ADStructure:
     def __init__(self, domain):
         self.ou = {}
         self.domain = domain
+        self.name = "CNCMS"
         dc_path_string = "DC=" + (",DC=".join(domain.split(".")))
         self.path = dc_path_string
         self.default_local_admin = 'LocalAdmin'
@@ -77,6 +84,8 @@ class ADStructure:
         for name, ou in obj["ou"].items():
             parsed_ou = ADOrganizationalUnit.from_json(ou,parent=ret)
             ret.ou[parsed_ou.name] = parsed_ou
+        if 'name' in obj:
+            ret.name = obj['name']
         if 'default_local_admin' in obj:
             ret.default_local_admin = obj['default_local_admin']
         if 'account_generator' in obj:
@@ -94,6 +103,7 @@ class ADStructure:
         ret = {
             'ou' : {},
             'domain' : self.domain,
+            'name' : self.name,
             'default_local_admin' : self.default_local_admin,
             'default_local_admin_password' : self.default_local_admin_password,
             'dc_ip' : self.dc_ip
@@ -113,11 +123,17 @@ class ADStructure:
         for name, ou in self.ou.items():
             ret = ret + ou.list_groups()
         return ret
+    
+    def list_users(self):
+        ret = []
+        for name, ou in self.ou.items():
+            ret = ret + ou.list_users()
+        return ret
 
     def edit_interactive(self):
         while True:
             try:
-                options =  ['Add OU','Import OUs']
+                options =  ['Domain Name','Add OU','Import OUs']
                 if len(self.ou) > 0:
                     options.append('Show OUs')
                     options.append('Show OU Tree')
@@ -142,6 +158,9 @@ class ADStructure:
                     ou = ou.edit_interactive()
                     if ou:
                         self.ou[ou.name] = ou
+                elif answer['option'] == 'Domain Name':
+                    answer = prompt([{'type': 'input','name': 'option','message': 'Domain Name:', 'default' : self.name}])
+                    self.name = answer["option"]
                 elif answer['option'] == 'Edit OU':
                     answer = prompt([{'type': 'list','name': 'option','message': 'Select a OU to edit', 'choices' :self.ou.keys()}])
                     self.ou[answer['option']].edit_interactive()
@@ -176,6 +195,7 @@ class ADOrganizationalUnit:
         self.ou = {}
         self.name = name
         self.groups = {}
+        self.users = {}
         self.parent = parent
         self.parent_path = parent.path
         if  isinstance(parent, ADStructure):
@@ -202,7 +222,8 @@ class ADOrganizationalUnit:
             ret = {
                 'ou' : {},
                 'groups' : {},
-                'name' : self.name
+                'name' : self.name,
+                'users' : {}
             }
             for name, ou in self.ou.items():
                 ret['ou'][name] = ou.to_json(full=True)
@@ -231,6 +252,14 @@ class ADOrganizationalUnit:
             ret.append(grp.to_json())
         return ret
 
+    def list_users(self):
+        ret = []
+        for name, ou in self.ou.items():
+            ret = ret + ou.list_users()
+        for name, grp in self.users.items():
+            ret.append(grp.to_json())
+        return ret
+
     def syn_path(self):
         self.parent_path = None
         self.path = ""
@@ -251,7 +280,7 @@ class ADOrganizationalUnit:
     def edit_interactive(self):
         while True:
             try:
-                options =  ['Edit name','Show path','Add OU','Import OUs', 'Add group', 'Import Groups']
+                options =  ['Edit name','Show path','Add OU','Import OUs', 'Add group', 'Import Groups','Add users']
                 if len(self.ou) > 0:
                     options.append('Show OUs')
                     options.append('Edit OU')
@@ -260,6 +289,10 @@ class ADOrganizationalUnit:
                     options.append('Show Groups')
                     options.append('Edit Groups')
                     options.append('Delete Groups')
+                if len(self.users) > 0:
+                    options.append('Show Users')
+                    options.append('Edit Users')
+                    options.append('Delete Users')
                 options.append('Back')
                 options.append('Cancel')
                 
@@ -273,7 +306,7 @@ class ADOrganizationalUnit:
                 elif answer['option'] == 'Show path':
                     print(self.path)
                 elif answer['option'] == 'Add OU':
-                    answer = prompt([{'type': 'input','name': 'option','message': 'OU name:', 'default' : "CancamusaLab"}])
+                    answer = prompt([{'type': 'input','name': 'option','message': 'OU name:', 'default' : ""}])
                     ou = ADOrganizationalUnit(answer['option'],self)
                     ou = ou.edit_interactive()
                     if ou:
@@ -289,7 +322,7 @@ class ADOrganizationalUnit:
                     for ou_name in self.groups.keys():
                         print(ou_name)
                 elif answer['option'] == 'Add Groups':
-                    answer = prompt([{'type': 'input','name': 'option','message': 'Group name:', 'default' : "CancamusaGroup"}])
+                    answer = prompt([{'type': 'input','name': 'option','message': 'Group name:', 'default' : ""}])
                     grp = ADGroup(self,answer["option"],answer["option"],answer["option"])
                     grp = grp.edit_interactive()
                     if grp:
@@ -341,7 +374,7 @@ class ADGroup:
             self.path = self.parent.path
 
     def create_interactive(parent=None):
-        grp = ADGroup(parent,"CancamusaGroup","CancamusaGroup","Cancamusa Group")
+        grp = ADGroup(parent,"","","")
         grp = grp.edit_interactive()
         return grp
     
@@ -355,5 +388,52 @@ class ADGroup:
             if prop.startswith("_"):
                 continue
             answer = prompt([{'type': 'input','name': 'option','message': "Editing {} Group".format(self.name), 'default' :str(getattr(self,prop))}])
+            setattr(self,prop,answer['option'])
+        return self
+
+
+class ADUser:
+    def __init__(self, parent, name, account_name,display_name, password):
+        self.parent = parent
+        self.name = name
+        self.account_name = account_name
+        self.display_name = display_name
+        self.password = password
+        self.path = ""
+        if parent:
+            self.path = parent.path
+    
+    def from_json(obj,parent=None):
+        return ADUser(parent,obj["name"],obj["account_name"],obj["display_name"],obj["password"])
+
+    def to_json(self):
+        return { 
+            "name" : self.name, 
+            "account_name" : self.account_name,
+            "display_name" : self.display_name,
+            "password" : self.password,
+            "path" : self.path
+        }
+    
+    def syn_path(self):
+        self.path = ""
+        if self.parent:
+            self.path = self.parent.path
+
+    def create_interactive(parent=None):
+        grp = ADUser(parent,"","","")
+        grp = grp.edit_interactive()
+        return grp
+    
+    def edit_interactive(self):
+        property_names = list(map(lambda x: str(x),dir(self)))
+        class_props =  list(map(lambda x: str(x),dir(ADUser)))
+        for element in class_props:
+            property_names.pop(property_names.index(element))
+
+        for prop in property_names:
+            if prop.startswith("_"):
+                continue
+            answer = prompt([{'type': 'input','name': 'option','message': "Editing {} user".format(self.name), 'default' :str(getattr(self,prop))}])
             setattr(self,prop,answer['option'])
         return self

@@ -609,6 +609,10 @@ class HostInfoWindowsAccounts:
         self.password_changeable = account['PasswordChangeable']
         self.password_expires = account['PasswordExpires']
         self.password_required = account['PasswordRequired']
+        if 'Domain' in account:
+            self.domain = account['Domain']
+        else:
+            self.domain = self.ps_computer_name
 
     def edit_interactive(self):
         property_names = list(map(lambda x: str(x), dir(self)))
@@ -638,7 +642,8 @@ class HostInfoWindowsAccounts:
             'Lockout': False,
             'PasswordChangeable': True,
             'PasswordExpires': False,
-            'PasswordRequired': True
+            'PasswordRequired': True,
+            'Domain' : host_name
         })
         disk = disk.edit_interactive()
         return disk
@@ -654,7 +659,8 @@ class HostInfoWindowsAccounts:
             'Lockout': self.lockout,
             'PasswordChangeable': self.password_changeable,
             'PasswordExpires': self.password_expires,
-            'PasswordRequired': self.password_required
+            'PasswordRequired': self.password_required,
+            'Domain' : self.domain
         }
 
     def from_json(account):
