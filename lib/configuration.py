@@ -114,7 +114,7 @@ class CancamusaConfiguration:
                 'images' : {'0' : 'Windows 10 Professional', '1' : 'Windows 10 Enterprise'},
                 'path' : '/data/templates/iso/Windows10.iso'
             }
-        raise Exception("Could not find a suitable image for the host {} with Windows {}".format(host.computer_name, host.os.major))
+        raise Exception("Could not find a suitable image for the host {} with Windows {}".format(host.computer_name, host.os.name))
 
 
 

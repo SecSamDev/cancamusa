@@ -51,6 +51,18 @@ def get_win_image_type(win_image):
         return 'Professional'
     elif 'Edu' in win_image:
         return 'Educational'
+    elif 'Evaluation' in win_image:
+        return 'Evaluation'
+    elif 'SERVERSTANDARDCORE' in win_image:
+        return 'SERVERSTANDARDCORE'
+    elif 'SERVERSTANDARD' in win_image:
+        return 'SERVERSTANDARD'
+    elif 'SERVERDATACENTERCORE' in win_image:
+        return 'SERVERDATACENTERCORE'
+    elif 'SERVERDATACENTER' in win_image:
+        return 'SERVERDATACENTER'
+    elif 'Server' in win_image:
+        return 'Server'
     else:
         return 'Pro'
 
