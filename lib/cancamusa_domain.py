@@ -400,7 +400,7 @@ class ADGroup:
             property_names.pop(property_names.index(element))
 
         for prop in property_names:
-            if prop.startswith("_"):
+            if prop.startswith("_") or prop == 'parent':
                 continue
             answer = prompt([{'type': 'input','name': 'option','message': "Editing {} Group".format(prop), 'default' :str(getattr(self,prop))}])
             setattr(self,prop,answer['option'])
@@ -449,7 +449,7 @@ class ADUser:
             property_names.pop(property_names.index(element))
 
         for prop in property_names:
-            if prop.startswith("_"):
+            if prop.startswith("_") or prop == 'parent':
                 continue
             answer = prompt([{'type': 'input','name': 'option','message': "Editing {}".format(prop), 'default' :str(getattr(self,prop))}])
             setattr(self,prop,answer['option'])
