@@ -356,7 +356,6 @@ class ADOrganizationalUnit:
             except KeyboardInterrupt as e:
                 return
             except Exception as e:
-                print(str(e))
                 pass
 
 class ADGroup:
