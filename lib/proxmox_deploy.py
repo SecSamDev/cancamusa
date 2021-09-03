@@ -73,7 +73,7 @@ class ProxmoxDeployer:
                 processor = get_host_processor()
             except:
                 answer = prompt([{'type': 'list', 'name': 'option',
-                          'message': 'Creating the "Cancamusa" processor. Select a QEMU cpu type:', 'choices': list_processors(self.family)}])
+                          'message': 'Creating the "Cancamusa" processor. Select a QEMU cpu type:', 'choices': list_processors()}])
                 processor = answer['option']
             cpu_edit += """
 cpu-model: Cancamusa
