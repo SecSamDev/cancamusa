@@ -349,7 +349,7 @@ class ADOrganizationalUnit:
                 
                 elif answer['option'] == 'Add Users':
                     answer = prompt([{'type': 'input','name': 'option','message': 'User name:', 'default' : ""}])
-                    grp = ADUser(self,answer["option"],answer["option"],answer["option"],"","",self.account_generator)
+                    grp = ADUser(self,answer["option"],"","",answer["option"],"",self.account_generator)
                     grp = grp.edit_interactive()
                     if grp:
                         self.users[grp.account_name] = grp
