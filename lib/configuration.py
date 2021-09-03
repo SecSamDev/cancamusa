@@ -85,7 +85,7 @@ class CancamusaConfiguration:
         cancamusa.save()
         return cancamusa
 
-    def select_win_image(self, host,debug=False):
+    def select_win_image(self, host,debug=False,prompter=True):
         """Selects the best windows image for a given host
 
         Args:
@@ -110,22 +110,28 @@ class CancamusaConfiguration:
                                     img_id : img_name
                                 }
                             }
-                    answer = prompt([{'type': 'list', 'name': 'option',
-                          'message': 'Select a Windows Image:', 'choices': images}])
-                    pos = images.index(answer['option'])
-                    image = image.copy()
-                    image['selected_img'] = pos
-                    return image
+                    if prompter:
+                        answer = prompt([{'type': 'list', 'name': 'option',
+                            'message': 'Select a Windows Image for{}:'.format(host.name), 'choices': images}])
+                        pos = images.index(answer['option'])
+                        image = image.copy()
+                        image['selected_img'] = pos
+                        return image
+                    else:
+                        return image
                 else:
-                    images = []
-                    for img_id, img_name in image['images'].items():
-                        images.append(img_name)
-                    answer = prompt([{'type': 'list', 'name': 'option',
-                          'message': 'Select a Windows Image:', 'choices': images}])
-                    pos = images.index(answer['option'])
-                    image = image.copy()
-                    image['selected_img'] = pos
-                    return image
+                    if prompter:
+                        images = []
+                        for img_id, img_name in image['images'].items():
+                            images.append(img_name)
+                        answer = prompt([{'type': 'list', 'name': 'option',
+                            'message': 'Select a Windows Image for:{}'.format(host.name), 'choices': images}])
+                        pos = images.index(answer['option'])
+                        image = image.copy()
+                        image['selected_img'] = pos
+                        return image
+                    else:
+                        return image
 
         if debug:
             return {

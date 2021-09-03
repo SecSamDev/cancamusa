@@ -74,7 +74,7 @@ iface vmbr{} inet static
             host_path, str(host.host_id) + ".conf")
         with open(qemu_template_file, 'w') as qemu_template:
             compatible_win_image = self.configuration.select_win_image(
-                host, 'CANCAMUSA_DEBUG' in os.environ)
+                host, 'CANCAMUSA_DEBUG' in os.environ,False)
             qemu_template.write('bootdisk: ide0\n')
             # Custom CPU with QEMU flags that hides virtualization
             qemu_template.write('cpu: Cancamusa\n')
