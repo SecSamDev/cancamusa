@@ -220,9 +220,9 @@ class CancamusaProject:
                 else:
                     print('Invalid path: ' + answer['option'])
             elif answer['option'] == 'Edit QEMU start ID':
-                answer = prompt([{'type': 'input','name': 'hostid','message': 'New Start value for hosts:', 'default' : self.host_id_start}])
+                answer = prompt([{'type': 'input','name': 'hostid','message': 'New Start value for hosts:', 'default' : str(self.host_id_start)}])
                 if answer['hostid']:
-                    self.change_host_id_start(answer['hostid'])
+                    self.change_host_id_start(int(answer['hostid']))
             elif answer['option'] == 'Edit host':
                 hosts = list(map(lambda x: x.computer_name, self.hosts))
                 answer = prompt([{'type': 'list','name': 'option','message': 'Select a host to edit', 'choices' :hosts}])
