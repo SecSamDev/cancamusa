@@ -60,6 +60,35 @@ class ScriptIsoBuilder:
         p_status = process.wait()
         process.terminate()
         print(unmountCommand)
+    
+    def build_floppy(self, output_dir):
+        init_script = self.init_script()
+        tmp_dir = tempfile.mkdtemp()
+        command = 'mkfs.msdos -C ' + output_dir + ' 1440'
+        process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+        out, err = process.communicate()
+        p_status = process.wait()
+        process.terminate()
+        command = 'mount -o loop ' + output_dir + ' ' + tmp_dir
+        process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+        out, err = process.communicate()
+        p_status = process.wait()
+        process.terminate()
+        with open(os.path.join(tmp_dir, 'init_script.bat'), 'wb') as file_w:
+            file_w.write(init_script)
+        for scr in self.scripts:
+            with open(scr,'rb') as file_r:
+                with open(os.path.join(tmp_dir, os.path.basename(scr)), 'wb') as file_w:
+                    file_w.write(file_r.read())
+        for cfg in self.configs:
+            with open(cfg,'rb') as file_r:
+                with open(os.path.join(tmp_dir, os.path.basename(cfg)), 'wb') as file_w:
+                    file_w.write(file_r.read())
+        command = 'umount ' + tmp_dir
+        process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+        out, err = process.communicate()
+        p_status = process.wait()
+        process.terminate()
             
 
     def build(self,output_dir):

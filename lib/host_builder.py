@@ -105,11 +105,11 @@ iface vmbr{} inet static
             qemu_template.write("ide{}: {}:iso/{},media=cdrom\n".format(
                 dcisc_i, self.configuration.proxmox_iso_storage, os.path.basename(compatible_win_image["path"])))
             dcisc_i = dcisc_i + 1
-            qemu_template.write("ide{}: {}:iso/{},media=cdrom\n".format(
-                dcisc_i, self.configuration.proxmox_iso_extra_storage, str(host.host_id) + ".iso"))
+            qemu_template.write()
             qemu_template.write('scsihw: virtio-scsi-pci\n')
+            floppy_disk = os.path.join()
             qemu_template.write(
-                'args:-bios {}\n'.format(os.path.join(host_path, "bios.bin")))
+                'args:-bios {} -fda {}\n'.format(os.path.join(host_path, "bios.bin"), os.path.join(host_path, str(host.host_id) + ".img")))
         print('QEMU template for proxmox created: ' + qemu_template_file)
 
     def build_extra_iso(self, host):
@@ -210,8 +210,8 @@ iface vmbr{} inet static
             file_w.write(net_script)
         builder.add_script(actual_file_out_path)
         
-        extra_iso_path = os.path.join(host_path, str(host.host_id) + ".iso")
-        builder.build_geniso(extra_iso_path)
+        extra_iso_path = os.path.join(host_path, str(host.host_id) + ".img")
+        builder.build_floppy(extra_iso_path)
 
 
 def qemu_disk_qcow2(pth, size):
