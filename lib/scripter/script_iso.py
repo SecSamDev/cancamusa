@@ -81,11 +81,11 @@ class ScriptIsoBuilder:
         for scr in self.scripts:
             with open(scr,'rb') as file_r:
                 with open(os.path.join(tmp_dir, os.path.basename(scr)), 'wb') as file_w:
-                    file_w.write(file_r.read())
+                    file_w.write(file_r.read().replace("\r","").replace("\n","\r\n"))
         for cfg in self.configs:
             with open(cfg,'rb') as file_r:
                 with open(os.path.join(tmp_dir, os.path.basename(cfg)), 'wb') as file_w:
-                    file_w.write(file_r.read())
+                    file_w.write(file_r.read().replace(b"\r",b"").replace(b"\n",b"\r\n"))
         command = 'umount ' + tmp_dir
         process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         out, err = process.communicate()
