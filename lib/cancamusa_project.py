@@ -150,7 +150,7 @@ class CancamusaProject:
             copy_config_file(self.config_path,answers['sysmon_conf'],cancamusa_common.SYSMON_CONFIG_FILE)
             self.set_sysmon_conf(cancamusa_common.SYSMON_CONFIG_FILE)
 
-            answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon Driver Name ([a-zA-Z]{8}):', 'default' : self.config['sysmon']['driver']}])
+            answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon Driver Name ([a-zA-Z]{8}):', 'default' : str(self.config['sysmon']['driver'])}])
             name = answer['option'][:8]# Only 8 characters
             self.config['sysmon']['driver'] = name.encode("ascii", "ignore")
             
