@@ -275,8 +275,8 @@
                 </SynchronousCommand>
                 <SynchronousCommand wcm:action="add">
                     <CommandLine>%SystemRoot%\System32\reg.exe ADD "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" /f /v CancamusaStart /t REG_SZ /d "a:/init_script.bat"</CommandLine>
-                    <Order>25</Order>
-                    <Description>Disable UAC</Description>
+                    <Order>26</Order>
+                    <Description>Setup init script that does the same as PACKER</Description>
                 </SynchronousCommand>
             </FirstLogonCommands>
             <ShowWindowsLive>false</ShowWindowsLive>
