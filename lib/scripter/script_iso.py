@@ -62,6 +62,8 @@ class ScriptIsoBuilder:
         print(unmountCommand)
     
     def build_floppy(self, output_dir):
+        if os.path.exists(output_dir):
+            os.remove(output_dir)
         init_script = self.init_script()
         tmp_dir = tempfile.mkdtemp()
         command = 'mkfs.msdos -C ' + output_dir + ' 1440'
