@@ -213,7 +213,7 @@ iface vmbr{} inet static
 
 
         # Install sysmon
-        sysmon_conf = os.path.basename(self.project.config['sysmon']['conf'])
+        sysmon_conf = cancamusa_common.SYSMON_CONFIG_FILE
         sysmon_drv = self.project.config['sysmon']['driver']
         sysmon_alt = self.project.config['sysmon']['altitude']
         install_sysmon = """
