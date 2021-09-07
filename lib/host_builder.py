@@ -7,6 +7,7 @@ from script_iso import ScriptIsoBuilder
 from jinja2 import Template
 import subprocess
 import ipaddress
+import cancamusa_common
 
 class WindowsHostBuilder:
     def __init__(self, project):
@@ -209,6 +210,52 @@ iface vmbr{} inet static
                 
             file_w.write(net_script)
         builder.add_script(actual_file_out_path)
+
+
+        # Install sysmon
+        sysmon_conf = os.path.basename(self.project.config['sysmon']['conf'])
+        sysmon_drv = self.project.config['sysmon']['driver']
+        sysmon_alt = self.project.config['sysmon']['altitude']
+        install_sysmon = """
+@echo off
+setlocal
+cd /d %~dp0
+powershell -Command "(New-Object Net.WebClient).DownloadFile('https://download.sysinternals.com/files/Sysmon.zip', 'c:\package.zip')"
+Call :UnZipFile "C:\Temp\" "c:\package.zip"
+cd C:\Temp
+Sysmon64.exe -accepteula -i a:\{} -d {}
+reg add “HKLM\SYSTEM\CurrentControlSet\Services\{}\Instances\Sysmon Instance” /v Altitude /t REG_SZ /d {} /f
+cd C:\
+rm -r C:\Temp
+exit /b
+
+:UnZipFile <ExtractTo> <newzipfile>
+set vbs="%temp%\_.vbs"
+if exist %vbs% del /f /q %vbs%
+>%vbs%  echo Set fso = CreateObject("Scripting.FileSystemObject")
+>>%vbs% echo If NOT fso.FolderExists(%1) Then
+>>%vbs% echo fso.CreateFolder(%1)
+>>%vbs% echo End If
+>>%vbs% echo set objShell = CreateObject("Shell.Application")
+>>%vbs% echo set FilesInZip=objShell.NameSpace(%2).items
+>>%vbs% echo objShell.NameSpace(%1).CopyHere(FilesInZip)
+>>%vbs% echo Set fso = Nothing
+>>%vbs% echo Set objShell = Nothing
+cscript //nologo %vbs%
+if exist %vbs% del /f /q %vbs%
+""".format(sysmon_conf, sysmon_drv, sysmon_drv, sysmon_alt)
+
+        actual_file_out_path = os.path.join(host_path, 'iso_file', 'install_sysmon.bat')
+        with open(actual_file_out_path, 'w') as file_w:
+            file_w.write(install_sysmon)
+        builder.add_script(actual_file_out_path)
+
+        actual_file_out_path = os.path.join(host_path, 'iso_file', sysmon_conf)
+        with open(cancamusa_common.SYSMON_CONFIG_FILE,'r') as file_r:
+            with open(actual_file_out_path,'w') as file_w:
+                file_w.write(file_r.read())
+        builder.add_config(actual_file_out_path)
+
         
         extra_iso_path = os.path.join(host_path, str(host.host_id) + ".img")
         builder.build_floppy(extra_iso_path)

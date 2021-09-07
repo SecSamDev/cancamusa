@@ -89,7 +89,9 @@ class CancamusaProject:
 
     def set_sysmon_conf(self, conf_path):
         self.config['sysmon'] = {
-            'conf' : conf_path
+            'conf' : conf_path,
+            'driver' : 'SoundDrv',
+            'altitude' : 385201
         }
         return self
     
@@ -145,8 +147,19 @@ class CancamusaProject:
         answers = prompt([{'type': 'confirm','name': 'sysmon','message': 'Install Sysmon in each host?'}])
         if answers['sysmon']:
             answers = prompt([{'type': 'input','name': 'sysmon_conf','message': 'Sysmon configuration file path'}])
-            self.set_sysmon_conf(answers['sysmon_conf'])
             copy_config_file(self.config_path,answers['sysmon_conf'],cancamusa_common.SYSMON_CONFIG_FILE)
+            self.set_sysmon_conf(cancamusa_common.SYSMON_CONFIG_FILE)
+
+            answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon Driver Name ([a-zA-Z]{8}):', 'default' : self.config['sysmon']['driver']}])
+            name = answer['option'][:8]# Only 8 characters
+            self.config['sysmon']['driver'] = name.encode("ascii", "ignore")
+            
+            answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon Driver Altitude:', 'default' : self.config['sysmon']['altitude']}])
+            altitude = int(answer['option'])
+            self.config['sysmon']['altitude'] = altitude
+
+
+        
 
     def new_project_in_path(pth):
         cancamusa = CancamusaProject(pth)
