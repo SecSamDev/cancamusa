@@ -152,7 +152,7 @@ class CancamusaProject:
 
             answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon Driver Name ([a-zA-Z]{8}):', 'default' : str(self.config['sysmon']['driver'])}])
             name = answer['option'][:8]# Only 8 characters
-            self.config['sysmon']['driver'] = name.encode("ascii", "ignore")
+            self.config['sysmon']['driver'] = name.encode("ascii", "ignore").decode()
             
             answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon Driver Altitude:', 'default' : str(self.config['sysmon']['altitude'])}])
             altitude = int(answer['option'])
