@@ -251,7 +251,7 @@ if exist %vbs% del /f /q %vbs%
         builder.add_script(actual_file_out_path)
 
         actual_file_out_path = os.path.join(host_path, 'iso_file', sysmon_conf)
-        with open(cancamusa_common.SYSMON_CONFIG_FILE,'r') as file_r:
+        with open(os.path.join('config_files', cancamusa_common.SYSMON_CONFIG_FILE),'r') as file_r:
             with open(actual_file_out_path,'w') as file_w:
                 file_w.write(file_r.read())
         builder.add_config(actual_file_out_path)
@@ -290,6 +290,12 @@ if exist %vbs% del /f /q %vbs%
         with open(actual_file_out_path, 'w') as file_w:
             file_w.write(install_winlogbeat)
         builder.add_script(actual_file_out_path)
+
+        actual_file_out_path = os.path.join(host_path, 'iso_file', cancamusa_common.WINLOGBEAT_CONFIG_FILE)
+        with open(os.path.join('config_files', cancamusa_common.WINLOGBEAT_CONFIG_FILE),'r') as file_r:
+            with open(actual_file_out_path,'w') as file_w:
+                file_w.write(file_r.read())
+        builder.add_config(actual_file_out_path)
 
         extra_iso_path = os.path.join(host_path, str(host.host_id) + ".img")
         builder.build_floppy(extra_iso_path)
