@@ -32,6 +32,7 @@ class CancamusaConfiguration:
         self.win_images = {}
         self.proxmox_image_storage = "local"
         self.proxmox_iso_extra_storage = "local"
+        self.start_vmbr = 1
     
     def save(self):
         if not self.config_path:
@@ -45,7 +46,8 @@ class CancamusaConfiguration:
                 'proxmox_iso_storage' : self.proxmox_iso_storage,
                 'proxmox_iso_extra_storage' : self.proxmox_iso_extra_storage,
                 'proxmox_image_storage' : self.proxmox_image_storage,
-                'win_images' : self.win_images
+                'win_images' : self.win_images,
+                'start_vmbr' : self.start_vmbr
             },indent=4,))
         return self
     
@@ -78,6 +80,8 @@ class CancamusaConfiguration:
             cancamusa.proxmox_image_storage = cancamusa_config['proxmox_image_storage']
             cancamusa.proxmox_iso_extra_storage = cancamusa_config['proxmox_iso_extra_storage']
             cancamusa.win_images = cancamusa_config['win_images']
+            if 'start_vmbr' in cancamusa_config:
+                cancamusa.start_vmbr = cancamusa_config['start_vmbr']
         except Exception as e:
             cancamusa = CancamusaConfiguration(pth)
         cancamusa.is_proxmox = is_proxmox_system()
@@ -156,7 +160,7 @@ class CancamusaConfiguration:
 def configuration_mode():
     cancamusa_config = CancamusaConfiguration.load_or_create(None)
     while True:
-        answers = prompt([{'type': 'list','name': 'option','message': 'Select an option', 'choices' : ['Set proxmox template location', 'Select proxmox ISO location', 'Select proxmox Extra ISO location','Select proxmox Image location', 'Edit registered Windows Images', 'Exit']}])
+        answers = prompt([{'type': 'list','name': 'option','message': 'Select an option', 'choices' : ['Set proxmox template location', 'Select proxmox ISO location', 'Select proxmox Extra ISO location','Select proxmox Image location', 'Edit registered Windows Images','Network bridges', 'Exit']}])
         storages = list(map(lambda x: x['name'], cancamusa_config.proxmox_storages))
         if answers['option'] == 'Set proxmox template location':
             storages = []
@@ -182,6 +186,16 @@ def configuration_mode():
             answers = prompt([{'type': 'list','name': 'option','message': 'Select storage:', 'choices' : storages}])
             pos = storages.index(answers['option'])
             cancamusa_config.proxmox_image_storage = cancamusa_config.proxmox_storages[pos]['name']
+        elif answers['option'] == 'Network bridges':
+            answers = prompt([{'type': 'input','name': 'option','message': 'Select Bridge index to create new ones:', 'default' : "1"}])
+            try:
+                val = int(answers['option'])
+                if val > 0:
+                    cancamusa_config.start_vmbr = val
+                else:
+                    cancamusa_config.start_vmbr = 1
+            except:
+                cancamusa_config.start_vmbr = 1
         elif answers['option'] == 'Exit':
             cancamusa_config.save()
             exit()

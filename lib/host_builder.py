@@ -86,10 +86,12 @@ iface vmbr{} inet static
             qemu_template.write('name: {}\n'.format(
                 host.computer_name.replace("-", "").replace("_", "")))
             net_i = 0
+            bridge_i = self.configuration.start_vmbr
             for hnet in host.networks:
                 qemu_template.write(
-                    'net{}: virtio={},bridge=vmbr0,firewall=1\n'.format(net_i, hnet.mac_address))
+                    'net{}: virtio={},bridge=vmbr{},firewall=1\n'.format(net_i, hnet.mac_address,bridge_i))
                 net_i = net_i + 1
+                bridge_i = bridge_i + 1
             qemu_template.write('numa: 0\n')
             qemu_template.write(
                 'ostype: {}\n'.format("win"+str(host.os.major)))
