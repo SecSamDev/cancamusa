@@ -186,7 +186,7 @@ class CancamusaProject:
 
     def edit_hosts(self):
         while True:
-            options =  ['Add host','Import hosts']
+            options =  ['Add host','Import hosts','Edit QEMU start ID']
             if len(self.hosts) > 0:
                 options.append('Show hosts')
                 options.append('Edit host')
@@ -219,6 +219,10 @@ class CancamusaProject:
                             print('ERROR: Cannot import host {}'.format(host))
                 else:
                     print('Invalid path: ' + answer['option'])
+            elif answer['option'] == 'Edit QEMU start ID':
+                answer = prompt([{'type': 'input','name': 'hostid','message': 'New Start value for hosts:', 'default' : self.host_id_start}])
+                if answer['hostid']:
+                    self.change_host_id_start(answer['hostid'])
             elif answer['option'] == 'Edit host':
                 hosts = list(map(lambda x: x.computer_name, self.hosts))
                 answer = prompt([{'type': 'list','name': 'option','message': 'Select a host to edit', 'choices' :hosts}])
@@ -243,10 +247,6 @@ class CancamusaProject:
                 return
             elif answer['option'] == 'Edit hosts':
                 self.edit_hosts()
-            elif answer['option'] == 'Edit QEMU start ID':
-                answer = prompt([{'type': 'input','name': 'hostid','message': 'New Start value for hosts:', 'default' : self.host_id_start}])
-                if answer['hostid']:
-                    self.change_host_id_start(answer['hostid'])
             elif answer['option'] == 'SIEM':
                 self.edit_siem_config()
             elif answer['option'] == 'Build':
