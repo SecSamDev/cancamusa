@@ -107,7 +107,6 @@ iface vmbr{} inet static
                 dcisc_i, self.configuration.proxmox_iso_storage, os.path.basename(compatible_win_image["path"])))
             dcisc_i = dcisc_i + 1
             qemu_template.write('scsihw: virtio-scsi-pci\n')
-            floppy_disk = os.path.join()
             qemu_template.write(
                 'args:-bios {} -fda {}\n'.format(os.path.join(host_path, "bios.bin"), os.path.join(host_path, str(host.host_id) + ".img")))
         print('QEMU template for proxmox created: ' + qemu_template_file)
