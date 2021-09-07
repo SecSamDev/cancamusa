@@ -112,7 +112,7 @@ class CancamusaConfiguration:
                             }
                     if prompter:
                         answer = prompt([{'type': 'list', 'name': 'option',
-                            'message': 'Select a Windows Image for{}:'.format(host.name), 'choices': images}])
+                            'message': 'Select a Windows Image for{}:'.format(host.os.name), 'choices': images}])
                         pos = images.index(answer['option'])
                         image = image.copy()
                         image['selected_img'] = pos
@@ -125,7 +125,7 @@ class CancamusaConfiguration:
                         for img_id, img_name in image['images'].items():
                             images.append(img_name)
                         answer = prompt([{'type': 'list', 'name': 'option',
-                            'message': 'Select a Windows Image for:{}'.format(host.name), 'choices': images}])
+                            'message': 'Select a Windows Image for:{}'.format(host.os.name), 'choices': images}])
                         pos = images.index(answer['option'])
                         image = image.copy()
                         image['selected_img'] = pos
