@@ -89,7 +89,7 @@ iface vmbr{} inet static
             bridge_i = self.configuration.start_vmbr
             for hnet in host.networks:
                 qemu_template.write(
-                    'net{}: virtio={},bridge=vmbr{},firewall=1\n'.format(net_i, hnet.mac_address,bridge_i))
+                    'net{}: rtl8139={},bridge=vmbr{},firewall=1\n'.format(net_i, hnet.mac_address,bridge_i))
                 net_i = net_i + 1
                 bridge_i = bridge_i + 1
             qemu_template.write('numa: 0\n')
