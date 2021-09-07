@@ -220,17 +220,19 @@ iface vmbr{} inet static
 @echo off
 setlocal
 cd /d %~dp0
-powershell -Command "(New-Object Net.WebClient).DownloadFile('https://download.sysinternals.com/files/Sysmon.zip', 'c:\package.zip')"
-Call :UnZipFile "C:\Temp\" "c:\package.zip"
-cd C:\Temp
-Sysmon64.exe -accepteula -i a:\{} -d {}
+powershell -Command "(New-Object Net.WebClient).DownloadFile('https://download.sysinternals.com/files/Sysmon.zip', 'c:\\package.zip')"
+mkdir C:\\Temp
+Call :UnZipFile "C:\\Temp\\" "c:\\package.zip"
+cd C:\\Temp
+Sysmon64.exe -accepteula -i a:\\{} -d {}
 reg add “HKLM\SYSTEM\CurrentControlSet\Services\{}\Instances\Sysmon Instance” /v Altitude /t REG_SZ /d {} /f
-cd C:\
-rm -r C:\Temp
+cd C:\\
+rm c:\\package.zip
+rm -r C:\\Temp
 exit /b
 
 :UnZipFile <ExtractTo> <newzipfile>
-set vbs="%temp%\_.vbs"
+set vbs="%temp%\\_.vbs"
 if exist %vbs% del /f /q %vbs%
 >%vbs%  echo Set fso = CreateObject("Scripting.FileSystemObject")
 >>%vbs% echo If NOT fso.FolderExists(%1) Then
@@ -256,7 +258,41 @@ if exist %vbs% del /f /q %vbs%
                 file_w.write(file_r.read())
         builder.add_config(actual_file_out_path)
 
-        
+        # Install Winlogbeat
+        # TODO: hide winlogbeat
+        # https://artifacts.elastic.co/downloads/beats/winlogbeat/winlogbeat-7.14.1-windows-x86_64.zip
+        install_winlogbeat = """
+@echo off
+setlocal
+cd /d %~dp0
+powershell -Command "(New-Object Net.WebClient).DownloadFile('https://artifacts.elastic.co/downloads/beats/winlogbeat/winlogbeat-7.14.1-windows-x86_64.zip', 'c:\\package.zip')"
+mkdir C:\\Tmp
+Call :UnZipFile "C:\\Tmp\\" "c:\\package.zip"
+cd C:\\Tmp
+copy a:\\{} C:\\Tmp\\winlogbeat.yml
+Powershell.exe -executionpolicy remotesigned -File .\\install-service-winlogbeat.ps1
+exit /b
+
+:UnZipFile <ExtractTo> <newzipfile>
+set vbs="%temp%\\_.vbs"
+if exist %vbs% del /f /q %vbs%
+>%vbs%  echo Set fso = CreateObject("Scripting.FileSystemObject")
+>>%vbs% echo If NOT fso.FolderExists(%1) Then
+>>%vbs% echo fso.CreateFolder(%1)
+>>%vbs% echo End If
+>>%vbs% echo set objShell = CreateObject("Shell.Application")
+>>%vbs% echo set FilesInZip=objShell.NameSpace(%2).items
+>>%vbs% echo objShell.NameSpace(%1).CopyHere(FilesInZip)
+>>%vbs% echo Set fso = Nothing
+>>%vbs% echo Set objShell = Nothing
+cscript //nologo %vbs%
+if exist %vbs% del /f /q %vbs%
+""".format(cancamusa_common.WINLOGBEAT_CONFIG_FILE)
+        actual_file_out_path = os.path.join(host_path, 'iso_file', 'install_winlogbeat.bat')
+        with open(actual_file_out_path, 'w') as file_w:
+            file_w.write(install_winlogbeat)
+        builder.add_script(actual_file_out_path)
+
         extra_iso_path = os.path.join(host_path, str(host.host_id) + ".img")
         builder.build_floppy(extra_iso_path)
 
