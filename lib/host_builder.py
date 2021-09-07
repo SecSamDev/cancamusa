@@ -131,8 +131,8 @@ iface vmbr{} inet static
         with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'Autounattend.xml.jinja'), 'r') as file_r:
             template = Template(file_r.read())
             lang = {
-                'principal': 'ES',
-                'fall': 'EN'
+                'principal': 'es-ES',
+                'fall': 'en-EN'
             }
             win_image = {
                 'image': compatible_win_image['selected_img']
