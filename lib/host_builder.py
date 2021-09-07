@@ -106,7 +106,6 @@ iface vmbr{} inet static
             qemu_template.write("ide{}: {}:iso/{},media=cdrom\n".format(
                 dcisc_i, self.configuration.proxmox_iso_storage, os.path.basename(compatible_win_image["path"])))
             dcisc_i = dcisc_i + 1
-            qemu_template.write()
             qemu_template.write('scsihw: virtio-scsi-pci\n')
             floppy_disk = os.path.join()
             qemu_template.write(
