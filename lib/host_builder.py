@@ -135,7 +135,7 @@ iface vmbr{} inet static
                 'fall': 'en-EN'
             }
             win_image = {
-                'image': compatible_win_image['selected_img']
+                'image': compatible_win_image['selected_img'] + 1 #Index starts at one
             }
             principal_disk = None
             disk_list = []
