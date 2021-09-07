@@ -21,7 +21,7 @@ class WindowsHostBuilder:
         self.networks = set()
     
     def build_net_interfaces(self):
-        vmbrX = 1
+        vmbrX = self.configuration.start_vmbr
         net_file = "# To be added in /etc/network/interfaces"
         for net in self.networks:
             net_file += """
