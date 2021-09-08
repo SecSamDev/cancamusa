@@ -31,8 +31,9 @@ def generate_files_for_DC(host,domain,builder, host_path):
     # Create DOMAIN
     actual_domain = None
     for dmn in domain.domains:
-        if dmn.name == host.domain:
+        if dmn.domain == host.domain:
             actual_domain = dmn
+            break
     if actual_domain == None:
         print("Domain not found....")
         print(actual_domain)
