@@ -442,7 +442,7 @@ class ADUser:
             self.path = parent.path
     
     def from_json(obj,parent=None):
-        return ADUser(parent,obj["first_name"],obj["account_name"],obj["display_name"],obj["password"],obj["department"])
+        return ADUser(parent,obj["first_name"],obj["second_name"],obj["account_name"],obj["display_name"],obj["password"],obj["department"])
 
     def to_json(self):
         return { 
