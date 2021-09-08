@@ -41,7 +41,7 @@ def generate_files_for_DC(host,domain,builder, host_path):
     ad_groups = actual_domain.list_groups()
     ad_ous = actual_domain.list_child_ou()
     user_list = actual_domain.list_users()
-    with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', host.os.win_type, 'create-domain.ps1.jinja'), 'r') as file_r:
+    with open(os.path.join(os.path.dirname(__file__), 'templates', host.os.win_type, 'create-domain.ps1.jinja'), 'r') as file_r:
         template = Template(file_r.read())
         actual_file_out_path = os.path.join(host_path,'iso_file', 'create-domain.ps1')
         with open(actual_file_out_path, 'w') as file_w:
@@ -50,7 +50,7 @@ def generate_files_for_DC(host,domain,builder, host_path):
     
 
 def generate_files_for_WS(host,builder, host_path):
-    with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', host.os.win_type, 'install-iis.ps1.jinja'), 'r') as file_r:
+    with open(os.path.join(os.path.dirname(__file__), 'templates', host.os.win_type, 'install-iis.ps1.jinja'), 'r') as file_r:
         template = Template(file_r.read())
         actual_file_out_path = os.path.join(host_path,'iso_file', 'install-iis.ps1')
         with open(actual_file_out_path, 'w') as file_w:
