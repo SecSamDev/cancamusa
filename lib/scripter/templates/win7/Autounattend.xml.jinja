@@ -274,12 +274,12 @@
                     <Description>Disable UAC</Description>
                 </SynchronousCommand>
                 <SynchronousCommand wcm:action="add">
-                    <CommandLine>mkdir C:\ini</CommandLine>
+                    <CommandLine>cmd.exe /c mkdir C:\ini</CommandLine>
                     <Order>26</Order>
                     <Description>Copy script files</Description>
                 </SynchronousCommand>
                 <SynchronousCommand wcm:action="add">
-                    <CommandLine>copy a:\ C:\ini\</CommandLine>
+                    <CommandLine>cmd.exe /c copy a:\ C:\ini\</CommandLine>
                     <Order>27</Order>
                     <Description>Copy script files</Description>
                 </SynchronousCommand>
