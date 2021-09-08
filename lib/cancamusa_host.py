@@ -140,30 +140,25 @@ class HostInfoRoles:
 
     def edit_interactive(self):
         answer = prompt([{'type': 'checkbox', 'name': 'option',
-                          'message': 'Select server roles: ', 'choices': AVAILABLE_ROLES}])
+                          'message': 'Select server roles: ', 'choices': [{'name': x, 'checked': (x in self.roles)} for x in AVAILABLE_ROLES]}])
         answ = answer['option']
         if len(answ) == 0:
             return
         else:
-            roles = []
-            print(answ)
             for ans in answ:
-                if 'checked' in ans and ans['checked']:
-                    roles.append(ans['name'])
+                self.roles.add(ans)
         return self
 
     def create_interactive():
+        roles = set()
         answer = prompt([{'type': 'checkbox', 'name': 'option',
-                          'message': 'Select server roles: ', 'choices': AVAILABLE_ROLES}])
+                          'message': 'Select server roles: ', 'choices': [{'name': x, 'checked': (x in self.roles)} for x in AVAILABLE_ROLES]}])
         answ = answer['option']
         if len(answ) == 0:
-            return
+            return HostInfoRoles([])
         else:
-            roles = []
-            print(answ)
             for ans in answ:
-                if 'checked' in ans and ans['checked']:
-                    roles.append(ans['name'])
+                roles.add(ans)
             return HostInfoRoles(roles)
 
     def to_json(self):
@@ -458,23 +453,23 @@ class HostInfoWindowsVersion:
                 'message': 'Select OS name', 'default': self.name}])
             self.name = answer['option']
             answer = prompt([{'type': 'input', 'name': 'option',
-                'message': 'Select OS Major Version', 'default': self.major}])
-            self.major = answer['option']
+                'message': 'Select OS Major Version', 'default': str(self.major)}])
+            self.major = int(answer['option'])
             answer = prompt([{'type': 'input', 'name': 'option',
-                'message': 'Select OS Minor Version', 'default': self.minor}])
-            self.minor = answer['option']
+                'message': 'Select OS Minor Version', 'default': str(self.minor)}])
+            self.minor = int(answer['option'])
             answer = prompt([{'type': 'input', 'name': 'option',
-                'message': 'Select OS Build Version', 'default': self.build}])
+                'message': 'Select OS Build Version', 'default': str(self.build)}])
             self.build = answer['option']
             answer = prompt([{'type': 'input', 'name': 'option',
-                'message': 'Select OS revision Version', 'default': self.revision}])
+                'message': 'Select OS revision Version', 'default': str(self.revision)}])
             self.revision = answer['option']
             answer = prompt([{'type': 'input', 'name': 'option',
-                'message': 'Select OS major revision Version', 'default': self.major_revision}])
-            self.major_revision = answer['option']
+                'message': 'Select OS major revision Version', 'default': str(self.major_revision)}])
+            self.major_revision = int(answer['option'])
             answer = prompt([{'type': 'input', 'name': 'option',
-                'message': 'Select OS minor revision Version', 'default': self.minor_revision}])
-            self.minor_revision = answer['option']
+                'message': 'Select OS minor revision Version', 'default': str(self.minor_revision)}])
+            self.minor_revision = int(answer['option'])
         pass
 
     def to_json(self):
@@ -801,6 +796,7 @@ class HostInfo:
                 if self.os.win_type in ['win2016','win2012','win2019']:
                     self.roles.edit_interactive()
                 else:
+                    print(self.os.win_type)
                     print("This is not a server")
             elif answer['option'] == 'RAM':
                 self.ram.edit_interactive()
