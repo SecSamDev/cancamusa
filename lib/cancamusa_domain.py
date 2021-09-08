@@ -219,6 +219,11 @@ class ADOrganizationalUnit:
             parsed_grp = ADGroup.from_json(grp,ret)
             parsed_grp.parent = ret
             ret.groups[name] = parsed_grp
+
+        for name, grp in obj["users"].items():
+            parsed_grp = ADUser.from_json(grp,ret)
+            parsed_grp.parent = ret
+            ret.users[name] = parsed_grp
         return ret
     
     
@@ -421,16 +426,17 @@ class ADGroup:
 
 
 class ADUser:
-    def __init__(self, parent, first_name,second_name, account_name,display_name, password, account_generator=None):
+    def __init__(self, parent, first_name,second_name, account_name,display_name, password, account_generator=None,department="Accounting"):
         self.parent = parent
         self.first_name = first_name
         self.second_name = second_name
-        if ' ' in first_name and 'account_name' == '' and account_generator:
+        if ' ' in first_name and account_generator:
             self.account_name = cancamusa_common.generate_account_name(first_name, account_generator)
         else:  
             self.account_name = account_name
         self.display_name = display_name
         self.password = password
+        self.department = department
         self.path = ""
         if parent:
             self.path = parent.path
@@ -445,7 +451,8 @@ class ADUser:
             "account_name" : self.account_name,
             "display_name" : self.display_name,
             "password" : self.password,
-            "path" : self.path
+            "path" : self.path,
+            "department" : self.department
         }
     
     def syn_path(self):

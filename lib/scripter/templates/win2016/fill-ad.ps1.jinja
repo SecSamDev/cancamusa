@@ -18,22 +18,21 @@ if (Get-ADGroup -Identity {{grp.sam_account_name}}){
 
 
 {% for user in user_list %}
-if (Get-ADUser -F {SamAccountName -eq {{user.sam_account_name}}}){
-    Write-Warning "A user account {{user.sam_account_name}} has already been created in Active Directory."
+if (Get-ADUser -F {SamAccountName -eq {{user.account_name}}}){
+    Write-Warning "A user account {{user.account_name}} has already been created in Active Directory."
 }else{
     New-ADUser `
-        -SamAccountName {{user.SamAccountName}} `
-        -UserPrincipalName "{{user.UserPrincipalName}}" `
-        -Name "{{user.Firstname}} {{user.Lastname}}" `
-        -GivenName {{user.Firstname}} `
-        -Surname {{user.Lastname}} `
+        -SamAccountName {{user.account_name}} `
+        -UserPrincipalName "{{user.account_name}}@{{domain}}" `
+        -Name "{{user.first_name}} {{user.second_name}}" `
+        -GivenName {{user.first_name}} `
+        -Surname {{user.second_name}} `
         -Enabled $True `
-        -ChangePasswordAtLogon $True `
-        -DisplayName "{{user.Lastname}}, {{user.Firstname}}" `
-        -Department {{user.Department}} `
-        -Path {{user.OU}} `
-        -AccountPassword (convertto-securestring {{user.Password}} -AsPlainText -Force)
+        -ChangePasswordAtLogon $False `
+        -DisplayName "{{user.display_name}}" `
+        -Department {{user.department}} `
+        -Path {{user.path}} `
+        -AccountPassword (convertto-securestring {{user.password}} -AsPlainText -Force)
     }
 }
-
 {% endfor %}
