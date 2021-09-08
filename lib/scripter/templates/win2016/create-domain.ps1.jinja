@@ -44,4 +44,7 @@ if ((gwmi win32_computersystem).partofdomain -eq $false) {
         Write-Host Setting DNS
         $adapters | ForEach-Object {$_.SetDNSServerSearchOrder($newDNSServers)}
     }
+    
+    # Next reboot fill AD
+    reg.exe ADD "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" /f /v FillDomain /t REG_SZ /d "C:\ini\fill-ad.ps1"
 }

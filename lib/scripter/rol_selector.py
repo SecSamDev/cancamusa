@@ -38,15 +38,25 @@ def generate_files_for_DC(host,domain,builder, host_path):
         print("Domain not found....")
         print(actual_domain)
         return
-    ad_groups = actual_domain.list_groups()
-    ad_ous = actual_domain.list_child_ou()
-    user_list = actual_domain.list_users()
+    domain_ip = actual_domain.dc_ip
+    domain_name = actual_domain.domain
+    domain_netbios = actual_domain.name
     with open(os.path.join(os.path.dirname(__file__), 'templates', host.os.win_type, 'create-domain.ps1.jinja'), 'r') as file_r:
         template = Template(file_r.read())
         actual_file_out_path = os.path.join(host_path,'iso_file', 'create-domain.ps1')
         with open(actual_file_out_path, 'w') as file_w:
-            file_w.write(template.render(user_list=user_list, ad_groups=ad_groups, ad_ous= ad_ous))
+            file_w.write(template.render(domain_ip=domain_ip, domain_name=domain_name, domain_netbios= domain_netbios))
         builder.add_script(actual_file_out_path)
+
+    ad_groups = actual_domain.list_groups()
+    ad_ous = actual_domain.list_child_ou()
+    user_list = actual_domain.list_users()
+    with open(os.path.join(os.path.dirname(__file__), 'templates', host.os.win_type, 'fill-ad.ps1.jinja'), 'r') as file_r:
+        template = Template(file_r.read())
+        actual_file_out_path = os.path.join(host_path,'iso_file', 'fill-ad.ps1')
+        with open(actual_file_out_path, 'w') as file_w:
+            file_w.write(template.render(user_list=user_list, ad_groups=ad_groups, ad_ous= ad_ous))
+        builder.add_config(actual_file_out_path)
     
 
 def generate_files_for_WS(host,builder, host_path):
