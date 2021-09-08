@@ -13,6 +13,7 @@ ROLE_DNS = 'DNS'
 AVAILABLE_ROLES = [ROLE_DOMAIN_CONTROLLER, ROLE_WEB_SERVER, ROLE_EXCHANGE, ROLE_AD_FOREST, ROLE_DHCP,ROLE_DNS]
 
 def generate_rol_files_for_host(host,builder, project):
+    print("Generating role files for {}".format(host.computer_name))
     project_path = os.path.join(project.config_path, "build")
     host_path = os.path.join(project_path, host.computer_name)
     if len(host.roles.roles) > 0:
