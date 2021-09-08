@@ -76,7 +76,7 @@ iface vmbr{} inet static
             host_path, str(host.host_id) + ".conf")
         with open(qemu_template_file, 'w') as qemu_template:
             compatible_win_image = self.configuration.select_win_image(
-                host, 'CANCAMUSA_DEBUG' in os.environ,False, 'CLEAN_ISOS' in os.environ)
+                host, 'CANCAMUSA_DEBUG' in os.environ,False)
             qemu_template.write('bootdisk: ide0\n')
             # Custom CPU with QEMU flags that hides virtualization
             qemu_template.write('cpu: custom-Cancamusa\n')
@@ -123,7 +123,7 @@ iface vmbr{} inet static
         
         # Build Autounattend
         compatible_win_image = self.configuration.select_win_image(
-            host, 'CANCAMUSA_DEBUG' in os.environ)
+            host, 'CANCAMUSA_DEBUG' in os.environ,True,'CLEAN_ISOS' in os.environ)
         
         # Copy all scripts and configs that are not templates into the ISO file
         for (dirpath, dirnames, filenames) in os.walk(os.path.join(os.path.dirname(__file__), 'scripter', 'scripts', compatible_win_image['win_type'])):
