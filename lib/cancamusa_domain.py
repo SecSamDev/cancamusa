@@ -354,7 +354,7 @@ class ADOrganizationalUnit:
                 
                 elif answer['option'] == 'Add Users':
                     answer = prompt([{'type': 'input','name': 'option','message': 'User name:', 'default' : ""}])
-                    grp = ADUser(self,answer["option"],"","",answer["option"],"",self.account_generator)
+                    grp = ADUser(self,answer["option"],"","",answer["option"],"","",self.account_generator)
                     grp = grp.edit_interactive()
                     if grp:
                         self.users[grp.account_name] = grp
@@ -426,7 +426,7 @@ class ADGroup:
 
 
 class ADUser:
-    def __init__(self, parent, first_name,second_name, account_name,display_name, password, account_generator=None,department="Accounting"):
+    def __init__(self, parent, first_name,second_name, account_name,display_name, password,department, account_generator=None):
         self.parent = parent
         self.first_name = first_name
         self.second_name = second_name
@@ -442,7 +442,7 @@ class ADUser:
             self.path = parent.path
     
     def from_json(obj,parent=None):
-        return ADUser(parent,obj["first_name"],obj["account_name"],obj["display_name"],obj["password"])
+        return ADUser(parent,obj["first_name"],obj["account_name"],obj["display_name"],obj["password"],obj["department"])
 
     def to_json(self):
         return { 
@@ -461,7 +461,7 @@ class ADUser:
             self.path = self.parent.path
 
     def create_interactive(parent=None):
-        grp = ADUser(parent,"","","","","")
+        grp = ADUser(parent,"","","","","","")
         grp = grp.edit_interactive()
         return grp
     
