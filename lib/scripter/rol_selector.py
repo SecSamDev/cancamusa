@@ -27,6 +27,7 @@ def generate_rol_files_for_host(host,builder, project):
             generate_files_for_WS(host,builder,host_path)
 
 def generate_files_for_DC(host,domain,builder, host_path):
+    print("Create Domain")
     # Create DOMAIN
     actual_domain = None
     for dmn in domain.domains:
@@ -36,10 +37,11 @@ def generate_files_for_DC(host,domain,builder, host_path):
         print("Domain not found....")
         print(actual_domain)
         return
-    
+    print(1)
     ad_groups = actual_domain.list_groups()
     ad_ous = actual_domain.list_child_ou()
     user_list = actual_domain.list_users()
+    print(2)
     with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', host.os.win_type, 'create-domain.ps1.jinja'), 'r') as file_r:
         template = Template(file_r.read())
         actual_file_out_path = os.path.join(host_path,'iso_file', 'create-domain.ps1')
