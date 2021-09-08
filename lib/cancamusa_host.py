@@ -168,7 +168,12 @@ class HostInfoRoles:
         return toRet
 
     def from_json(roles):
-        if len(roles) > 0 and 'Name' in roles[0]:
+        if len(roles) > 0 and 'Name' in roles[0] and not 'DisplayName' in roles[0]:
+            rols = []
+            for rol in roles:
+                rols.append(rol['Name'])
+            return HostInfoRoles(rols)
+        elif len(roles) > 0 and 'Name' in roles[0] and 'DisplayName' in roles[0]:
             # Not processed
             role_list = roles_from_extracted_info(roles)
             return HostInfoRoles(role_list)
