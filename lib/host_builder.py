@@ -199,7 +199,7 @@ iface vmbr{} inet static
 
         # TODO: build role scripts
         
-        generate_rol_files_for_host(host,builder,host_path)
+        generate_rol_files_for_host(host,builder,self.project)
 
 
         # Join Domain
