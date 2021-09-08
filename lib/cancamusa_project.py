@@ -229,21 +229,20 @@ class CancamusaProject:
                 answer = prompt([{'type': 'list','name': 'option','message': 'Select a host to edit', 'choices' :hosts}])
                 pos = hosts.index(answer['option'])
                 self.hosts[pos].edit_interactive(project=self)
+                hst = self.hosts[pos]
+                if hst.domain != None and ROLE_DOMAIN_CONTROLLER in hst.roles.roles:
+                    for dmn in self.domain.domains:
+                        if dmn.domain == hst.domain:
+                            try:
+                                dmn.dc_ip = hst.networks[0].ip_address[0]
+                            except:
+                                print("Network not configured for DC: {}".format(hst.computer_name))
             elif answer['option'] == 'Delete host':
                 hosts = list(map(lambda x: x.computer_name, self.hosts))
                 answer = prompt([{'type': 'list','name': 'option','message': 'Select a host to delete', 'choices' : hosts}])
                 pos = hosts.index(answer['option'])
                 self.hosts.pop(pos)
             elif answer['option'] == 'Back':
-                for hst in self.hosts:
-                    if hst.domain != None and ROLE_DOMAIN_CONTROLLER in hst.roles.roles:
-                        for dmn in self.domain.domains:
-                            if dmn.domain == hst.domain:
-                                try:
-                                    dmn.dc_ip = hst.networks[0].ip_address[0]
-                                except:
-                                    print("Network not configured for host: {}".format(hst.computer_name))
-
                 return
 
     def edit_domain_config(self): 
