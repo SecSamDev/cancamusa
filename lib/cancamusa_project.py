@@ -264,8 +264,6 @@ class CancamusaProject:
                 for host in self.hosts:
                     builder.build_host_image(host)
                 builder.build_net_interfaces()
-                
-                return
             elif answer['option'] == 'Deploy':
                 # Depending if the project is alredy builded it deploys the project in Proxmox etc
                 deployer = ProxmoxDeployer(self)
@@ -274,7 +272,6 @@ class CancamusaProject:
                     deployer.deploy_host(host)
                 # Create resource pool
                 deployer.create_pool()
-                return
             elif answer['option'] == 'AD':  
                 self.edit_domain_config()
             elif answer['option'] == 'Description':  
