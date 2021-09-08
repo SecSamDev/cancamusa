@@ -66,7 +66,7 @@ def get_win_image_type(win_image):
 
 def generate_account_name(full_name,alg):
     if alg == ACCOUNT_FORMAT_NAME_DOT_SURNAME:
-        return full_name.lower().split(" ")[:-1].join(".")
+        return ".".join(full_name.lower().split(" "))
     elif alg == ACCOUNT_FORMAT_TRHEE_LETTERS:
         arr = full_name.lower().split(" ")
         return arr[0][:3] + arr[1][:3]

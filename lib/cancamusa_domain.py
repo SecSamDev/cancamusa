@@ -430,7 +430,7 @@ class ADUser:
         self.parent = parent
         self.first_name = first_name
         self.second_name = second_name
-        if ' ' in first_name and account_generator != None:
+        if account_generator != None and ' ' in first_name:
             self.account_name = cancamusa_common.generate_account_name(first_name, account_generator)
         else:  
             self.account_name = account_name
