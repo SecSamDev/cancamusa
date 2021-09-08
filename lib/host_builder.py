@@ -185,6 +185,18 @@ iface vmbr{} inet static
 
         # TODO: build role scripts
 
+        # Setup Network -> O = Nombre de Adaptador, 2 = Direccion Fisica
+        #"$headers = (getmac /fo csv /v | Select-Object -First 1).replace('\"','').split(',')"
+
+        with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'setup-net.ps1.jinja'), 'r') as file_r:
+            template = Template(file_r.read())
+            actual_file_out_path = os.path.join(host_path,'iso_file', 'setup-net.ps1')
+            for netw in host.networks:
+                self.networks.add(str(ipaddress.ip_network('{}/{}'.format(netw.ip_address[0],netw.ip_subnet[0]),False)))
+            with open(actual_file_out_path, 'w') as file_w:
+                file_w.write(template.render(networks=host.networks))
+            builder.add_script(actual_file_out_path)
+
         # Join Domain
         if len(self.project.domain.domains) > 0:
             # There are domains
@@ -196,20 +208,6 @@ iface vmbr{} inet static
                     for domain in self.project.domain.domains:
                         file_w.write(template.render(domain_dc_ip=domain.dc_ip,username=domain.default_local_admin,password=domain.default_local_admin_password,domain_name=domain.domain))
                 builder.add_script(actual_file_out_path)
-        
-        
-        # Setup Network -> O = Nombre de Adaptador, 2 = Direccion Fisica
-        #"$headers = (getmac /fo csv /v | Select-Object -First 1).replace('\"','').split(',')"
-        actual_file_out_path = os.path.join(host_path, 'iso_file', 'setup-net.ps1')
-        with open(actual_file_out_path, 'w') as file_w:
-            net_script = ""
-            for netw in host.networks:
-                net_script += "$elements = (getmac /fo csv /v | Select-Object -Skip 1).replace('\"','').split([Environment]::NewLine\n"
-                net_script += "foreach($el in $elements) { if($el.split(',')[2] -eq \"" + netw.mac_address.replace(":","-").upper() + "\") {netsh interface ip set address $el.split(',')[0] static " + netw.ip_address[0] + " " + netw.ip_subnet[0] + " " + netw.ip_gateway[0] + '}}\n'
-                self.networks.add(str(ipaddress.ip_network('{}/{}'.format(netw.ip_address[0],netw.ip_subnet[0]),False)))
-                
-            file_w.write(net_script)
-        builder.add_script(actual_file_out_path)
 
 
         # Install sysmon

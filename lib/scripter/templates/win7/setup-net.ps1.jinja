@@ -1,0 +1,9 @@
+Get-ChildItem -Path "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList\Profiles" -recurse | foreach(Set-ItemProperty -Path $_.pspath -Name Category -value 1)
+{%- for netw in networks %}
+$elements = (getmac /fo csv /v | Select-Object -Skip 1).replace('\"','').split([Environment]::NewLine)
+foreach($el in $elements) { 
+    if($el.split(',')[2] -eq "{{netw.mac_address}}".replace(":","-").ToUpper()) {
+        netsh interface ip set address $el.split(',')[0] static "{{netw.ip_address[0]}" "{{netw.ip_subnet[0]}}" "{{netw.ip_gateway[0]"
+    }
+}
+{%- endfor %}
