@@ -14,7 +14,7 @@ class ScriptIsoBuilder:
     """
     def __init__(self,host, scripts, configs):
         self.host = host
-        self.scripts = set()
+        self.scripts = []
         self.configs = set()
         for scr in scripts:
             self.scripts.add(scr)
@@ -26,7 +26,7 @@ class ScriptIsoBuilder:
         self.configs.add(config_path)
 
     def add_script(self,script_path):
-        self.scripts.add(script_path)
+        self.scripts.append(script_path)
 
     def init_script(self):
         script = ""
