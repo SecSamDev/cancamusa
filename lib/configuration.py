@@ -89,7 +89,7 @@ class CancamusaConfiguration:
         cancamusa.save()
         return cancamusa
 
-    def select_win_image(self, host,debug=False,prompter=True):
+    def select_win_image(self, host,debug=False,prompter=True,clean=False):
         """Selects the best windows image for a given host
 
         Args:
@@ -99,7 +99,7 @@ class CancamusaConfiguration:
         win_image = get_win_image_type(str(host.os.name))
         for name, image in self.win_images.items():
             if image["win_type"] == win_type:
-                if host.selected_img_pth != None and host.selected_img_pth == image['path']:
+                if not clean and host.selected_img_pth != None and host.selected_img_pth == image['path']:
                     return {
                         'path' : image['path'],
                         'win_type' : image['win_type'],

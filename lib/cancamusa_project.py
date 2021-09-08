@@ -250,7 +250,7 @@ class CancamusaProject:
 
     def edit_project_interactive(self):
         while True:
-            answer = prompt([{'type': 'list','name': 'option','message': 'Select a project property:', 'choices' : ['Description','Edit hosts','AD','SIEM','Build','Deploy','Exit'], 'value' : "none"}])
+            answer = prompt([{'type': 'list','name': 'option','message': 'Select a project property:', 'choices' : ['Description','Edit hosts','AD','SIEM','Build', 'Rebuild','Deploy','Exit'], 'value' : "none"}])
             if answer['option'] == 'Exit':
                 self.save()
                 return
@@ -260,6 +260,13 @@ class CancamusaProject:
                 self.edit_siem_config()
             elif answer['option'] == 'Build':
                 # Building the project: Creating ISOs, fill templates based on project specifications
+                builder = WindowsHostBuilder(self)
+                for host in self.hosts:
+                    builder.build_host_image(host)
+                builder.build_net_interfaces()
+            elif answer['option'] == 'Rebuild':
+                # Rebuilding the project letting the user select the ISOs: Creating ISOs, fill templates based on project specifications
+                os.environ['CLEAN_ISOS']='True'
                 builder = WindowsHostBuilder(self)
                 for host in self.hosts:
                     builder.build_host_image(host)
