@@ -55,7 +55,7 @@ def generate_files_for_DC(host,domain,builder, host_path):
         template = Template(file_r.read())
         actual_file_out_path = os.path.join(host_path,'iso_file', 'fill-ad.ps1')
         with open(actual_file_out_path, 'w') as file_w:
-            file_w.write(template.render(user_list=user_list, ad_groups=ad_groups, ad_ous= ad_ous))
+            file_w.write(template.render(user_list=user_list, ad_groups=ad_groups, ad_ous=ad_ous, domain=actual_domain.domain))
         builder.add_config(actual_file_out_path)
     
 
