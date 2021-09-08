@@ -755,6 +755,7 @@ class HostInfo:
             host.selected_img_idx = obj['selected_img_idx']
         if 'selected_img_pth' in obj:
             host.selected_img_idx = obj['selected_img_pth']
+        print("obj['selected_img_pth']" + obj['selected_img_pth'])
         return host
 
     def edit_interactive(self, project=None):
