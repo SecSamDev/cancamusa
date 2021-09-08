@@ -752,11 +752,9 @@ class HostInfo:
         host.domain = obj['domain']
         host.roles = HostInfoRoles.from_json(obj['roles'])
         if 'selected_img_idx' in obj:
-            print("selected_img_idx!!!")
             host.selected_img_idx = obj['selected_img_idx']
         if 'selected_img_pth' in obj:
             host.selected_img_idx = obj['selected_img_pth']
-        print("obj['selected_img_pth']" + obj['selected_img_pth'])
         return host
 
     def edit_interactive(self, project=None):
