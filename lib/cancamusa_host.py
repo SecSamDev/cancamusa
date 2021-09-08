@@ -788,12 +788,12 @@ class HostInfo:
                 self.bios.edit_interactive()
             elif answer['option'] == 'Domain':
                 if project:
-                    domains = list(map(lambda x: x.domain, project.domain.domains))
+                    domains = list(map(lambda x: x.domain, project.domain.domains)) + ["None"]
                     answer2 = prompt([{'type': 'list', 'name': 'option', 'message': 'Join a domain', 'choices': domains}])
-                    if answer2['option'] == '':
+                    pos = domains.index(answer2['option'])
+                    if domains[pos] == "None":
                         self.domain = None
                     else:
-                        pos = domains.index(answer2['option'])
                         self.domain = domains[pos]
                 else:
                     print("No domains available...")
