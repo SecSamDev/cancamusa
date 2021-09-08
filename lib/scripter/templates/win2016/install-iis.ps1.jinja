@@ -1,0 +1,45 @@
+Write-Host 'Install IIS'
+
+$InetPubRoot = "C:\Inetpub"
+$InetPubLog = "C:\Inetpub\Log"
+$InetPubWWWRoot = "C:\Inetpub\WWWRoot"
+
+Import-Module ServerManager
+
+Add-WindowsFeature -Name Web-Common-Http,Web-Asp-Net,Web-Net-Ext,Web-ISAPI-Ext,Web-ISAPI-Filter,Web-Http-Logging,Web-Request-Monitor,Web-Basic-Auth,Web-Windows-Auth,Web-Filtering,Web-Performance,Web-Mgmt-Console,Web-Mgmt-Compat,WAS -IncludeAllSubFeature
+
+Import-Module WebAdministration
+
+New-Item -Path $InetPubRoot -type directory -Force -ErrorAction SilentlyContinue
+New-Item -Path $InetPubLog -type directory -Force -ErrorAction SilentlyContinue
+New-Item -Path $InetPubWWWRoot -type directory -Force -ErrorAction SilentlyContinue
+
+$InetPubOldLocation = @(get-website)[0].physicalPath.ToString()
+$InetPubOldLocation =  $InetPubOldLocation.Replace("%SystemDrive%",$env:SystemDrive)
+
+$Command = "icacls $InetPubWWWRoot /grant BUILTIN\IIS_IUSRS:(OI)(CI)(RX) BUILTIN\Users:(OI)(CI)(RX)"
+cmd.exe /c $Command
+$Command = "icacls $InetPubLog /grant ""NT SERVICE\TrustedInstaller"":(OI)(CI)(F)"
+cmd.exe /c $Command
+
+$Command = "%windir%\system32\inetsrv\appcmd set config -section:system.applicationHost/sites -siteDefaults.logfile.directory:$InetPubLog"
+cmd.exe /c $Command
+$Command = "%windir%\system32\inetsrv\appcmd set config -section:system.applicationHost/log -centralBinaryLogFile.directory:$InetPubLog"
+cmd.exe /c $Command
+$Command = "%windir%\system32\inetsrv\appcmd set config -section:system.applicationHost/log -centralW3CLogFile.directory:$InetPubLog"
+cmd.exe /c $Command
+
+Set-ItemProperty 'IIS:\Sites\Default Web Site' -name physicalPath -value $InetPubWWWRoot
+
+
+If (!(Test-Path "C:\inetpub\temp\apppools")) {
+  New-Item -Path "C:\inetpub\temp\apppools" -type directory -Force -ErrorAction SilentlyContinue
+}
+
+if (Test-Path -Path "C:\ini\WWWRoot") {
+  # Copy IIS folder into C:\Inetpub\WWWRoot
+  cmd.exe /c copy C:\ini\WWWRoot\ C:\Inetpub\WWWRoot\
+}
+
+$Command = "IISRESET"
+Invoke-Expression -Command $Command

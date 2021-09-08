@@ -11,45 +11,6 @@ from rol_selector import AVAILABLE_ROLES, roles_from_extracted_info
 
 from processors import list_processors
 
-
-class InteractiveHostEditor:
-
-    def edit_hosts(cancamusa):
-        """Edit the hosts inside a CancamusaProject
-
-        Args:
-            cancamusa: Cancamusa project
-        Returns:
-            The edited cancamusa project
-    """
-        answers = prompt([{'type': 'list', 'name': 'host_option', 'message': 'Select an option', 'choices': [
-                         'Import hosts', 'Edit host', 'Delete host', 'Create Host', 'Exit']}])
-
-        if answers['option'] == 'Import hosts':
-            answers = prompt([{'type': 'input', 'name': 'hosts_path',
-                               'message': 'Where is the host information location?'}])
-            try:
-                hosts = read_host_files_in_path(answers['hosts_path'])
-            except:
-                print("Cannot read hosts import paths: " +
-                      answers['hosts_path'])
-            for host in hosts:
-                # Check if it does not alredy exists
-                cancamusa.add_host(host)
-
-    def change_bios(host_info):
-        bios_list = list(
-            map(lambda x: x['Name'] + " " + x['Manufacturer'], bios_database.BIOS_LIST))
-        bios_list.insert(0, 'Use built in bios')
-        answers = prompt([{'type': 'list', 'name': 'host_option',
-                           'message': 'Select a bios', 'choices': bios_list}])
-        pos = bios_list.index(answers['host_option'])
-        if pos < 0:
-            host_info.bios = None
-        else:
-            host_info.bios = HostInfoBios(bios_database.BIOS_LIST[pos])
-
-
 def read_host_information(pth):
     return HostInfo.host_info_from_directory(pth)
 
@@ -173,34 +134,51 @@ class HostInfoPrograms:
 
 class HostInfoRoles:
     def __init__(self, roles):
-        self.roles = roles
+        self.roles = set()
+        for rol in roles:
+            self.roles.add(rol)
 
     def edit_interactive(self):
-        # Don't know what to do here
+        answer = prompt([{'type': 'checkbox', 'name': 'option',
+                          'message': 'Select server roles: ', 'choices': AVAILABLE_ROLES}])
+        answ = answer['option']
+        if len(answ) == 0:
+            return
+        else:
+            roles = []
+            print(answ)
+            for ans in answ:
+                if 'checked' in ans and ans['checked']:
+                    roles.append(ans['name'])
         return self
 
     def create_interactive():
-        examples = [] + AVAILABLE_ROLES + ['Back']
-        answer = prompt([{'type': 'list', 'name': 'option',
-                          'message': 'Select a server role: ', 'choices': examples}])
+        answer = prompt([{'type': 'checkbox', 'name': 'option',
+                          'message': 'Select server roles: ', 'choices': AVAILABLE_ROLES}])
         answ = answer['option']
-        if answ == 'Back':
+        if len(answ) == 0:
             return
         else:
-            return [{'name': answ}]
+            roles = []
+            print(answ)
+            for ans in answ:
+                if 'checked' in ans and ans['checked']:
+                    roles.append(ans['name'])
+            return HostInfoRoles(roles)
 
     def to_json(self):
         toRet = []
         for rol in self.roles:
-            toRet.append({'name': rol['name']})
+            toRet.append({'Name': rol})
         return toRet
 
     def from_json(roles):
-        if len(roles) > 0 and 'DisplayName' in roles[0]:
+        if len(roles) > 0 and 'Name' in roles[0]:
             # Not processed
             role_list = roles_from_extracted_info(roles)
+            return HostInfoRoles(role_list)
         else:
-            return HostInfoRole(roles)
+            return HostInfoRoles([])
 
 
 class HostInfoDisk:
@@ -678,7 +656,7 @@ class HostInfo:
         self.os = HostInfoWindowsVersion('Windows 10 Enterprise',10, 0, 0, 0, 0, 0)
         self.accounts = []
         self.programs = []
-        self.roles = []
+        self.roles = HostInfoRoles([])
         self.cpus = []
         self.ram = HostInfoRAM("Crucial",size_textual_to_numeric("8G"))
         self.domain = None
@@ -734,7 +712,7 @@ class HostInfo:
         for cpu in self.cpus:
             to_ret['cpus'].append(cpu.to_json())
         to_ret['bios'] = self.bios.to_json()
-        to_ret['roles'] = []
+        to_ret['roles'] = self.roles.to_json()
         to_ret["os"] = self.os.to_json()
         to_ret["computer_name"] = self.computer_name
         to_ret["domain"] = self.domain
@@ -766,12 +744,13 @@ class HostInfo:
         host.host_id = int(obj["host_id"]) if 'host_id' in obj else 1000
         host.ram = HostInfoRAM.from_json(obj['ram'])
         host.domain = obj['domain']
+        host.roles = HostInfoRoles.from_json(obj['roles'])
         return host
 
     def edit_interactive(self, project=None):
         while True:
             answer = prompt([{'type': 'list', 'name': 'option', 'message': 'Editing host: ' + self.computer_name, 'choices': [
-                            'Name', 'Disks', 'Bios','RAM', 'CPUs', 'Accounts','Domain', 'Network interfaces', 'OS Version', 'Resume', 'Back', 'Cancel']}])
+                            'Name', 'Disks', 'Bios','RAM', 'CPUs', 'Accounts','Domain','Roles', 'Network interfaces', 'OS Version', 'Resume', 'Back', 'Cancel']}])
             if answer['option'] == 'Back':
                 return self
             elif answer['option'] == 'Resume':
@@ -818,6 +797,11 @@ class HostInfo:
                         self.domain = domains[pos]
                 else:
                     print("No domains available...")
+            elif answer['option'] == 'Roles':
+                if self.os.win_type in ['win2016','win2012','win2019']:
+                    self.roles.edit_interactive()
+                else:
+                    print("This is not a server")
             elif answer['option'] == 'RAM':
                 self.ram.edit_interactive()
             elif answer['option'] == 'OS Version':

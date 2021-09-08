@@ -8,6 +8,7 @@ from jinja2 import Template
 import subprocess
 import ipaddress
 import cancamusa_common
+from rol_selector import generate_rol_files_for_host
 
 class WindowsHostBuilder:
     def __init__(self, project):
@@ -183,7 +184,6 @@ iface vmbr{} inet static
 
             builder.add_config(os.path.join(host_path,'iso_file', 'Autounattend.xml'))
 
-        # TODO: build role scripts
 
         # Setup Network -> O = Nombre de Adaptador, 2 = Direccion Fisica
         #"$headers = (getmac /fo csv /v | Select-Object -First 1).replace('\"','').split(',')"
@@ -196,6 +196,11 @@ iface vmbr{} inet static
             with open(actual_file_out_path, 'w') as file_w:
                 file_w.write(template.render(networks=host.networks))
             builder.add_script(actual_file_out_path)
+
+        # TODO: build role scripts
+        
+        generate_rol_files_for_host(host,builder,host_path)
+
 
         # Join Domain
         if len(self.project.domain.domains) > 0:
