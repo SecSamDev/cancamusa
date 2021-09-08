@@ -99,7 +99,7 @@ class CancamusaConfiguration:
         win_image = get_win_image_type(str(host.os.name))
         for name, image in self.win_images.items():
             if image["win_type"] == win_type:
-                if host.selected_img_idx != None and host.selected_img_pth != None:
+                if host.selected_img_idx != None:
                     print("host.selected_img_pth" + str(host.selected_img_pth))
                     print(image['path'])
                 if host.selected_img_pth != None and host.selected_img_pth == image['path']:
