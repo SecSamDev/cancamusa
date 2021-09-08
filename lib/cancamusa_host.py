@@ -660,6 +660,8 @@ class HostInfo:
         self.cpus = []
         self.ram = HostInfoRAM("Crucial",size_textual_to_numeric("8G"))
         self.domain = None
+        self.selected_img_idx = None
+        self.selected_img_pth = None
 
     def add_disk(self, disk):
         for dsk in self.disks:
@@ -716,6 +718,10 @@ class HostInfo:
         to_ret["os"] = self.os.to_json()
         to_ret["computer_name"] = self.computer_name
         to_ret["domain"] = self.domain
+        if self.selected_img_idx != None:
+            to_ret['selected_img_idx'] = self.selected_img_idx
+        if self.selected_img_pth != None:
+            to_ret['selected_img_pth'] = self.selected_img_pth
         return to_ret
 
     def from_json(obj):
@@ -745,6 +751,10 @@ class HostInfo:
         host.ram = HostInfoRAM.from_json(obj['ram'])
         host.domain = obj['domain']
         host.roles = HostInfoRoles.from_json(obj['roles'])
+        if 'selected_img_idx' in obj:
+            host.selected_img_idx = obj['selected_img_idx']
+        if 'selected_img_pth' in obj:
+            host.selected_img_idx = obj['selected_img_pth']
         return host
 
     def edit_interactive(self, project=None):

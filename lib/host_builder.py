@@ -140,6 +140,8 @@ iface vmbr{} inet static
             win_image = {
                 'image': compatible_win_image['selected_img'] + 1 #Index starts at one
             }
+            host.selected_img_idx = compatible_win_image['selected_img']
+            host.selected_img_pth = compatible_win_image["path"]
             principal_disk = None
             disk_list = []
             for disk in host.disks:

@@ -99,6 +99,14 @@ class CancamusaConfiguration:
         win_image = get_win_image_type(str(host.os.name))
         for name, image in self.win_images.items():
             if image["win_type"] == win_type:
+                if host.selected_img_pth != None and host.selected_img_pth == image['path']:
+                    return {
+                        'path' : image['path'],
+                        'win_type' : image['win_type'],
+                        'md5' : image['md5'],
+                        'selected_img' : host.selected_img_idx,
+                        'images' : {}
+                    }
                 if win_image:
                     images = []
                     for img_id, img_name in image['images'].items():
