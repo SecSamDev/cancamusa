@@ -8,6 +8,7 @@ from cancamusa_host import HostInfo
 from host_builder import WindowsHostBuilder
 from cancamusa_domain import CancamusaDomain
 from proxmox_deploy import ProxmoxDeployer
+from rol_selector import ROLE_DOMAIN_CONTROLLER
 
 
 class CancamusaProject:
@@ -234,6 +235,15 @@ class CancamusaProject:
                 pos = hosts.index(answer['option'])
                 self.hosts.pop(pos)
             elif answer['option'] == 'Back':
+                for hst in self.hosts:
+                    if hst.domain != None and ROLE_DOMAIN_CONTROLLER in hst.roles.roles:
+                        for dmn in self.domain.domains:
+                            if dmn.domain == hst.domain:
+                                try:
+                                    dmn.dc_ip = hst.networks[0].ip_address[0]
+                                except:
+                                    print("Network not configured for host: {}".format(hst.computer_name))
+
                 return
 
     def edit_domain_config(self): 
