@@ -110,7 +110,7 @@ iface vmbr{} inet static
             dcisc_i = dcisc_i + 1
             qemu_template.write('scsihw: virtio-scsi-pci\n')
             qemu_template.write(
-                'args:-bios {} -boot once=d -fda {}\n'.format(os.path.join(host_path, "bios.bin"), os.path.join(host_path, str(host.host_id) + ".img")))
+                'args:-bios {} -boot once=d,order=c,strict=on -fda {}\n'.format(os.path.join(host_path, "bios.bin"), os.path.join(host_path, str(host.host_id) + ".img")))
         print('QEMU template for proxmox created: ' + qemu_template_file)
 
     def build_extra_iso(self, host):

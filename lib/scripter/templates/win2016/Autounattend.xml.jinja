@@ -212,8 +212,18 @@
                     <RequiresUserInput>true</RequiresUserInput>
                 </SynchronousCommand>
                 <SynchronousCommand wcm:action="add">
-                    <CommandLine>%SystemRoot%\System32\reg.exe ADD "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" /f /v CancamusaStart /t REG_SZ /d "a:/init_script.bat"</CommandLine>
-                    <Order>12</Order>
+                    <CommandLine>mkdir C:\ini\</CommandLine>
+                    <Order>26</Order>
+                    <Description>Copy script files</Description>
+                </SynchronousCommand>
+                <SynchronousCommand wcm:action="add">
+                    <CommandLine>copy a:\ C:\ini\</CommandLine>
+                    <Order>27</Order>
+                    <Description>Copy script files</Description>
+                </SynchronousCommand>
+                <SynchronousCommand wcm:action="add">
+                    <CommandLine>%SystemRoot%\System32\reg.exe ADD "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" /f /v CancamusaStart /t REG_SZ /d "C:\ini\init_script.bat"</CommandLine>
+                    <Order>28</Order>
                     <Description>Setup init script that does the same as PACKER</Description>
                 </SynchronousCommand>
                 <!-- WITHOUT WINDOWS UPDATES -->
