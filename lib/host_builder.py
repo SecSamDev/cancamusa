@@ -112,6 +112,7 @@ iface vmbr{} inet static
             qemu_template.write('scsihw: virtio-scsi-pci\n')
             qemu_template.write(
                 'args:-bios {} -boot once=d,order=c,strict=on -fda {}\n'.format(os.path.join(host_path, "bios.bin"), os.path.join(host_path, str(host.host_id) + ".img")))
+            qemu_template.write("vmstatestorage: {}\n".format(self.configuration.proxmox_image_storage))
         print('QEMU template for proxmox created: ' + qemu_template_file)
 
     def build_extra_iso(self, host):

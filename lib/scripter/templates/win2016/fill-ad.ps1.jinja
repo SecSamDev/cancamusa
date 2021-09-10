@@ -1,38 +1,26 @@
 Import-Module ActiveDirectory
 
 {% for ou in ad_ous %}
-if (Get-ADOrganizationalUnit -Identity {% if ou.parent_path %}"{{ou.path}}"{% else %} {{ou.name}} {% endif %}){
-    Write-Warning "A OrganizationalUnit {{ou.name}} has already been created in Active Directory."
-}else{
-    New-ADOrganizationalUnit -name "{{ou.name}}" {% if ou.parent_path %}-path "{{ou.parent_path}}"{% endif %}
-}{% endfor %}
+New-ADOrganizationalUnit -name "{{ou.name}}" {% if ou.parent_path %}-path "{{ou.parent_path}}"{% endif %}
+{% endfor %}
 
 
 {% for grp in ad_groups %}
-if (Get-ADGroup -Identity {{grp.sam_account_name}}){
-    Write-Warning "A group {{grp.sam_account_name}} has already been created in Active Directory."
-}else{
-    New-ADGroup -Name "{{grp.name}}" -SamAccountName {{grp.sam_account_name}} -GroupCategory {{grp.group_category}} -GroupScope {{grp.group_scope}} -DisplayName "{{grp.display_name}}" -Path "{{grp.path}}"
-}
+New-ADGroup -Name "{{grp.name}}" -SamAccountName {{grp.sam_account_name}} -GroupCategory {{grp.group_category}} -GroupScope {{grp.group_scope}} -DisplayName "{{grp.display_name}}" -Path "{{grp.path}}"
 {% endfor %}
 
 
 {% for user in user_list %}
-if (Get-ADUser -F {SamAccountName -eq {{user.account_name}}}){
-    Write-Warning "A user account {{user.account_name}} has already been created in Active Directory."
-}else{
-    New-ADUser `
-        -SamAccountName {{user.account_name}} `
-        -UserPrincipalName "{{user.account_name}}@{{domain}}" `
-        -Name "{{user.first_name}} {{user.second_name}}" `
-        -GivenName {{user.first_name}} `
-        -Surname {{user.second_name}} `
-        -Enabled $True `
-        -ChangePasswordAtLogon $False `
-        -DisplayName "{{user.display_name}}" `
-        -Department {{user.department}} `
-        -Path {{user.path}} `
-        -AccountPassword (convertto-securestring {{user.password}} -AsPlainText -Force)
-    }
-}
+New-ADUser `
+    -SamAccountName {{user.account_name}} `
+    -UserPrincipalName "{{user.account_name}}@{{domain}}" `
+    -Name "{{user.first_name}} {{user.second_name}}" `
+    -GivenName {{user.first_name}} `
+    -Surname {{user.second_name}} `
+    -Enabled $True `
+    -ChangePasswordAtLogon $False `
+    -DisplayName "{{user.display_name}}" `
+    -Department {{user.department}} `
+    -Path {{user.path}} `
+    -AccountPassword (convertto-securestring {{user.password}} -AsPlainText -Force)
 {% endfor %}
