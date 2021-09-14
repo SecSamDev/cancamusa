@@ -10,6 +10,7 @@ from cancamusa_domain import CancamusaDomain
 from proxmox_deploy import ProxmoxDeployer
 from rol_selector import ROLE_DOMAIN_CONTROLLER, ROLE_DNS, ROLE_DHCP, calculate_dhcp_failover
 import ipaddress
+import os
 
 class CancamusaProject:
     """ Loads and stores information about a Cancamusa project """
