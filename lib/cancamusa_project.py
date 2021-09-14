@@ -72,8 +72,10 @@ class CancamusaProject:
                         dhcp_server['failovers'] = []
                     else:
                         failover = calculate_dhcp_failover(found_dhcp, host)
-                        if not failover == None:
-                            dhcp_server['failovers'].append(failover)
+                        if failover != None:
+                            failover_names = list(map(lambda x: x['name'], dhcp_server['failovers']))
+                            if not failover['name'] in failover_names:
+                                dhcp_server['failovers'].append(failover)
 
 
     def change_host_id_start(self, new_value):

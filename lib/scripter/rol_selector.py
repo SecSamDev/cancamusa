@@ -78,7 +78,7 @@ def generate_files_for_DHCP(host,builder, project):
     # Create DHCP files
     # Scopes
     scopes = []
-    dns_server = project.dns_servers[host.computer_name]
+    dns_server = project.dns_servers[host.computer_name] if host.computer_name in project.dns_servers else None
     fixed_ips = []
     for network in project.networks:
         net = ipaddress.ip_network(network,False)
@@ -100,23 +100,25 @@ def generate_files_for_DHCP(host,builder, project):
             "exclusions" : exclusions
         })
     domain = project.domain.get_domain(host.domain)
+    dhcp_config = project.dhcp_servers[host.computer_name]
     with open(os.path.join(os.path.dirname(__file__), 'templates', host.os.win_type, 'install-dhcp.ps1.jinja'), 'r') as file_r:
         template = Template(file_r.read())
         actual_file_out_path = os.path.join(host_path,'iso_file', 'install-dhcp.ps1')
         with open(actual_file_out_path, 'w') as file_w:
-            file_w.write(template.render(host=host, dmn=domain, dns=dns_server, scopes=scopes, config=project.dhcp_servers[host.computer_name]))
+            file_w.write(template.render(host=host, dmn=domain, dns=dns_server, scopes=scopes, config=dhcp_config))
         builder.add_script(actual_file_out_path)
     
     fixed_hosts = []
-    for host in project.hosts:
+    for hst in project.hosts:
         if host.networks[0].ip_address[0] in fixed_ips:
-            fixed_hosts.append(host)
+            fixed_hosts.append(hst)
 
     with open(os.path.join(os.path.dirname(__file__), 'templates', host.os.win_type, 'fill-dhcp.ps1.jinja'), 'r') as file_r:
         template = Template(file_r.read())
         actual_file_out_path = os.path.join(host_path,'iso_file', 'fill-dhcp.ps1')
         with open(actual_file_out_path, 'w') as file_w:
-            file_w.write(template.render(thishost=host, dmn=domain, hosts=fixed_hosts, config=project.dhcp_servers[host.computer_name]))
+            file_w.write(template.render(thishost=host, dmn=domain, hosts=fixed_hosts, config=dhcp_config))
+        thishost = None
         builder.add_script(actual_file_out_path)
 
 
@@ -166,10 +168,10 @@ def calculate_dhcp_failover(host1, host2):
     scopes2 = set()
     for netw in host1.networks:
         net = ipaddress.ip_network("{}/{}".format(netw.ip_address[0], netw.ip_subnet[0]),False)
-        scopes1.add(net.network_address)
+        scopes1.add(str(net.network_address))
     for netw in host2.networks:
         net = ipaddress.ip_network("{}/{}".format(netw.ip_address[0], netw.ip_subnet[0]),False)
-        scopes2.add(net.network_address)
+        scopes2.add(str(net.network_address))
     common_scopes = list(scopes1.intersection(scopes2))
 
     return {

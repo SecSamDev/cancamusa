@@ -181,6 +181,14 @@ This will be used in the principal DC to create and fill the AD.
 * Drivers: No usage of VirtIO drivers.
 * High personalizations of machine hostname and users (Avoid usage of generic names that are detected by malware).
 
+### Windows server capabilities
+
+#### DHCP
+Configure as many servers as you want with failover enabled (if there is more than one DHCP server).
+
+Adds as many scopes as networks has the laboratory.
+Reserves IPs for each host that has a network interface in fixed or static mode.
+Calculates the failover configuration
 
 ## TODO:
 - Proxmox template creation with all scripts and drivers bundled in a ISO mounted in a CD/DVD device.
