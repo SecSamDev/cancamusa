@@ -111,7 +111,7 @@ iface vmbr{} inet static
             dcisc_i = dcisc_i + 1
             qemu_template.write('scsihw: virtio-scsi-pci\n')
             
-            bootsplash = self.configuration.os.path.join(self.project_path,'bootsplash.bmp')
+            bootsplash = os.path.join(self.project_path,'bootsplash.bmp')
             qemu_template.write(
                 'args:-bios {} -boot once=d,order=c,strict=on,splash={} -fda {}\n'.format(os.path.join(host_path, "bios.bin"),bootsplash, os.path.join(host_path, str(host.host_id) + ".img")))
             qemu_template.write("vmstatestorage: {}\n".format(self.configuration.proxmox_image_storage))
