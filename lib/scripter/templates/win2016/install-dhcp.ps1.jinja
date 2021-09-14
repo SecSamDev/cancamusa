@@ -1,0 +1,33 @@
+Install-WindowsFeature DHCP -IncludeManagementTools
+netsh dhcp add securitygroups
+Restart-Service dhcpserver
+
+Add-DhcpServerInDC -DnsName {{host.computer_name}}.{{host.domain}} -IPAddress {{host.networks[0].ip_address[0]}}
+
+Set-ItemProperty –Path registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\ServerManager\Roles\12 –Name ConfigurationState –Value 2
+
+Set-DhcpServerv4DnsSetting -ComputerName "{{host.computer_name}}.{{host.domain}}" -DynamicUpdates "Always" -DeleteDnsRRonLeaseExpiry $True
+{% if not dns == None -%}
+[string]$userName = '{{dns.username}}'
+[string]$userPassword = '{{dns.password}}'
+[securestring]$secStringPassword = ConvertTo-SecureString $userPassword -AsPlainText -Force
+[pscredential]$Credential = New-Object System.Management.Automation.PSCredential ($userName, $secStringPassword)
+
+Set-DhcpServerDnsCredential -Credential $Credential -ComputerName "{{host.computer_name}}.{{host.domain}}"
+{% endif %}
+
+{%- for scope in scopes %}
+Add-DhcpServerv4Scope -name "{{scope.name}}" -StartRange {{scope.start_range}} -EndRange {{scope.end_range}} -SubnetMask {{scope.subnet_mask}} -State Active
+{%- for exclusion in scope.exclusions %}
+Add-DhcpServerv4ExclusionRange -ScopeID {{scope.scope_id}} -StartRange {{exclusion}} -EndRange {{exclusion}}
+{%- endfor %}
+Set-DhcpServerv4OptionValue -OptionID 3 -Value {{host.networks[0].ip_address[0]}} -ScopeID {{scope.scope_id}} -ComputerName {{host.computer_name}}.{{host.domain}}
+{% if not dns == None -%}
+Set-DhcpServerv4OptionValue -DnsDomain {{host.domain}} -DnsServer {{dns.ip}}
+{% endif %}
+{%- endfor %}
+
+{% if config.primary == True -%}
+# Next reboot fill DHCP
+reg.exe ADD "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" /f /v FillDHCP /t REG_SZ /d 'C:\Windows\System32\cmd.exe /c powershell -File "C:\ini\fill-dhcp.ps1"'
+{% endif %}

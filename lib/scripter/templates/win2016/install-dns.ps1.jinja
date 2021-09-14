@@ -1,2 +1,2 @@
 Install-WindowsFeature -Name DNS -IncludeManagementTools
-Add-DnsServerForwarder -IPAddress 8.8.8.8 -PassThru
+Add-DnsServerForwarder -IPAddress {{dns.forwarder}} -PassThru

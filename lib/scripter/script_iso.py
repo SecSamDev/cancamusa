@@ -66,7 +66,7 @@ class ScriptIsoBuilder:
         if os.path.exists(output_dir):
             os.remove(output_dir)
         # Added installation logs
-        init_script = "@echo off\n>C:\\init\\install.log (\n" + self.init_script() + "\n)\n"
+        init_script = b"@echo off\n>C:\\init\\install.log (\n" + self.init_script() + b"\n)\n"
         tmp_dir = tempfile.mkdtemp()
         command = 'mkfs.msdos -C ' + output_dir + ' 1440'
         process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
@@ -88,6 +88,7 @@ class ScriptIsoBuilder:
             with open(cfg,'rb') as file_r:
                 with open(os.path.join(tmp_dir, os.path.basename(cfg)), 'wb') as file_w:
                     file_w.write(file_r.read().replace(b"\r",b"").replace(b"\n",b"\r\n"))
+        
         command = 'umount ' + tmp_dir
         process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         out, err = process.communicate()

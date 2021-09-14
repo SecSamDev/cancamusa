@@ -1,5 +1,6 @@
 from jinja2 import Template
 import os
+import ipaddress
 
 ROLE_DOMAIN_CONTROLLER = 'DC'
 ROLE_EXCHANGE = 'Exchange'
@@ -19,16 +20,19 @@ def generate_rol_files_for_host(host,builder, project):
     if len(host.roles.roles) > 0:
         selected_roles = set(host.roles.roles)
         if ROLE_DHCP in selected_roles:
-            generate_files_for_DHCP(host,builder,host_path)
+            generate_files_for_DHCP(host,builder, project)
         if ROLE_DNS in selected_roles:
-            generate_files_for_DHCP(host,builder,host_path)
+            generate_files_for_DNS(host,builder, project)
         if ROLE_DOMAIN_CONTROLLER in selected_roles:
-            generate_files_for_DC(host,project.domain,builder,host_path)
+            generate_files_for_DC(host,builder,project)
         if ROLE_WEB_SERVER in selected_roles:
-            generate_files_for_WS(host,builder,host_path)
+            generate_files_for_WS(host,builder,project)
 
-def generate_files_for_DC(host,domain,builder, host_path):
+def generate_files_for_DC(host,builder, project):
     # Create DOMAIN
+    domain = project.domain
+    project_path = os.path.join(project.config_path, "build")
+    host_path = os.path.join(project_path, host.computer_name)
     actual_domain = None
     for dmn in domain.domains:
         if dmn.domain == host.domain:
@@ -58,7 +62,9 @@ def generate_files_for_DC(host,domain,builder, host_path):
         builder.add_config(actual_file_out_path)
     
 
-def generate_files_for_WS(host,builder, host_path):
+def generate_files_for_WS(host,builder, project):
+    project_path = os.path.join(project.config_path, "build")
+    host_path = os.path.join(project_path, host.computer_name)
     with open(os.path.join(os.path.dirname(__file__), 'templates', host.os.win_type, 'install-iis.ps1.jinja'), 'r') as file_r:
         template = Template(file_r.read())
         actual_file_out_path = os.path.join(host_path,'iso_file', 'install-iis.ps1')
@@ -66,12 +72,66 @@ def generate_files_for_WS(host,builder, host_path):
             file_w.write(template.render())
         builder.add_script(actual_file_out_path)
 
-def generate_files_for_DHCP(host,builder, host_path):
+def generate_files_for_DHCP(host,builder, project):
+    project_path = os.path.join(project.config_path, "build")
+    host_path = os.path.join(project_path, host.computer_name)
     # Create DHCP files
-    pass
+    # Scopes
+    scopes = []
+    dns_server = project.dns_servers[host.computer_name]
+    fixed_ips = []
+    for network in project.networks:
+        net = ipaddress.ip_network(network,False)
+        usable_host = list(net.hosts())
+        exclusions = []
+        for excluded_ip in project.fixed_ips:
+            excluded_net = ipaddress.ip_network(excluded_ip,False)
+            if excluded_net.network_address != net.network_address:
+                continue
+            excluded_ip = excluded_ip.split("/")[0]
+            fixed_ips.append(excluded_ip)
+            exclusions.append(excluded_ip)
+        scopes.append({
+            "name" : "Network {}".format(network),
+            "start_range" : str(usable_host[0]),
+            "end_range" : str(usable_host[-1]),
+            "subnet_mask" : str(net.netmask),
+            "scope_id" : str(net.network_address),
+            "exclusions" : exclusions
+        })
+    domain = project.domain.get_domain(host.domain)
+    with open(os.path.join(os.path.dirname(__file__), 'templates', host.os.win_type, 'install-dhcp.ps1.jinja'), 'r') as file_r:
+        template = Template(file_r.read())
+        actual_file_out_path = os.path.join(host_path,'iso_file', 'install-dhcp.ps1')
+        with open(actual_file_out_path, 'w') as file_w:
+            file_w.write(template.render(host=host, dmn=domain, dns=dns_server, scopes=scopes, config=project.dhcp_servers[host.computer_name]))
+        builder.add_script(actual_file_out_path)
+    
+    fixed_hosts = []
+    for host in project.hosts:
+        if host.networks[0].ip_address[0] in fixed_ips:
+            fixed_hosts.append(host)
 
-def generate_files_for_DNS(host,builder, host_path):
+    with open(os.path.join(os.path.dirname(__file__), 'templates', host.os.win_type, 'fill-dhcp.ps1.jinja'), 'r') as file_r:
+        template = Template(file_r.read())
+        actual_file_out_path = os.path.join(host_path,'iso_file', 'fill-dhcp.ps1')
+        with open(actual_file_out_path, 'w') as file_w:
+            file_w.write(template.render(thishost=host, dmn=domain, hosts=fixed_hosts, config=project.dhcp_servers[host.computer_name]))
+        builder.add_script(actual_file_out_path)
+
+
+
+def generate_files_for_DNS(host,builder, project):
     # Create DNS files
+    project_path = os.path.join(project.config_path, "build")
+    host_path = os.path.join(project_path, host.computer_name)
+    dns_server = project.dns_servers[host.computer_name]
+    with open(os.path.join(os.path.dirname(__file__), 'templates', host.os.win_type, 'install-dns.ps1.jinja'), 'r') as file_r:
+        template = Template(file_r.read())
+        actual_file_out_path = os.path.join(host_path,'iso_file', 'install-dns.ps1')
+        with open(actual_file_out_path, 'w') as file_w:
+            file_w.write(template.render(dns=dns_server))
+        builder.add_script(actual_file_out_path)
     pass
 
 
@@ -96,3 +156,27 @@ def roles_from_extracted_info(roles):
     
 
     return returned_roles
+
+def calculate_dhcp_failover(host1, host2):
+    if host1.domain == None or host1.domain == "" or host2.domain == None or host2.domain == "" or host1.domain != host2.domain:
+        return None
+    config = host1.roles.config[ROLE_DHCP]
+    
+    scopes1 = set()
+    scopes2 = set()
+    for netw in host1.networks:
+        net = ipaddress.ip_network("{}/{}".format(netw.ip_address[0], netw.ip_subnet[0]),False)
+        scopes1.add(net.network_address)
+    for netw in host2.networks:
+        net = ipaddress.ip_network("{}/{}".format(netw.ip_address[0], netw.ip_subnet[0]),False)
+        scopes2.add(net.network_address)
+    common_scopes = list(scopes1.intersection(scopes2))
+
+    return {
+        'partner' : "{}.{}".format(host2.computer_name,host2.domain),
+        'scopes' : common_scopes,
+        'scopes_ids' : ",".join(common_scopes),
+        'name' : "{}-{}".format(host1.computer_name,host2.computer_name),
+        'mode' : config['failover_mode'],
+        'secret': config['failover_secret'] if 'failover_secret' in config else ""
+    }

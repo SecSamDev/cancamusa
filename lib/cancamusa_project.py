@@ -8,8 +8,8 @@ from cancamusa_host import HostInfo
 from host_builder import WindowsHostBuilder
 from cancamusa_domain import CancamusaDomain
 from proxmox_deploy import ProxmoxDeployer
-from rol_selector import ROLE_DOMAIN_CONTROLLER
-
+from rol_selector import ROLE_DOMAIN_CONTROLLER, ROLE_DNS, ROLE_DHCP, calculate_dhcp_failover
+import ipaddress
 
 class CancamusaProject:
     """ Loads and stores information about a Cancamusa project """
@@ -27,6 +27,54 @@ class CancamusaProject:
         self.host_id_start = 1000
         self.host_id_counter = 1000
         self.hosts = []
+        # Project metadata updated
+        self.networks = set()
+        self.fixed_ips = set()
+        self.dns_servers = {}
+        self.dc_servers = {}
+        self.dhcp_servers = {}
+    
+    def scan_hosts(self):
+        found_dc = None
+        found_dns = None
+        found_dhcp = None
+        for host in self.hosts:
+            for netw in host.networks:
+                # For simplicity use only the first IP of the list (IPV4)
+                self.networks.add(str(ipaddress.ip_network('{}/{}'.format(netw.ip_address[0],netw.ip_subnet[0]),False)))
+                if netw.assign_method == 'static' or netw.assign_method == 'fixed':
+                    self.fixed_ips.add('{}/{}'.format(netw.ip_address[0],netw.ip_subnet[0]))
+            if ROLE_DNS in host.roles.roles:
+                # DNS server
+                self.dns_servers[host.computer_name] = host.roles.config[ROLE_DNS]
+                self.dns_servers[host.computer_name]['ip'] = host.networks[0].ip_address[0]
+                self.dns_servers[host.computer_name]['primary'] = (found_dns == None)
+                if found_dns == None:
+                    found_dns = host
+            if ROLE_DOMAIN_CONTROLLER in host.roles.roles:
+                # DC server
+                self.dc_servers[host.computer_name] = host.roles.config[ROLE_DOMAIN_CONTROLLER]
+                self.dc_servers[host.computer_name]['ip'] = host.networks[0].ip_address[0]
+                self.dc_servers[host.computer_name]['primary'] = (found_dc == None)
+                if found_dc == None:
+                    found_dc = host
+            if ROLE_DHCP in host.roles.roles:
+                # DC server
+                self.dhcp_servers[host.computer_name] = host.roles.config[ROLE_DHCP]
+                self.dhcp_servers[host.computer_name]['ip'] = host.networks[0].ip_address[0]
+                self.dhcp_servers[host.computer_name]['primary'] = (found_dhcp == None)
+                if found_dhcp == None:
+                    found_dhcp = host
+                else:
+                    # Configure failover
+                    dhcp_server = self.dhcp_servers[found_dhcp.computer_name]
+                    if not 'failovers' in dhcp_server:
+                        dhcp_server['failovers'] = []
+                    else:
+                        failover = calculate_dhcp_failover(found_dhcp, host)
+                        if not failover == None:
+                            dhcp_server['failovers'].append(failover)
+
 
     def change_host_id_start(self, new_value):
         start_dif = new_value - self.host_id_start
@@ -78,6 +126,7 @@ class CancamusaProject:
         cancamusa.host_id_counter = int(obj['host_id_counter']) if 'host_id_counter' in obj else cancamusa.host_id_start
         for host in obj['hosts']:
             cancamusa.hosts.append(HostInfo.from_json(host))
+        cancamusa.scan_hosts()
         return cancamusa
 
     def set_elasticsearch_siem(self, host, security):
@@ -180,7 +229,6 @@ class CancamusaProject:
         
         # ---------- Sysmon ----------
         cancamusa.edit_sysmon()
-        
         cancamusa.save()
         return cancamusa
 
@@ -244,11 +292,13 @@ class CancamusaProject:
                 self.hosts.pop(pos)
             elif answer['option'] == 'Back':
                 return
+            self.scan_hosts()
 
     def edit_domain_config(self): 
         self.domain.edit_interactive()
 
     def edit_project_interactive(self):
+        self.scan_hosts()
         while True:
             answer = prompt([{'type': 'list','name': 'option','message': 'Select a project property:', 'choices' : ['Description','Edit hosts','AD','SIEM','Build', 'Rebuild','Deploy','Exit'], 'value' : "none"}])
             if answer['option'] == 'Exit':

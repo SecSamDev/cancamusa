@@ -12,6 +12,11 @@ class CancamusaDomain:
             domains.append(domain)
         cancamusa = CancamusaDomain(domains)
         return cancamusa
+    def get_domain(self,domain):
+        for dmn in self.domains:
+            if domain == dmn.name:
+                return dmn
+        return None
 
     def add_domain(self,domain):
         self.domains.append(domain)

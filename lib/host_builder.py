@@ -8,7 +8,7 @@ from jinja2 import Template
 import subprocess
 import ipaddress
 import cancamusa_common
-from rol_selector import generate_rol_files_for_host
+from rol_selector import generate_rol_files_for_host, ROLE_DNS, ROLE_DOMAIN_CONTROLLER
 
 class WindowsHostBuilder:
     def __init__(self, project):
@@ -19,12 +19,12 @@ class WindowsHostBuilder:
             os.mkdir(self.project_path)
         self.configuration = CancamusaConfiguration.load_or_create(None)
         self.seabios_path = None
-        self.networks = set()
+
     
     def build_net_interfaces(self):
         vmbrX = self.configuration.start_vmbr
         net_file = "# To be added in /etc/network/interfaces"
-        for net in self.networks:
+        for net in self.project.networks:
             net_file += """
 auto vmbr{}
 iface vmbr{} inet static
@@ -194,21 +194,13 @@ iface vmbr{} inet static
         with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'setup-net.ps1.jinja'), 'r') as file_r:
             template = Template(file_r.read())
             actual_file_out_path = os.path.join(host_path,'iso_file', 'setup-net.ps1')
-            for netw in host.networks:
-                # For simplicity use only the first IP of the list (IPV4)
-                self.networks.add(str(ipaddress.ip_network('{}/{}'.format(netw.ip_address[0],netw.ip_subnet[0]),False)))
             with open(actual_file_out_path, 'w') as file_w:
                 file_w.write(template.render(networks=host.networks))
             builder.add_script(actual_file_out_path)
 
-        # Build Windows ROLES
-        generate_rol_files_for_host(host,builder,self.project)
-
-
         # Join Domain
-        if len(self.project.domain.domains) > 0:
-            # There are domains
-            
+        if len(self.project.domain.domains) > 0 and host.domain in self.project.domain.domains and not ROLE_DOMAIN_CONTROLLER in host.roles.roles:
+            # TODO: Improve Join Domain for multiple DomainControllers
             with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'join-domain.ps1.jinja'), 'r') as file_r:
                 template = Template(file_r.read())
                 actual_file_out_path = os.path.join(host_path,'iso_file', 'join-domain.ps1')
@@ -217,41 +209,41 @@ iface vmbr{} inet static
                         file_w.write(template.render(domain_dc_ip=domain.dc_ip,username=domain.default_local_admin,password=domain.default_local_admin_password,domain_name=domain.domain))
                 builder.add_script(actual_file_out_path)
 
-
         # Install sysmon
-        sysmon_conf = cancamusa_common.SYSMON_CONFIG_FILE
-        sysmon_drv = self.project.config['sysmon']['driver']
-        sysmon_alt = self.project.config['sysmon']['altitude']
-        with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'install-sysmon.bat.jinja'), 'r') as file_r:
-            template = Template(file_r.read())
-            actual_file_out_path = os.path.join(host_path,'iso_file', 'install-sysmon.bat')
-            with open(actual_file_out_path, 'w') as file_w:
-                file_w.write(template.render(sysmon_conf=sysmon_conf,sysmon_drv=sysmon_drv,sysmon_alt=sysmon_alt))
-            builder.add_script(actual_file_out_path)
+        if 'sysmon' in self.project.config:
+            sysmon_conf = cancamusa_common.SYSMON_CONFIG_FILE
+            sysmon_drv = self.project.config['sysmon']['driver']
+            sysmon_alt = self.project.config['sysmon']['altitude']
+            with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'install-sysmon.bat.jinja'), 'r') as file_r:
+                template = Template(file_r.read())
+                actual_file_out_path = os.path.join(host_path,'iso_file', 'install-sysmon.bat')
+                with open(actual_file_out_path, 'w') as file_w:
+                    file_w.write(template.render(sysmon_conf=sysmon_conf,sysmon_drv=sysmon_drv,sysmon_alt=sysmon_alt))
+                builder.add_script(actual_file_out_path)
 
-        actual_file_out_path = os.path.join(host_path, 'iso_file', sysmon_conf)
-        with open(os.path.join('config_files', cancamusa_common.SYSMON_CONFIG_FILE),'r') as file_r:
-            with open(actual_file_out_path,'w') as file_w:
-                file_w.write(file_r.read())
-        builder.add_config(actual_file_out_path)
+            actual_file_out_path = os.path.join(host_path, 'iso_file', sysmon_conf)
+            with open(os.path.join('config_files', cancamusa_common.SYSMON_CONFIG_FILE),'r') as file_r:
+                with open(actual_file_out_path,'w') as file_w:
+                    file_w.write(file_r.read())
+            builder.add_config(actual_file_out_path)
 
         # Install Winlogbeat
         # TODO: hide winlogbeat
         # https://artifacts.elastic.co/downloads/beats/winlogbeat/winlogbeat-7.14.1-windows-x86_64.zip
 
+        if os.path.exists(os.path.join(host_path, 'iso_file', cancamusa_common.WINLOGBEAT_CONFIG_FILE)):
+            with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'install-winlogbeat.bat.jinja'), 'r') as file_r:
+                template = Template(file_r.read())
+                actual_file_out_path = os.path.join(host_path,'iso_file', 'install-winlogbeat.bat')
+                with open(actual_file_out_path, 'w') as file_w:
+                    file_w.write(template.render(winlogbeat_config=cancamusa_common.WINLOGBEAT_CONFIG_FILE))
+                builder.add_script(actual_file_out_path)
 
-        with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'install-winlogbeat.bat.jinja'), 'r') as file_r:
-            template = Template(file_r.read())
-            actual_file_out_path = os.path.join(host_path,'iso_file', 'install-winlogbeat.bat')
-            with open(actual_file_out_path, 'w') as file_w:
-                file_w.write(template.render(winlogbeat_config=cancamusa_common.WINLOGBEAT_CONFIG_FILE))
-            builder.add_script(actual_file_out_path)
-
-        actual_file_out_path = os.path.join(host_path, 'iso_file', cancamusa_common.WINLOGBEAT_CONFIG_FILE)
-        with open(os.path.join('config_files', cancamusa_common.WINLOGBEAT_CONFIG_FILE),'r') as file_r:
-            with open(actual_file_out_path,'w') as file_w:
-                file_w.write(file_r.read())
-        builder.add_config(actual_file_out_path)
+            actual_file_out_path = os.path.join(host_path, 'iso_file', cancamusa_common.WINLOGBEAT_CONFIG_FILE)
+            with open(os.path.join('config_files', cancamusa_common.WINLOGBEAT_CONFIG_FILE),'r') as file_r:
+                with open(actual_file_out_path,'w') as file_w:
+                    file_w.write(file_r.read())
+            builder.add_config(actual_file_out_path)
 
         # Deception options
         with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'deception.bat.jinja'), 'r') as file_r:
@@ -260,6 +252,9 @@ iface vmbr{} inet static
             with open(actual_file_out_path, 'w') as file_w:
                 file_w.write(template.render(cpus=host.cpus))
             builder.add_script(actual_file_out_path)
+
+        # Build Windows ROLES -> Last to be executed (reboots needed) and need to be in domain
+        generate_rol_files_for_host(host,builder,self.project)
 
         # BUILD Floppy
         extra_iso_path = os.path.join(host_path, str(host.host_id) + ".img")

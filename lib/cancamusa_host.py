@@ -7,7 +7,7 @@ import random
 import codecs
 from mac_vendors import get_mac_list, search_wildcard_vendor, random_mac_for_vendor
 from cancamusa_common import random_guid, get_win_type
-from rol_selector import AVAILABLE_ROLES, roles_from_extracted_info
+from rol_selector import AVAILABLE_ROLES, roles_from_extracted_info, ROLE_DNS, ROLE_DHCP
 
 from processors import list_processors
 
@@ -133,10 +133,11 @@ class HostInfoPrograms:
 
 
 class HostInfoRoles:
-    def __init__(self, roles):
+    def __init__(self, roles, config={}):
         self.roles = set()
         for rol in roles:
             self.roles.add(rol)
+        self.config = config
 
     def edit_interactive(self):
         answer = prompt([{'type': 'checkbox', 'name': 'option',
@@ -147,6 +148,30 @@ class HostInfoRoles:
         else:
             for ans in answ:
                 self.roles.add(ans)
+        for rol in self.roles:
+            # Customize properties for each ROL
+            # DNS: DNS user and password for DHCP Server
+            # Don't save state as to prevent errors
+            self.config[rol] = {}
+            if rol == ROLE_DNS:
+                answer = prompt([{'type': 'input', 'name': 'option',
+                          'message': 'Select username for DhcpServer in DNS: ', 'default' : 'dnsadmin'}])
+                self.config[rol]['username'] = answer['option']
+                answer = prompt([{'type': 'input', 'name': 'option',
+                          'message': 'Select password for DhcpServer in DNS: ', 'default' : 'password'}])
+                self.config[rol]['password'] = answer['option']
+                answer = prompt([{'type': 'input', 'name': 'option',
+                          'message': 'External DNS server: ', 'default' : '8.8.8.8'}])
+                self.config[rol]['forwarder'] = answer['option']
+            if rol == ROLE_DHCP:
+                self.config[rol]['failover_mode'] = answer['option']
+                answer = prompt([{'type': 'list', 'name': 'option',
+                          'message': 'Failover mode: ', 'choices' : ['StandBy','Active']}])
+                self.config[rol]['failover_mode'] = answer['option']
+                if self.config[rol]['failover_mode'] == 'Active':
+                    answer = prompt([{'type': 'input', 'name': 'option',
+                            'message': 'Failover secret: ', 'default' : 'S3cret'}])
+                    self.config[rol]['failover_secret'] = answer['option']
         return self
 
     def create_interactive():
@@ -164,15 +189,22 @@ class HostInfoRoles:
     def to_json(self):
         toRet = []
         for rol in self.roles:
-            toRet.append({'Name': rol})
+            config = self.config[rol] if rol in self.config else {}
+            toRet.append({
+                'Name': rol,
+                'Config' : config
+            })
         return toRet
 
     def from_json(roles):
         if len(roles) > 0 and 'Name' in roles[0] and not 'DisplayName' in roles[0]:
             rols = []
+            configs = {}
             for rol in roles:
+                config = rol['Config'] if 'Config' in rol else {}
+                configs[rol['Name']] = config
                 rols.append(rol['Name'])
-            return HostInfoRoles(rols)
+            return HostInfoRoles(rols, configs)
         elif len(roles) > 0 and 'Name' in roles[0] and 'DisplayName' in roles[0]:
             # Not processed
             role_list = roles_from_extracted_info(roles)
@@ -770,6 +802,7 @@ class HostInfo:
             host.selected_img_idx = obj['selected_img_idx']
         if 'selected_img_pth' in obj:
             host.selected_img_pth = obj['selected_img_pth']
+        host.domain = obj['domain']
         return host
 
     def edit_interactive(self, project=None):
@@ -823,7 +856,7 @@ class HostInfo:
                 else:
                     print("No domains available...")
             elif answer['option'] == 'Roles':
-                if self.os.win_type in ['win2016','win2012','win2019']:
+                if self.os.win_type.lower() in ['win2016','win2012','win2019']:
                     self.roles.edit_interactive()
                 else:
                     print(self.os.win_type)
