@@ -84,13 +84,13 @@ class CancamusaProject:
         return None
     
     def primary_dc_config(self):
-        for key, srv in self.dc_servers:
+        for key, srv in self.dc_servers.items():
             if srv['primary']:
                 return srv
         return None
     
     def primary_dhcp_config(self):
-        for key, srv in self.dhcp_servers:
+        for key, srv in self.dhcp_servers.items():
             if srv['primary']:
                 return srv
         return None
