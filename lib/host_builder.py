@@ -111,9 +111,9 @@ iface vmbr{} inet static
             dcisc_i = dcisc_i + 1
             qemu_template.write('scsihw: virtio-scsi-pci\n')
             
-            bootsplash = os.path.join(self.project_path,'bootsplash.bmp')
+            bootsplash = os.path.join(self.project_path,'..','bootsplash.bmp')
             qemu_template.write(
-                'args:-bios {} -boot once=d,order=c,strict=on,splash={} -fda {}\n'.format(os.path.join(host_path, "bios.bin"),bootsplash, os.path.join(host_path, str(host.host_id) + ".img")))
+                'args:-bios {} -boot menu=on,once=d,order=c,strict=on,splash={} -fda {} -smbios type=1,manufacturer=DELL,product=XPS 13 9360,version=2.6.2,serial=HB3O4WM,uuid=a80a97c5-e5a0-41ef-b8d2-00689114933a\n'.format(os.path.join(host_path, "bios.bin"),bootsplash, os.path.join(host_path, str(host.host_id) + ".img")))
             qemu_template.write("vmstatestorage: {}\n".format(self.configuration.proxmox_image_storage))
         print('QEMU template for proxmox created: ' + qemu_template_file)
 
