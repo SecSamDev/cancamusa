@@ -77,6 +77,23 @@ class CancamusaProject:
                             if not failover['name'] in failover_names:
                                 dhcp_server['failovers'].append(failover)
 
+    def primary_dns_config(self):
+        for srv in self.dns_servers:
+            if srv['primary']:
+                return srv
+        return None
+    
+    def primary_dc_config(self):
+        for srv in self.dc_servers:
+            if srv['primary']:
+                return srv
+        return None
+    
+    def primary_dhcp_config(self):
+        for srv in self.dhcp_servers:
+            if srv['primary']:
+                return srv
+        return None
 
     def change_host_id_start(self, new_value):
         start_dif = new_value - self.host_id_start

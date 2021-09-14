@@ -1,3 +1,4 @@
+from lib.scripter.rol_selector import ROLE_DOMAIN_CONTROLLER
 import os
 import json
 from PyInquirer import prompt
@@ -153,6 +154,10 @@ class HostInfoRoles:
             # DNS: DNS user and password for DHCP Server
             # Don't save state as to prevent errors
             self.config[rol] = {}
+            if rol == ROLE_DOMAIN_CONTROLLER:
+                answer = prompt([{'type': 'input', 'name': 'option',
+                          'message': 'Safe mode password: ', 'default' : 'SafeModePassw123!'}])
+                self.config[rol]['safe_mode_password'] = answer['option']
             if rol == ROLE_DNS:
                 answer = prompt([{'type': 'input', 'name': 'option',
                           'message': 'Select username for DhcpServer in DNS: ', 'default' : 'dnsadmin'}])
@@ -563,9 +568,8 @@ class HostInfoCpu:
         answer = prompt([{'type': 'input', 'name': 'option',
                           'message': 'Threads: ', 'default': str(self.threads)}])
         self.threads = int(answer['option'])
-        answer = prompt([{'type': 'list', 'name': 'option',
-                          'message': 'Select a QEMU cpu type:', 'choices': list_processors(self.family)}])
-        self.processor_type = answer['option']
+        #answer = prompt([{'type': 'list', 'name': 'option','message': 'Select a QEMU cpu type:', 'choices': list_processors(self.family)}])
+        #self.processor_type = answer['option']
         return self
     
     def safe_name(self):
@@ -634,6 +638,10 @@ class HostInfoWindowsAccounts:
         self.password_changeable = account['PasswordChangeable']
         self.password_expires = account['PasswordExpires']
         self.password_required = account['PasswordRequired']
+        if 'Password' in account:
+            self.password = account['Password']
+        else:
+            self.password = "CancamusaRocks123!"
         if 'Domain' in account:
             self.domain = account['Domain']
         else:
@@ -668,7 +676,8 @@ class HostInfoWindowsAccounts:
             'PasswordChangeable': True,
             'PasswordExpires': False,
             'PasswordRequired': True,
-            'Domain' : host_name
+            'Domain' : host_name,
+            'Password' : "CancamusaRocks123!"
         })
         disk = disk.edit_interactive()
         return disk
@@ -685,7 +694,8 @@ class HostInfoWindowsAccounts:
             'PasswordChangeable': self.password_changeable,
             'PasswordExpires': self.password_expires,
             'PasswordRequired': self.password_required,
-            'Domain' : self.domain
+            'Domain' : self.domain,
+            'Password' : self.password
         }
 
     def from_json(account):
@@ -784,16 +794,20 @@ class HostInfo:
         if 'cpus' in obj:
             for cpu in obj['cpus']:
                 host.cpus.append(HostInfoCpu.from_json(cpu))
-        if len(host.cpus) == 0:
-            host.cpus.append(HostInfoCpu(
-                "Intel(R) Xeon(R) CPU E5-2430L v2 @ 2.40GHz", 6, 12))
-        host.bios = HostInfoBios.from_json(obj['bios'])
-        host.bios.ps_computer_name = obj["computer_name"]
-        host.computer_name = obj["computer_name"]
         if 'os' in obj:
             host.os = HostInfoWindowsVersion.from_json(obj["os"])
         else:
             host.os = HostInfoWindowsVersion('Windows 10 Enterprise',10, 0, 0, 0, 0, 0)
+        if len(host.cpus) == 0:
+            if host.os.win_type in ['win10', 'win7','win11']:
+                host.cpus.append(HostInfoCpu(
+                    "Intel(R) Core(TM) i5-8265U CPU @ 1.60GHz", 4, 8))
+            else:
+                host.cpus.append(HostInfoCpu(
+                    "Intel(R) Xeon(R) CPU E5-2430L v2 @ 2.40GHz", 6, 12))
+        host.bios = HostInfoBios.from_json(obj['bios'])
+        host.bios.ps_computer_name = obj["computer_name"]
+        host.computer_name = obj["computer_name"]
         host.host_id = int(obj["host_id"]) if 'host_id' in obj else 1000
         host.ram = HostInfoRAM.from_json(obj['ram'])
         host.domain = obj['domain']

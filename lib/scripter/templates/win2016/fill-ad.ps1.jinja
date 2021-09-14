@@ -9,7 +9,6 @@ New-ADOrganizationalUnit -name "{{ou.name}}" {% if ou.parent_path %}-path "{{ou.
 New-ADGroup -Name "{{grp.name}}" -SamAccountName {{grp.sam_account_name}} -GroupCategory {{grp.group_category}} -GroupScope {{grp.group_scope}} -DisplayName "{{grp.display_name}}" -Path "{{grp.path}}"
 {% endfor %}
 
-
 {% for user in user_list %}
 New-ADUser `
     -SamAccountName {{user.account_name}} `

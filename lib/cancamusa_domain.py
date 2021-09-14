@@ -79,9 +79,9 @@ class ADStructure:
         self.name = "CNCMS"
         dc_path_string = "DC=" + (",DC=".join(domain.split(".")))
         self.path = dc_path_string
-        self.default_local_admin = 'LocalAdmin'
+        self.default_admin = 'Admin'
         self.account_generator = cancamusa_common.ACCOUNT_FORMAT_NAME_DOT_SURNAME
-        self.default_local_admin_password = 'CancamusaRocks123!'
+        self.default_admin_password = 'CancamusaRocks123!'
         self.dc_ip = '10.0.0.1'
 
     def from_json(obj):
@@ -91,12 +91,12 @@ class ADStructure:
             ret.ou[parsed_ou.name] = parsed_ou
         if 'name' in obj:
             ret.name = obj['name']
-        if 'default_local_admin' in obj:
-            ret.default_local_admin = obj['default_local_admin']
+        if 'default_admin' in obj:
+            ret.default_admin = obj['default_admin']
         if 'account_generator' in obj:
             ret.account_generator = obj['account_generator']
-        if 'default_local_admin_password' in obj:
-            ret.default_local_admin_password = obj['default_local_admin_password']
+        if 'default_admin_password' in obj:
+            ret.default_admin_password = obj['default_admin_password']
         if 'dc_ip' in obj:
             ret.dc_ip = obj['dc_ip']
         return ret
@@ -109,8 +109,8 @@ class ADStructure:
             'ou' : {},
             'domain' : self.domain,
             'name' : self.name,
-            'default_local_admin' : self.default_local_admin,
-            'default_local_admin_password' : self.default_local_admin_password,
+            'default_admin' : self.default_admin,
+            'default_admin_password' : self.default_admin_password,
             'dc_ip' : self.dc_ip
         }
         for name, ou in self.ou.items():
@@ -176,11 +176,11 @@ class ADStructure:
                     answers = prompt([{'type': 'list','name': 'selection','message': 'Method used to generate random accounts. Ex: ' + cancamusa_common.ACCOUNT_FORMAT_EXAMPLE, 'choices' : [cancamusa_common.ACCOUNT_FORMAT_LETTER_SURNAME, cancamusa_common.ACCOUNT_FORMAT_NAME_DOT_SURNAME, cancamusa_common.ACCOUNT_FORMAT_TRHEE_LETTERS]}])
                     self.account_generator = answers['selection']
                 elif answer['option'] == 'Default Local Admin':
-                    answer = prompt([{'type': 'input','name': 'option','message': 'Admin name:', 'default' : self.default_local_admin}])
-                    self.default_local_admin = answer["option"]
+                    answer = prompt([{'type': 'input','name': 'option','message': 'Admin name:', 'default' : self.default_admin}])
+                    self.default_admin = answer["option"]
                 elif answer['option'] == 'Default Local Admin Password':
-                    answer = prompt([{'type': 'input','name': 'option','message': 'Admin password:', 'default' : self.default_local_admin_password}])
-                    self.default_local_admin_password = answer["option"]
+                    answer = prompt([{'type': 'input','name': 'option','message': 'Admin password:', 'default' : self.default_admin_password}])
+                    self.default_admin_password = answer["option"]
                 elif answer['option'] == 'Delete OU':
                     answer = prompt([{'type': 'list','name': 'option','message': 'Select a OU to delete:', 'choices' :self.ou.keys()}])
                     self.ou.pop(answer["option"], None)

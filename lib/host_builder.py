@@ -151,25 +151,20 @@ iface vmbr{} inet static
                 else:
                     disk_list.append(disk)
 
+            host_domain = None
+            principal_user = None
             if host.domain:
                 domains = list(
                     map(lambda x: x.domain, self.project.domain.domains))
                 host_domain_pos = domains.index(host.domain)
                 host_domain = self.project.domain.domains[host_domain_pos]
-                if not host_domain:
-                    raise Exception("Invalid domain {} for host {}".format(
-                        host.domain, host.computer_name))
-                principal_user = {
-                    'name': host_domain.default_local_admin,
-                    'password': host_domain.default_local_admin_password,
-                    'group': 'Administrators',
-                    'organization': host_domain.domain
-                }
-            else:
+                
+            
+            if not host_domain:
                 if len(host.accounts) > 0:
                     principal_user = {
                         'name': host.accounts[0].name,
-                        'password': "Cancamusa123Rocks!",
+                        'password': host.accounts[0].password,
                         'group': 'Administrators',
                         'organization': host.computer_name
                     }
@@ -179,6 +174,26 @@ iface vmbr{} inet static
                         'password': "Cancamusa123Rocks!",
                         'group': 'Administrators',
                         'organization': host.computer_name
+                    }
+            else:
+                # Account of valid domain
+                if len(host.accounts) > 0:
+                    for acc in host.accounts:
+                        if acc.domain == host_domain.name:
+                            principal_user = {
+                                'name': acc.name,
+                                'password': acc.password,
+                                'group': 'Administrators',
+                                'organization': host.computer_name
+                            }
+                        break
+                if principal_user == None:
+                    # Last resource => use domain account
+                    principal_user = {
+                        'name': host_domain.default_admin,
+                        'password': host_domain.default_admin_password,
+                        'group': 'Administrators',
+                        'organization': host.computer_name #Still not in domain
                     }
 
             with open(os.path.join(host_path,'iso_file', 'Autounattend.xml'), 'w') as file_w:
@@ -206,7 +221,7 @@ iface vmbr{} inet static
                 actual_file_out_path = os.path.join(host_path,'iso_file', 'join-domain.ps1')
                 with open(actual_file_out_path, 'w') as file_w:
                     for domain in self.project.domain.domains:
-                        file_w.write(template.render(domain_dc_ip=domain.dc_ip,username=domain.default_local_admin,password=domain.default_local_admin_password,domain_name=domain.domain))
+                        file_w.write(template.render(domain_dc_ip=domain.dc_ip,username=domain.default_admin,password=domain.default_admin_password,domain_name=domain.domain))
                 builder.add_script(actual_file_out_path)
 
         # Install sysmon

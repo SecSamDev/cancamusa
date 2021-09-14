@@ -41,14 +41,24 @@ def generate_files_for_DC(host,builder, project):
     if actual_domain == None:
         print("Domain not found for host: " + str(host.computer_name))
         return
-    domain_ip = actual_domain.dc_ip
+    
+    
+    primary_dc = project.primary_dc_config()
+    config = project.dc_servers[host.computer_name]
+    config['admin_user'] = actual_domain.default_admin
+    config['admin_password'] = actual_domain.default_admin_password
+    domain_ip = host.networks[0].ip_address[0]
     domain_name = actual_domain.domain
     domain_netbios = actual_domain.name
+    domain_subnet = host.networks[0].ip_subnet[0]
+    dns1 = project.primary_dns_config()
+    dns1 = dns1['ip'] if dns1 != None else '8.8.8.8'
+    dns2 = '127.0.0.1'
     with open(os.path.join(os.path.dirname(__file__), 'templates', host.os.win_type, 'create-domain.ps1.jinja'), 'r') as file_r:
         template = Template(file_r.read())
         actual_file_out_path = os.path.join(host_path,'iso_file', 'create-domain.ps1')
         with open(actual_file_out_path, 'w') as file_w:
-            file_w.write(template.render(domain_ip=domain_ip, domain_name=domain_name, domain_netbios= domain_netbios))
+            file_w.write(template.render(domain_ip=domain_ip,domain_subnet=domain_subnet, domain_name=domain_name, domain_netbios= domain_netbios,primary_dc=primary_dc,config=config,dns1=dns1,dns2=dns2))
         builder.add_script(actual_file_out_path)
 
     ad_groups = actual_domain.list_groups()
