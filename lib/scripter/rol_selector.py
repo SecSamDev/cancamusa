@@ -35,8 +35,7 @@ def generate_files_for_DC(host,domain,builder, host_path):
             actual_domain = dmn
             break
     if actual_domain == None:
-        print("Domain not found....")
-        print(actual_domain)
+        print("Domain not found for host: " + str(host.computer_name))
         return
     domain_ip = actual_domain.dc_ip
     domain_name = actual_domain.domain

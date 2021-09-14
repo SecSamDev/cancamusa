@@ -145,7 +145,7 @@ class ADStructure:
                 options.append('Set DC IP')
                 options.append('Back')
                 options.append('Cancel')
-                answer = prompt([{'type': 'list','name': 'option','message': 'OrganizationalUnit edition mode', 'choices' : options}])
+                answer = prompt([{'type': 'list','name': 'option','message': 'OrganizationalUnit edition mode:', 'choices' : options}])
                 if answer['option'] == 'Show OUs':
                     for ou_name in self.ou.keys():
                         print(ou_name)
@@ -154,7 +154,7 @@ class ADStructure:
                     for ou_name, ou in self.ou.items():
                         print(ou.tree_str(1))
                 elif answer['option'] == 'Add OU':
-                    answer = prompt([{'type': 'input','name': 'option','message': 'OU name:', 'default' : "CancamusaLab"}])
+                    answer = prompt([{'type': 'input','name': 'option','message': 'OU name:', 'default' : ""}])
                     ou = ADOrganizationalUnit(answer['option'],self)
                     ou.account_generator = self.account_generator
                     ou = ou.edit_interactive()
@@ -164,7 +164,7 @@ class ADStructure:
                     answer = prompt([{'type': 'input','name': 'option','message': 'Domain Name:', 'default' : self.name}])
                     self.name = answer["option"]
                 elif answer['option'] == 'Edit OU':
-                    answer = prompt([{'type': 'list','name': 'option','message': 'Select a OU to edit', 'choices' :self.ou.keys()}])
+                    answer = prompt([{'type': 'list','name': 'option','message': 'Select a OU to edit:', 'choices' :self.ou.keys()}])
                     self.ou[answer['option']].account_generator = self.account_generator
                     self.ou[answer['option']].edit_interactive()
                 elif answer['option'] == 'Account Generator':
@@ -177,7 +177,7 @@ class ADStructure:
                     answer = prompt([{'type': 'input','name': 'option','message': 'Admin password:', 'default' : self.default_local_admin_password}])
                     self.default_local_admin_password = answer["option"]
                 elif answer['option'] == 'Delete OU':
-                    answer = prompt([{'type': 'list','name': 'option','message': 'Select a OU to delete', 'choices' :self.ou.keys()}])
+                    answer = prompt([{'type': 'list','name': 'option','message': 'Select a OU to delete:', 'choices' :self.ou.keys()}])
                     self.ou.pop(answer["option"], None)
                 elif answer['option'] == 'Back':
                     return self

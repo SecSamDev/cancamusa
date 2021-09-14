@@ -195,13 +195,13 @@ iface vmbr{} inet static
             template = Template(file_r.read())
             actual_file_out_path = os.path.join(host_path,'iso_file', 'setup-net.ps1')
             for netw in host.networks:
+                # For simplicity use only the first IP of the list (IPV4)
                 self.networks.add(str(ipaddress.ip_network('{}/{}'.format(netw.ip_address[0],netw.ip_subnet[0]),False)))
             with open(actual_file_out_path, 'w') as file_w:
                 file_w.write(template.render(networks=host.networks))
             builder.add_script(actual_file_out_path)
 
-        # TODO: build role scripts
-        
+        # Build Windows ROLES
         generate_rol_files_for_host(host,builder,self.project)
 
 
@@ -253,6 +253,15 @@ iface vmbr{} inet static
                 file_w.write(file_r.read())
         builder.add_config(actual_file_out_path)
 
+        # Deception options
+        with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'deception.bat.jinja'), 'r') as file_r:
+            template = Template(file_r.read())
+            actual_file_out_path = os.path.join(host_path,'iso_file', 'deception.bat')
+            with open(actual_file_out_path, 'w') as file_w:
+                file_w.write(template.render(cpus=host.cpus))
+            builder.add_script(actual_file_out_path)
+
+        # BUILD Floppy
         extra_iso_path = os.path.join(host_path, str(host.host_id) + ".img")
         builder.build_floppy(extra_iso_path)
 

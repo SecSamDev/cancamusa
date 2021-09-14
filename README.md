@@ -104,6 +104,7 @@ Now editing the bios version:
 ? Edit: system_bios_minor_version  6
 ? Edit: version  ALASKA - 1072009
 ```
+This information is used to compile a custom SeaBIOS, so each host will have a different BIOS.
 
 The network interfaces selecting a "Random device", we can search for a custom vendor (See mac-vendor.txt):
 ```
@@ -126,7 +127,17 @@ The network interfaces selecting a "Random device", we can search for a custom v
 ? Edit: setting_id  {49f6db5f-228b-42db-a89a-31a78b2d6eb7}
 ```
 
+We have three network configuration options:
+* Static: will configure the network interface using a static IP.
+* Dynamic: will use DHCP to configure the IP, the IP, gateway and subnet will be used to detect which linux bridge will be used.
+* Fixed: will use DHCP but with a fixed IP. Will create a custom script to set the fixed IPs in the DHCP server.
+
+All configurations will use the `setup-net.ps1`script to configure the network of each host.
+
 #### Edit AD
+
+We can create as many domains as we want with OUs, groups and users.
+
 ```
 ? Select a project property: AD
 Domains:
@@ -160,6 +171,16 @@ Domains:
     >Users
       >paco.perez (User)
 ```
+This will be used in the principal DC to create and fill the AD.
+
+### Deception options
+* Sysmon: change the name and Altitude of the driver.
+* BIOS: compile a custom BIOS.
+* Hide virtualization: personalization of the CPU and flags passed to KVM.
+* Disks: usage of qcow2 to be able to have disks as large as we want.
+* Drivers: No usage of VirtIO drivers.
+* High personalizations of machine hostname and users (Avoid usage of generic names that are detected by malware).
+
 
 ## TODO:
 - Proxmox template creation with all scripts and drivers bundled in a ISO mounted in a CD/DVD device.
