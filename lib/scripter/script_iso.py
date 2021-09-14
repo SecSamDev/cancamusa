@@ -33,11 +33,11 @@ class ScriptIsoBuilder:
         for scr in self.scripts:
             scr = os.path.basename(scr)
             if scr.endswith("ps1"):
-                script += 'Powershell.exe -executionpolicy remotesigned -File .\\' + scr + "\n"
+                script += 'Powershell.exe -executionpolicy remotesigned -File "C:\\ini\\' + scr + "\n"
             elif scr.endswith(".bat"):
-                script += 'call .\\' + scr + "\n"
+                script += 'call C:\\ini\\' + scr + "\n"
             elif scr.endswith(".py"):
-                script += 'SET RUN_DOTPY=python.exe ' + scr + '\nset SCRIPT=\nIF EXIST "python.exe" (\n\tSET SCRIPT=%RUN_DOTPY%\n)\n%SCRIPT%'
+                script += 'SET RUN_DOTPY=python.exe C:\\ini\\' + scr + '\nset SCRIPT=\nIF EXIST "python.exe" (\n\tSET SCRIPT=%RUN_DOTPY%\n)\n%SCRIPT%'
         return bytearray(script, "utf8")
 
     def build_geniso(self, output_dir):
