@@ -249,6 +249,11 @@ class HostInfoNetwork:
                 self.ip_gateway = net_object['DefaultIPGateway']
             else:
                 self.ip_gateway = ['192.168.0.1']
+            if 'AssignMethod' in net_object:
+                self.assign_method = net_object['AssignMethod']
+            else:
+                # static, dynamic, DHCP
+                self.assign_method = 'static'
                 
 
     def __str__(self):
@@ -262,6 +267,12 @@ class HostInfoNetwork:
 
         for prop in property_names:
             if prop.startswith("_"):
+                continue
+            if prop == 'assign_method':
+                answer = prompt([{'type': 'list', 'name': 'option',
+                                  'message': 'Edit IP assignation method',  'choices': [
+                        'static', 'dynamic', 'fixed']}])
+                self.assign_method = answer['option']
                 continue
             if prop == 'ip_address':
                 answer = prompt([{'type': 'input', 'name': 'option',
@@ -322,7 +333,8 @@ class HostInfoNetwork:
                 'InterfaceIndex': int(last_index) + 1,
                 'IPAddress': ["192.168.0.2"],
                 'IPSubnet' : ["255.255.255.0"],
-                'DefaultIPGateway' : ["192.168.0.1"]
+                'DefaultIPGateway' : ["192.168.0.1"],
+                'AssignMethod' : 'static'
             })
         elif answer['option'] == 'Search vendor':
             while True:
@@ -354,7 +366,8 @@ class HostInfoNetwork:
                     'InterfaceIndex': int(last_index) + 1,
                     'IPAddress': ["192.168.0.2"],
                     'IPSubnet' : ["255.255.255.0"],
-                    'DefaultIPGateway' : ["192.168.0.1"]
+                    'DefaultIPGateway' : ["192.168.0.1"],
+                    'AssignMethod' : 'static'
                 })
                 break
         elif answer['option'] == 'Basic':
@@ -368,7 +381,8 @@ class HostInfoNetwork:
                 'InterfaceIndex': int(last_index) + 1,
                 'IPAddress': ["192.168.0.2"],
                 'IPSubnet' : ["255.255.255.0"],
-                'DefaultIPGateway' : ["192.168.0.1"]
+                'DefaultIPGateway' : ["192.168.0.1"],
+                'AssignMethod' : 'static'
             })
         netwrk = netwrk.edit_interactive()
         return netwrk
@@ -384,7 +398,8 @@ class HostInfoNetwork:
             'InterfaceIndex': int(self.interface_index),
             'IPAddress': self.ip_address,
             'IPSubnet' : self.ip_subnet,
-            'DefaultIPGateway' : self.ip_gateway
+            'DefaultIPGateway' : self.ip_gateway,
+            'AssignMethod' : self.assign_method
         }
 
     def from_json(net_object):

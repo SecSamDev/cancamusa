@@ -19,6 +19,8 @@ class ProxmoxDeployer:
         self.configuration = CancamusaConfiguration.load_or_create(None)
 
     def deploy_host(self, host):
+        if not self.configuration.is_proxmox:
+            return
         host_path = os.path.join(self.project_path,host.computer_name)
         if not os.path.exists(host_path):
             return
@@ -38,6 +40,8 @@ class ProxmoxDeployer:
             dcisc_i = dcisc_i + 1
         
     def create_pool(self):
+        if not self.configuration.is_proxmox:
+            return
         usr_cfg = "/etc/pve/user.cfg"
         name = safe_pool_name(self.project.project_name)
         mv_list = list(map(lambda x: str(x.host_id), self.project.hosts))
@@ -57,6 +61,8 @@ class ProxmoxDeployer:
                 file_w.write(usr_cfg_edit)
     
     def create_cpu_if_not_exists(self):
+        if not self.configuration.is_proxmox:
+            return
         # Creates a new Proxmox CPU in /etc/pve/virtual-guest/cpu-models.conf called Cancamusa
         if 'CANCAMUSA_DEBUG' in os.environ:
             return

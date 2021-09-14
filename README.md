@@ -35,11 +35,9 @@ Not a valid cancamusa project
 ? Select a project property:  
   > Description
   > Edit hosts
-  > Sysmon
-  > Elasticsearch
-  > Logstash
-  > Account Generator
-  > Winlogbeat
+  > AD
+  > SIEM
+  > Rebuild
   > Build
   > Deploy
   > Exit
@@ -47,16 +45,26 @@ Not a valid cancamusa project
 This interactive menu will help you configure a full windows platform.
 
 #### Edit hosts
-This will give you power to cistomize each host in your new network:
+This will give you power to customize each host in your new network:
 ```
 ? Select a project property:  Edit hosts
+  > Add Host
+  > Import hosts
+  > Edit QEMU start ID
+  > Back
 ? Host edition mode Add host
 ? Editing host: Windows
   > Name
   > Disks
   > Bios
+  > RAM
+  > CPUs
   > Accounts
+  > Domain
+  > Roles
   > Network interfaces
+  > OS Version
+  > Resume
   > Back
   > Cancel
 ```
@@ -102,16 +110,56 @@ The network interfaces selecting a "Random device", we can search for a custom v
 ? Editing host: Windows123  Network interfaces
 ? Modify interfaces  Add
 ? Network edition mode  Random device
+? Edit IP assignation method
+  > static
+  > dynamic
+  > fixed
 ? Edit: description  KARDIOS SYSTEMS CORP.
 ? Edit: dns_domain  
 ? Edit: dns_host_name  
 ? Edit: index  0
 ? Edit: interface_index  0
 ? Edit IpAddress  ['192.168.0.1']
+? Edit Gateway ['192.168.0.1']
+? Edit Subnet ['255.255.255.0']
 ? Edit: mac_address  00:20:77:97:5d:31
 ? Edit: setting_id  {49f6db5f-228b-42db-a89a-31a78b2d6eb7}
 ```
 
+#### Edit AD
+```
+? Select a project property: AD
+Domains:
+? Domain edition mode: Add domain
+? Domain name: cancamusa.com
+? OrganizationalUnit edition mode
+  > Domain name
+  > Add OU
+  > Import OUs
+  > Account Generator
+  > Default Local Admin
+  > Default Local Admin Password
+  > Set DC IP
+  > Back
+  > Cancel
+? OrganizationalUnit edition mode Add OU
+? OU name: Madrid
+? Editing Madrid OU Add OU
+? OU name: Users
+? Editing Users OU Add Users
+? User name: Paco Perez
+? Editing account_name paco.perez
+? Editing department IT
+? Editing display_name Paco Perez
+? Editing first_name Paco
+? Editing password PacoPerez123!
+? Editing second_name Perez
+? OrganizationalUnit edition mode Show OU Tree
+>CNCMS
+  >Madrid
+    >Users
+      >paco.perez (User)
+```
 
 ## TODO:
 - Proxmox template creation with all scripts and drivers bundled in a ISO mounted in a CD/DVD device.

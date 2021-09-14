@@ -41,7 +41,8 @@ class ScriptIsoBuilder:
         return bytearray(script, "utf8")
 
     def build_geniso(self, output_dir):
-        init_script = self.init_script()
+        # Added installation logs
+        init_script = "@echo off\n>C:\\init\\install.log (\n" + self.init_script() + "\n)\n"
         tmp_dir = tempfile.mkdtemp()
         with open(os.path.join(tmp_dir, 'init_script.bat'), 'wb') as file_w:
             file_w.write(init_script)
@@ -64,7 +65,8 @@ class ScriptIsoBuilder:
     def build_floppy(self, output_dir):
         if os.path.exists(output_dir):
             os.remove(output_dir)
-        init_script = self.init_script()
+        # Added installation logs
+        init_script = "@echo off\n>C:\\init\\install.log (\n" + self.init_script() + "\n)\n"
         tmp_dir = tempfile.mkdtemp()
         command = 'mkfs.msdos -C ' + output_dir + ' 1440'
         process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)

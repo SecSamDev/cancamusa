@@ -32,12 +32,13 @@ def process_release_date(released):
         return matches.group('day') + "/" + matches.group('month') + "/" + matches.group('year')
 
 # git clone https://git.seabios.org/seabios.git
+# or https://github.com/coreboot/seabios
 # qemu -bios out/bios.bin
 # https://gist.github.com/doomedraven/41af84c8cf93ba63cea933a80e898fb6
 
 def download_seabios():
     SEABIOS_PATH = tempfile.mkdtemp()
-    process = subprocess.Popen(['git','clone','https://git.seabios.org/seabios.git'], stdout=subprocess.PIPE, cwd=SEABIOS_PATH)
+    process = subprocess.Popen(['git','clone','https://github.com/coreboot/seabios.git'], stdout=subprocess.PIPE, cwd=SEABIOS_PATH)
     output, error = process.communicate()
     p_status = process.wait()
     process.terminate()

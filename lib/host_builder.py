@@ -258,6 +258,7 @@ iface vmbr{} inet static
 
 
 def qemu_disk_qcow2(pth, size):
+    # DEBUG mode = Not a Proxmox env
     if 'CANCAMUSA_DEBUG' in os.environ:
         return
     parent = os.path.dirname(pth)
