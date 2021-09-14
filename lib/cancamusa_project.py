@@ -249,6 +249,10 @@ class CancamusaProject:
         # ---------- Sysmon ----------
         cancamusa.edit_sysmon()
         cancamusa.save()
+        # Copy bootsplash
+        with open(os.path.join(pth,'bootsplash.bmp','wb')) as file_w:
+            with open(os.path.join(os.path.dirname(__file__),'..','img','cancamusa_boot.bmp'), 'rb') as file_r:
+                file_w.write(file_r.read())
         return cancamusa
 
 
