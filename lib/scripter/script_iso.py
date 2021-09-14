@@ -79,7 +79,7 @@ class ScriptIsoBuilder:
         p_status = process.wait()
         process.terminate()
         with open(os.path.join(tmp_dir, 'init_script.bat'), 'wb') as file_w:
-            file_w.write(init_script)
+            file_w.write(init_script.replace(b"\r",b"").replace(b"\n",b"\r\n"))
         for scr in self.scripts:
             with open(scr,'rb') as file_r:
                 with open(os.path.join(tmp_dir, os.path.basename(scr)), 'wb') as file_w:
