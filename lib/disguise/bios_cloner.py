@@ -38,7 +38,7 @@ def process_release_date(released):
 
 def download_seabios():
     SEABIOS_PATH = tempfile.mkdtemp()
-    process = subprocess.Popen(['git','clone','https://github.com/coreboot/seabios.git','-b','1.12-stable'], stdout=subprocess.PIPE, cwd=SEABIOS_PATH)
+    process = subprocess.Popen(['git','clone','-b','rel-1.14.0','https://github.com/coreboot/seabios.git'], stdout=subprocess.PIPE, cwd=SEABIOS_PATH)
     output, error = process.communicate()
     p_status = process.wait()
     process.terminate()
