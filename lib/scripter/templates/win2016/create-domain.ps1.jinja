@@ -25,7 +25,7 @@ if ((gwmi win32_computersystem).partofdomain -eq $false) {
     $SecurePassword = $PlainPassword | ConvertTo-SecureString -AsPlainText -Force
 
     # Instalar Forest y convertir la maquina en un DC
-    Install-WindowsFeature AD-domain-services –IncludeManagementTools
+    Install-WindowsFeature AD-domain-services -IncludeManagementTools
     Import-Module ADDSDeployment
 
     Install-ADDSForest -SafeModeAdministratorPassword $SecurePassword `
