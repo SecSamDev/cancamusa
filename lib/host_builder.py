@@ -59,13 +59,13 @@ iface vmbr{} inet static
         self.build_qemu_template(host)
         self.build_extra_iso(host)
 
-        if not self.seabios_path:
-            self.seabios_path = bios_cloner.download_seabios()
         print(self.project_path)
         host_path = os.path.join(self.project_path, host.computer_name)
         if not os.path.exists(host_path):
             os.mkdir(host_path)
         if not os.path.exists(os.path.join(host_path, "bios.bin")):
+            if not self.seabios_path:
+                self.seabios_path = bios_cloner.download_seabios()
             bios_cloner.compile_cloned_bios(host.bios, os.path.join(
                 host_path, "bios.bin"), SEABIOS_PATH=self.seabios_path)
 

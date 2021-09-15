@@ -70,6 +70,7 @@ def compile_cloned_bios(bios,output_bios, SEABIOS_PATH=None):
         copytree(SEABIOS_PATH,SEABIOS_PATH2)
         SEABIOS_PATH = SEABIOS_PATH2
 
+    print("Working on: {}".format(SEABIOS_PATH) )
     SRC_CONFIG_H = os.path.join(SEABIOS_PATH, "src", "config.h")
     SRC_FW_SSDT_MISC_DSL = os.path.join(SEABIOS_PATH, "src", "fw", "ssdt-misc.dsl")
     VGASRC_KCONFIG = os.path.join(SEABIOS_PATH, "vgasrc", "Kconfig")
