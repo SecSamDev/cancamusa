@@ -126,7 +126,7 @@ def compile_cloned_bios(bios,output_bios, SEABIOS_PATH=None):
         HID_BIOS_NAME = HID_BIOS_NAME[0:8]
 
     replace_files([SRC_FW_SSDT_MISC_DSL], [
-        ["QEMU0001", NEW_BIOS_NAME_UPPER]
+        ["QEMU0001", HID_BIOS_NAME]
     ])
 
     replace_files([VGASRC_KCONFIG], [
