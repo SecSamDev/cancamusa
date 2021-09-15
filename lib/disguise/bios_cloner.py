@@ -121,9 +121,9 @@ def compile_cloned_bios(bios,output_bios, SEABIOS_PATH=None):
         #BUILD_APPNAME8 in src/fw/mptable.c alredy has a size() method 
     ])
 
-    HID_BIOS_NAME = NEW_BIOS_NAME_UPPER
+    HID_BIOS_NAME = re.sub('[^0-9a-fA-F]','0',NEW_BIOS_NAME_UPPER)
     if len(HID_BIOS_NAME) < 8:
-        HID_BIOS_NAME = HID_BIOS_NAME + "CPU"[:(8-len(HID_BIOS_NAME))]
+        HID_BIOS_NAME = HID_BIOS_NAME + "000"[:(8-len(HID_BIOS_NAME))]
     elif len(HID_BIOS_NAME) > 8:
         HID_BIOS_NAME = HID_BIOS_NAME[0:8]
 
