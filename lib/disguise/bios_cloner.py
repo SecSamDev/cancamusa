@@ -96,13 +96,14 @@ def compile_cloned_bios(bios,output_bios, SEABIOS_PATH=None):
     DOT_CONFIG = os.path.join(SEABIOS_PATH, ".config")
     MAKEFILE = os.path.join(SEABIOS_PATH, "Makefile")
 
-    data = ""
+    """data = ""
     with open(SRC_FW_PCIINIT_c, 'r') as file_data:
         data = file_data.read()
-    data = re.sub(r'"Intel IGD BDSM enabled at[^"]+"', '"' + bios.name + '"', data)
+    data = re.sub(r'"Intel IGD BDSM enabled at[^"]+"', '"' + bios.name + '");', data)
+    data = data.replace(", (u32)addr, bdsm_size >> 20, dev);","")
     with open(SRC_FW_PCIINIT_c, 'w') as file_data:
         file_data.write(data)
-
+    """
     replace_files([SRC_FW_BIOSTABLES_c], [
         ['#define BIOS_NAME "SeaBIOS"', '#define BIOS_NAME "' + bios.manufacturer +'"'],
         ['#define BIOS_DATE "04/01/2014"', '#define BIOS_DATE "' + process_release_date(bios.release_date) +'"']
