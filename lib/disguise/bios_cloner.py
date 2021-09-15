@@ -74,6 +74,7 @@ def compile_cloned_bios(bios,output_bios, SEABIOS_PATH=None):
     SRC_FW_SSDT_MISC_DSL = os.path.join(SEABIOS_PATH, "src", "fw", "ssdt-misc.dsl")
     VGASRC_KCONFIG = os.path.join(SEABIOS_PATH, "vgasrc", "Kconfig")
     SRC_HW_BLOCKCMD_C = os.path.join(SEABIOS_PATH, "src", "hw", "blockcmd.c")
+    SRC_FW_ACPI_C = os.path.join(SEABIOS_PATH, "src", "fw", "acpi.c")
     SRC_FW_PARAVIRT_C = os.path.join(SEABIOS_PATH, "src", "fw", "paravirt.c")
     SRC_HW_BLOCKCMD_C = os.path.join(SEABIOS_PATH, "src", "hw", "blockcmd.c")
     SRC_FW_ACPI_DSDT_DSL = os.path.join(SEABIOS_PATH, "src", "fw", "acpi-dsdt.dsl")
@@ -112,6 +113,11 @@ def compile_cloned_bios(bios,output_bios, SEABIOS_PATH=None):
         ["BXPC", NEW_BIOS_NAME_UPPER],
         ['"BXPC"', '"' + NEW_BIOS_NAME_UPPER + '"']
     ])
+    replace_files([SRC_FW_ACPI_C], [
+        [", BUILD_APPNAME6, 6", ', BUILD_APPNAME6, ' + str(len(NEW_BIOS_NAME_UPPER) + 1)],
+        [", BUILD_APPNAME4, 4", ', BUILD_APPNAME4, ' + str(len(NEW_BIOS_NAME) + 1)],
+        #BUILD_APPNAME8 in src/fw/mptable.c alredy has a size() method 
+    ])
 
     replace_files([SRC_FW_SSDT_MISC_DSL], [
         ["QEMU0001", NEW_BIOS_NAME_UPPER]
@@ -119,15 +125,17 @@ def compile_cloned_bios(bios,output_bios, SEABIOS_PATH=None):
 
     replace_files([VGASRC_KCONFIG], [
         ["QEMU/Bochs", NEW_BIOS_NAME],
-        ["qemu ", NEW_BIOS_NAME + " "]
+        ["QEMU", NEW_BIOS_NAME],
+        ["qemu bochs", NEW_BIOS_NAME],
+        ["qemu", NEW_BIOS_NAME],
+        ["bochs", NEW_BIOS_NAME]
     ])
-
-    replace_files([SRC_HW_BLOCKCMD_C, SRC_FW_PARAVIRT_C], [
-        ['"QEMU', '"' + NEW_BIOS_NAME_UPPER]
-    ])
-
     replace_files([SRC_HW_BLOCKCMD_C], [
-        ['"QEMU"', '"' + NEW_BIOS_NAME_UPPER + '"']
+        ['"QEMU", 5', '"' + NEW_BIOS_NAME_UPPER + '", ' + str(len(NEW_BIOS_NAME_UPPER) + 1)]
+    ])
+    replace_files([SRC_FW_PARAVIRT_C], [
+        ['"QEMU', '"' + NEW_BIOS_NAME_UPPER],
+        ["for (i = 0; i < 4; i++)","for (i = 0; i < {}; i++)".format(str(len(NEW_BIOS_NAME_UPPER)))]
     ])
 
     replace_files([SRC_FW_ACPI_DSDT_DSL, SRC_FW_Q35_ACPI_DSDT_DSL], [
@@ -181,6 +189,7 @@ def compile_cloned_bios(bios,output_bios, SEABIOS_PATH=None):
     p_status = process.wait()
     process.terminate()
 
+    print("Generated SeaBIOS: {}".format(os.path.join(SEABIOS_PATH,"out","bios.bin")))
     # Move bios to new location
     with open(output_bios,'wb') as write_file:
         with open(os.path.join(SEABIOS_PATH,"out","bios.bin"),'rb') as read_file:
