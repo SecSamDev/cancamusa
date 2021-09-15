@@ -720,6 +720,12 @@ class HostInfo:
         self.selected_img_idx = None
         self.selected_img_pth = None
 
+    def get_account_for_domain(self, domain):
+        for acc in self.accounts:
+            if acc.domain == domain:
+                return acc
+        return None
+
     def add_disk(self, disk):
         for dsk in self.disks:
             if dsk.device_id == disk.device_id:

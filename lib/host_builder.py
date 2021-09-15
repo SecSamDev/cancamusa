@@ -218,15 +218,22 @@ iface vmbr{} inet static
             builder.add_script(actual_file_out_path)
 
         # Join Domain
-        project_domains = list(map(lambda x: x.domain, self.project.domain.domains))
-        if len(self.project.domain.domains) > 0 and host.domain in project_domains and not ROLE_DOMAIN_CONTROLLER in host.roles.roles:
+        actual_domain = self.project.domain.get_domain(host.domain)
+        if len(self.project.domain.domains) > 0 and actual_domain and not ROLE_DOMAIN_CONTROLLER in host.roles.roles:
             # TODO: Improve Join Domain for multiple DomainControllers
             with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'join-domain.ps1.jinja'), 'r') as file_r:
                 template = Template(file_r.read())
                 actual_file_out_path = os.path.join(host_path,'iso_file', 'join-domain.ps1')
                 with open(actual_file_out_path, 'w') as file_w:
-                    for domain in self.project.domain.domains:
-                        file_w.write(template.render(domain_dc_ip=domain.dc_ip,username=domain.default_admin,password=domain.default_admin_password,domain_name=domain.domain))
+                    acc = host.get_account_for_domain(host.domain)
+                    if acc == None:
+                        username = actual_domain.default_admin
+                        password = actual_domain.default_admin_password
+                    else:
+                        username = acc.name
+                        password = acc.password
+
+                    file_w.write(template.render(domain_dc_ip=actual_domain.dc_ip,username=username,password=password,domain_name=actual_domain.domain))
                 builder.add_script(actual_file_out_path)
 
         # Install sysmon
