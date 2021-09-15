@@ -12,6 +12,7 @@ class CancamusaDomain:
             domains.append(domain)
         cancamusa = CancamusaDomain(domains)
         return cancamusa
+
     def get_domain(self,domain):
         for dmn in self.domains:
             if domain == dmn.name:
@@ -84,6 +85,13 @@ class ADStructure:
         self.default_admin_password = 'CancamusaRocks123!'
         self.dc_ip = '10.0.0.1'
 
+    def get_user(self, username):
+        users = self.list_users()
+        for usr in users:
+            if usr.account_name == username:
+                return usr
+        return None
+    
     def from_json(obj):
         ret = ADStructure(obj["domain"])
         for name, ou in obj["ou"].items():
