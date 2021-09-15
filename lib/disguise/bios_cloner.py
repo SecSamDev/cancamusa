@@ -131,7 +131,7 @@ def compile_cloned_bios(bios,output_bios, SEABIOS_PATH=None):
         ["QEMU0001", HID_BIOS_NAME]
     ])
     replace_files([SRC_STD_MPTABLE_H],[
-        ["char oemid[8];", 'char oemid[{}];'.format(str(len(HID_BIOS_NAME)))]
+        ["char oemid[8];", 'char oemid[{}];'.format(str(len(NEW_BIOS_NAME_UPPER)))]
     ])
     replace_files([VGASRC_KCONFIG], [
         ["QEMU/Bochs", NEW_BIOS_NAME],
