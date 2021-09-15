@@ -218,7 +218,8 @@ iface vmbr{} inet static
             builder.add_script(actual_file_out_path)
 
         # Join Domain
-        if len(self.project.domain.domains) > 0 and host.domain in self.project.domain.domains and not ROLE_DOMAIN_CONTROLLER in host.roles.roles:
+        project_domains = list(map(lambda x: x.domain, self.project.domain.domains))
+        if len(self.project.domain.domains) > 0 and host.domain in project_domains and not ROLE_DOMAIN_CONTROLLER in host.roles.roles:
             # TODO: Improve Join Domain for multiple DomainControllers
             with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'join-domain.ps1.jinja'), 'r') as file_r:
                 template = Template(file_r.read())
