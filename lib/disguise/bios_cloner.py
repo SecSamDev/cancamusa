@@ -108,10 +108,10 @@ def compile_cloned_bios(bios,output_bios, SEABIOS_PATH=None):
         ['#define BIOS_NAME "SeaBIOS"', '#define BIOS_NAME "' + bios.manufacturer +'"'],
         ['#define BIOS_DATE "04/01/2014"', '#define BIOS_DATE "' + process_release_date(bios.release_date) +'"']
     ])
-
+    BIOS_VENDOR = (NEW_BIOS_NAME_UPPER + "CPU00000000")[0:8]
     replace_files([SRC_CONFIG_H], [
         ["Bochs", NEW_BIOS_NAME],
-        ["BOCHSCPU", (NEW_BIOS_NAME_UPPER + "CPU00000000")[0:8]],
+        ["BOCHSCPU", BIOS_VENDOR],
         ["BOCHS ", NEW_BIOS_NAME_UPPER + " "],
         ["BXPC", NEW_BIOS_NAME_UPPER],
         ['"BXPC"', '"' + NEW_BIOS_NAME_UPPER + '"']
@@ -121,7 +121,7 @@ def compile_cloned_bios(bios,output_bios, SEABIOS_PATH=None):
         [", BUILD_APPNAME4, 4", ', BUILD_APPNAME4, ' + str(len(NEW_BIOS_NAME) + 1)],
         #BUILD_APPNAME8 in src/fw/mptable.c alredy has a size() method 
     ])
-
+    
     HID_BIOS_NAME = re.sub('[^0-9a-fA-F]','0',NEW_BIOS_NAME_UPPER)
     HID_BIOS_NAME = (HID_BIOS_NAME + "00000000")[0:8]
 
@@ -140,12 +140,15 @@ def compile_cloned_bios(bios,output_bios, SEABIOS_PATH=None):
         ["bochs", NEW_BIOS_NAME]
     ])
     replace_files([SRC_HW_BLOCKCMD_C], [
-        ['"QEMU", 5', '"' + NEW_BIOS_NAME_UPPER + '", ' + str(len(NEW_BIOS_NAME_UPPER) + 1)]
+        ['"QEMU", 5', '"' + BIOS_VENDOR[0:7] + '", 8']
     ])
+    """
     replace_files([SRC_FW_PARAVIRT_C], [
-        ['"QEMU', '"' + NEW_BIOS_NAME_UPPER],
+        # Used for cdbres_inquiry.vendor -> char[8]
+        ['"QEMU', '"' + BIOS_VENDOR],
         ["for (i = 0; i < 4; i++)","for (i = 0; i < {}; i++)".format(str(len(NEW_BIOS_NAME_UPPER)))]
     ])
+    """
 
     replace_files([SRC_FW_ACPI_DSDT_DSL, SRC_FW_Q35_ACPI_DSDT_DSL], [
         ['"BXPC"', '"' + NEW_BIOS_NAME_UPPER + '"'],
