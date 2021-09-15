@@ -111,7 +111,7 @@ def compile_cloned_bios(bios,output_bios, SEABIOS_PATH=None):
 
     replace_files([SRC_CONFIG_H], [
         ["Bochs", NEW_BIOS_NAME],
-        ["BOCHSCPU", NEW_BIOS_NAME_UPPER],
+        ["BOCHSCPU", (NEW_BIOS_NAME_UPPER + "CPU00000000")[0:8]],
         ["BOCHS ", NEW_BIOS_NAME_UPPER + " "],
         ["BXPC", NEW_BIOS_NAME_UPPER],
         ['"BXPC"', '"' + NEW_BIOS_NAME_UPPER + '"']
@@ -123,17 +123,15 @@ def compile_cloned_bios(bios,output_bios, SEABIOS_PATH=None):
     ])
 
     HID_BIOS_NAME = re.sub('[^0-9a-fA-F]','0',NEW_BIOS_NAME_UPPER)
-    if len(HID_BIOS_NAME) < 8:
-        HID_BIOS_NAME = HID_BIOS_NAME + "000"[:(8-len(HID_BIOS_NAME))]
-    elif len(HID_BIOS_NAME) > 8:
-        HID_BIOS_NAME = HID_BIOS_NAME[0:8]
+    HID_BIOS_NAME = (HID_BIOS_NAME + "00000000")[0:8]
 
     replace_files([SRC_FW_SSDT_MISC_DSL], [
         ["QEMU0001", HID_BIOS_NAME]
     ])
+    """
     replace_files([SRC_STD_MPTABLE_H],[
         ["char oemid[8];", 'char oemid[{}];'.format(str(len(NEW_BIOS_NAME_UPPER)))]
-    ])
+    ])"""
     replace_files([VGASRC_KCONFIG], [
         ["QEMU/Bochs", NEW_BIOS_NAME],
         ["QEMU", NEW_BIOS_NAME],
