@@ -63,7 +63,7 @@ iface vmbr{} inet static
         host_path = os.path.join(self.project_path, host.computer_name)
         if not os.path.exists(host_path):
             os.mkdir(host_path)
-        if not os.path.exists(os.path.join(host_path, "bios.bin")):
+        if not os.path.exists(os.path.join(host_path, "bios.bin")) or ('CLEAN_ISOS' in os.environ and os.environ['CLEAN_ISOS'] == 'True'):
             if not self.seabios_path:
                 self.seabios_path = bios_cloner.download_seabios()
             bios_cloner.compile_cloned_bios(host.bios, os.path.join(
