@@ -15,7 +15,13 @@ class CancamusaDomain:
 
     def get_domain(self,domain):
         for dmn in self.domains:
-            if domain == dmn.name:
+            if domain == dmn.domain:
+                return dmn
+        return None
+    
+    def get_domain_by_name(self,name):
+        for dmn in self.domains:
+            if name == dmn.name:
                 return dmn
         return None
 
