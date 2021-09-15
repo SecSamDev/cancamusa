@@ -78,6 +78,7 @@ def compile_cloned_bios(bios,output_bios, SEABIOS_PATH=None):
     SRC_FW_ACPI_C = os.path.join(SEABIOS_PATH, "src", "fw", "acpi.c")
     SRC_FW_PARAVIRT_C = os.path.join(SEABIOS_PATH, "src", "fw", "paravirt.c")
     SRC_HW_BLOCKCMD_C = os.path.join(SEABIOS_PATH, "src", "hw", "blockcmd.c")
+    SRC_STD_MPTABLE_H = os.path.join(SEABIOS_PATH, "src", "std", "mptable.h")
     SRC_FW_ACPI_DSDT_DSL = os.path.join(SEABIOS_PATH, "src", "fw", "acpi-dsdt.dsl")
     SRC_FW_Q35_ACPI_DSDT_DSL = os.path.join(
         SEABIOS_PATH, "src", "fw", "q35-acpi-dsdt.dsl")
@@ -119,16 +120,19 @@ def compile_cloned_bios(bios,output_bios, SEABIOS_PATH=None):
         [", BUILD_APPNAME4, 4", ', BUILD_APPNAME4, ' + str(len(NEW_BIOS_NAME) + 1)],
         #BUILD_APPNAME8 in src/fw/mptable.c alredy has a size() method 
     ])
+
     HID_BIOS_NAME = NEW_BIOS_NAME_UPPER
-    if len(HID_BIOS_NAME)< 7:
-        HID_BIOS_NAME = HID_BIOS_NAME + "0"*(8-len(HID_BIOS_NAME))
+    if len(HID_BIOS_NAME) < 8:
+        HID_BIOS_NAME = HID_BIOS_NAME + "CPU"[:(8-len(HID_BIOS_NAME))]
     elif len(HID_BIOS_NAME) > 8:
         HID_BIOS_NAME = HID_BIOS_NAME[0:8]
 
     replace_files([SRC_FW_SSDT_MISC_DSL], [
         ["QEMU0001", HID_BIOS_NAME]
     ])
-
+    replace_files([SRC_STD_MPTABLE_H],[
+        ["char oemid[8];", 'char oemid[{}];'.format(str(len(HID_BIOS_NAME)))]
+    ])
     replace_files([VGASRC_KCONFIG], [
         ["QEMU/Bochs", NEW_BIOS_NAME],
         ["QEMU", NEW_BIOS_NAME],
