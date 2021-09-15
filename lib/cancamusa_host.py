@@ -305,6 +305,8 @@ class HostInfoNetwork:
         for prop in property_names:
             if prop.startswith("_"):
                 continue
+            if prop in ['setting_id','index','interface_index']:
+                continue
             if prop == 'assign_method':
                 answer = prompt([{'type': 'list', 'name': 'option',
                                   'message': 'Edit IP assignation method',  'choices': [
@@ -648,11 +650,14 @@ class HostInfoWindowsAccounts:
             self.domain = self.ps_computer_name
 
     def edit_interactive(self):
+        # If needed change in cancamusa.json
+        """
         property_names = list(map(lambda x: str(x), dir(self)))
         class_props = list(map(lambda x: str(x), dir(HostInfoWindowsAccounts)))
         for element in class_props:
             property_names.pop(property_names.index(element))
-
+        """
+        property_names = ['name','description','domain','password']
         for prop in property_names:
             if prop.startswith("_"):
                 continue
