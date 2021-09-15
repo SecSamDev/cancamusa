@@ -219,6 +219,8 @@ iface vmbr{} inet static
 
         # Join Domain
         actual_domain = self.project.domain.get_domain(host.domain)
+        if actual_domain == None:
+            print("No domain configuration for: {}".format(host.domain))
         if len(self.project.domain.domains) > 0 and actual_domain and not ROLE_DOMAIN_CONTROLLER in host.roles.roles:
             # TODO: Improve Join Domain for multiple DomainControllers
             with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'join-domain.ps1.jinja'), 'r') as file_r:
