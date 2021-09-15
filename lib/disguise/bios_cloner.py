@@ -90,6 +90,9 @@ def compile_cloned_bios(bios,output_bios, SEABIOS_PATH=None):
     NEW_BIOS_NAME_UPPER = bios.version.split(" ")[0]
     NEW_BIOS_NAME = NEW_BIOS_NAME_UPPER[0] + (NEW_BIOS_NAME_UPPER[1:]).lower()
 
+    DOT_CONFIG = os.path.join(SEABIOS_PATH, ".config")
+    MAKEFILE = os.path.join(SEABIOS_PATH, "Makefile")
+
     data = ""
     with open(SRC_FW_PCIINIT_c, 'r') as file_data:
         data = file_data.read()
@@ -159,8 +162,21 @@ def compile_cloned_bios(bios,output_bios, SEABIOS_PATH=None):
         ['"SeaBIOS (version', '" ' + bios.manufacturer + ' (version']
     ])
 
-    # do make
-    process = subprocess.Popen(['make'], stdout=subprocess.PIPE, cwd=SEABIOS_PATH)
+    # Create .config file
+    process = subprocess.Popen(['make','-j','"$(nproc)"', '2>/dev/null'], stdout=subprocess.PIPE, cwd=SEABIOS_PATH)
+    output, error = process.communicate()
+    p_status = process.wait()
+    process.terminate()
+
+    # Replace .config strings
+    replace_files([DOT_CONFIG], [
+        ['CONFIG_XEN=y', 'CONFIG_XEN=n']
+    ])
+    replace_files([MAKEFILE], [
+        ['PYTHON=python','PYTHON=python3']
+    ])
+    # Compile
+    process = subprocess.Popen(['make','-j','"$(nproc)"'], stdout=subprocess.PIPE, cwd=SEABIOS_PATH)
     output, error = process.communicate()
     p_status = process.wait()
     process.terminate()
