@@ -1,4 +1,6 @@
 @echo off
 {%- for cpu in cpus %}
-reg add "HKLM\HARDWARE\DESCRIPTION\System\CentralProcessor\{{loop.index}}" /f /v ProcessorNameString /t REG_SZ /d "{{cpu.name}}"
+{% for n_core in range(cpu.cores) %}
+reg add "HKLM\HARDWARE\DESCRIPTION\System\CentralProcessor\{{n_core}}" /f /v ProcessorNameString /t REG_SZ /d "{{cpu.name}}"
+{% endfor %}
 {%- endfor %}
