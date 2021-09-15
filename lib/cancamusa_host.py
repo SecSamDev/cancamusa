@@ -726,9 +726,7 @@ class HostInfo:
         self.selected_img_pth = None
 
     def get_account_for_domain(self, domain):
-        print("Searching domain: {}".format(domain))
         for acc in self.accounts:
-            print("     {}".format(acc.domain))
             if acc.domain == domain:
                 return acc
         return None
