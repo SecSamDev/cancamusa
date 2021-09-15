@@ -19,7 +19,7 @@ if ((gwmi win32_computersystem).partofdomain -eq $false) {
     secedit /export /cfg C:\secpol.cfg
     (gc C:\secpol.cfg).replace("PasswordComplexity = 1", "PasswordComplexity = 0") | Out-File C:\secpol.cfg
     secedit /configure /db C:\Windows\security\local.sdb /cfg C:\secpol.cfg /areas SECURITYPOLICY
-    rm -force C:\secpol.cfg -confirm:$false
+    Remove-Item –path C:\secpol.cfg -Force -Confirm:$false
 
     $PlainPassword = "{{config.safe_mode_password}}" # "P@ssw0rd"
     $SecurePassword = $PlainPassword | ConvertTo-SecureString -AsPlainText -Force
@@ -50,7 +50,7 @@ Add-WindowsFeature RSAT-AD-PowerShell,RSAT-AD-AdminCenter
 secedit /export /cfg C:\secpol.cfg
 (gc C:\secpol.cfg).replace("PasswordComplexity = 1", "PasswordComplexity = 0") | Out-File C:\secpol.cfg
 secedit /configure /db C:\Windows\security\local.sdb /cfg C:\secpol.cfg /areas SECURITYPOLICY
-rm -force C:\secpol.cfg -confirm:$false
+Remove-Item –path C:\secpol.cfg -Force -Confirm:$false
 
 Install-WindowsFeature AD-domain-services –IncludeManagementTools
 Import-Module ADDSDeployment

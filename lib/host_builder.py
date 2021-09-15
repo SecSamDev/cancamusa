@@ -34,8 +34,10 @@ iface vmbr{} inet static
 	bridge-fd 0
 	bridge-vlan-aware yes
 	bridge-vids 2-4094
+    #post-up iptables -t nat -A POSTROUTING -s '{}' -o eno1 -j MASQUERADE
+	#post-down iptables -t nat -D POSTROUTING -s '{}' -o eno1 -j MASQUERADE
 
-""".format(vmbrX,vmbrX,str(net))
+""".format(vmbrX,vmbrX,str(net),str(net),str(net))
             vmbrX = vmbrX + 1
         
         net_path = os.path.join(self.project_path,'net_interfaces')
