@@ -119,6 +119,11 @@ def compile_cloned_bios(bios,output_bios, SEABIOS_PATH=None):
         [", BUILD_APPNAME4, 4", ', BUILD_APPNAME4, ' + str(len(NEW_BIOS_NAME) + 1)],
         #BUILD_APPNAME8 in src/fw/mptable.c alredy has a size() method 
     ])
+    HID_BIOS_NAME = NEW_BIOS_NAME_UPPER
+    if len(HID_BIOS_NAME)< 7:
+        HID_BIOS_NAME = HID_BIOS_NAME + "0"*(8-len(HID_BIOS_NAME))
+    elif len(HID_BIOS_NAME) > 8:
+        HID_BIOS_NAME = HID_BIOS_NAME[0:8]
 
     replace_files([SRC_FW_SSDT_MISC_DSL], [
         ["QEMU0001", NEW_BIOS_NAME_UPPER]
