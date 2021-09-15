@@ -172,7 +172,7 @@ def compile_cloned_bios(bios,output_bios, SEABIOS_PATH=None):
     ])
 
     # Create .config file
-    process = subprocess.Popen(['make', '2>/dev/null'], stdout=subprocess.PIPE, cwd=SEABIOS_PATH)
+    process = subprocess.Popen(['make'], stdout=subprocess.PIPE, cwd=SEABIOS_PATH)
     output, error = process.communicate()
     p_status = process.wait()
     process.terminate()
