@@ -291,7 +291,10 @@ class HostInfoNetwork:
             else:
                 # static, dynamic, DHCP
                 self.assign_method = 'static'
-                
+            if 'DNSServers' in net_object:
+                self.dns_servers = net_object['DNSServers']
+            else:
+                self.dns_servers = [self.ip_gateway[0],'8.8.4.4']            
 
     def __str__(self):
         return "{}: {} ({}) [{}]".format(self.index, self.description, self.mac_address, ",".join(self.ip_address))
@@ -373,7 +376,8 @@ class HostInfoNetwork:
                 'IPAddress': ["192.168.0.2"],
                 'IPSubnet' : ["255.255.255.0"],
                 'DefaultIPGateway' : ["192.168.0.1"],
-                'AssignMethod' : 'static'
+                'AssignMethod' : 'static',
+                'DNSServers' : ['8.8.8.8','8.8.4.4']
             })
         elif answer['option'] == 'Search vendor':
             while True:
@@ -406,7 +410,8 @@ class HostInfoNetwork:
                     'IPAddress': ["192.168.0.2"],
                     'IPSubnet' : ["255.255.255.0"],
                     'DefaultIPGateway' : ["192.168.0.1"],
-                    'AssignMethod' : 'static'
+                    'AssignMethod' : 'static',
+                    'DNSServers' : ['8.8.8.8','8.8.4.4']
                 })
                 break
         elif answer['option'] == 'Basic':
@@ -421,7 +426,8 @@ class HostInfoNetwork:
                 'IPAddress': ["192.168.0.2"],
                 'IPSubnet' : ["255.255.255.0"],
                 'DefaultIPGateway' : ["192.168.0.1"],
-                'AssignMethod' : 'static'
+                'AssignMethod' : 'static',
+                'DNSServers' : ['8.8.8.8','8.8.4.4']
             })
         netwrk = netwrk.edit_interactive()
         return netwrk
@@ -438,7 +444,8 @@ class HostInfoNetwork:
             'IPAddress': self.ip_address,
             'IPSubnet' : self.ip_subnet,
             'DefaultIPGateway' : self.ip_gateway,
-            'AssignMethod' : self.assign_method
+            'AssignMethod' : self.assign_method,
+            'DNSServers' : self.dns_servers
         }
 
     def from_json(net_object):
