@@ -1,15 +1,16 @@
 @echo off
 setlocal
 cd /d %~dp0
-powershell -Command "(New-Object Net.WebClient).DownloadFile('https://download.sysinternals.com/files/Sysmon.zip', 'c:\package.zip')"
+powershell -Command "[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;(New-Object Net.WebClient).DownloadFile('https://download.sysinternals.com/files/Sysmon.zip', 'c:\package.zip')"
 mkdir C:\Temp
 Call :UnZipFile "C:\Temp\" "c:\package.zip"
 cd C:\Temp
-Sysmon64.exe -accepteula -i a:\{{sysmon_conf}} -d {{sysmon_drv}}
-reg add “HKLM\SYSTEM\CurrentControlSet\Services\{{sysmon_drv}}\Instances\Sysmon Instance” /v Altitude /t REG_SZ /d {{sysmon_alt}} /f
+ren Sysmon64.exe {{sysmon_drv}}.exe
+{{sysmon_drv}}.exe -accepteula -i a:\{{sysmon_conf}} -d {{sysmon_drv}}
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\{{sysmon_drv}}\Instances\Sysmon Instance” /v Altitude /t REG_SZ /d {{sysmon_alt}} /f
 cd C:\
-rm c:\package.zip
-rm -r C:\Temp
+del c:\package.zip
+del -r C:\Temp
 exit /b
 
 :UnZipFile <ExtractTo> <newzipfile>
