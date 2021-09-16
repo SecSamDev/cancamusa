@@ -215,12 +215,43 @@ class CancamusaProject:
                 answers = prompt([{'type': 'input','name': 'elastic_url','message': 'Kibana Host.','default' : 'http://192.168.100.100:5601'}])
                 self.config['siem']['elasticsearch']['kibana'] = answers['elastic_url']
     
+    def edit_socks_proxy(self):
+        if not 'proxy' in self.config:
+            answers = prompt([{'type': 'confirm','name': 'proxy','message': 'Use a SOCKS proxy?'}])
+            if not answers['proxy']:
+                self.config.pop('proxy',None)
+                return
+            self.config['proxy'] = {
+                'ip' : "",
+                'port' : 1080
+            }
+        answer = prompt([{'type': 'input','name': 'option','message': 'Proxy host (10.10.10.10):', 'default' : str(self.config['proxy']['ip'])}])
+        description = answer['option']
+        self.config['proxy']['ip'] = description
+        answer = prompt([{'type': 'input','name': 'option','message': 'Proxy port (1080):', 'default' : str(self.config['proxy']['port'])}])
+        description = int(answer['option'])
+        self.config['proxy']['port'] = description
+        answers = prompt([{'type': 'confirm','name': 'proxy','message': 'Use user+password?'}])
+        if not answers['proxy']:
+            self.config['proxy'].pop('username',None)
+            self.config['proxy'].pop('password',None)
+            return
+        if not 'username' in self.config['proxy']:
+            self.config['proxy']['username'] = "user"
+            self.config['proxy']['password'] = "password"
+        answer = prompt([{'type': 'input','name': 'option','message': 'Proxy username:', 'default' : self.config['proxy']['username']}])
+        description = answer['option']
+        self.config['proxy']['username'] = description
+        answer = prompt([{'type': 'input','name': 'option','message': 'Proxy password:', 'default' : self.config['proxy']['password']}])
+        description = int(answer['option'])
+        self.config['proxy']['password'] = description
+
 
     def edit_sysmon(self):
         if not 'sysmon' in self.config:
             answers = prompt([{'type': 'confirm','name': 'sysmon','message': 'Install Sysmon in each host?'}])
             if not answers['sysmon']:
-                del self.config['sysmon']
+                self.config.pop('sysmon',None)
                 return
             self.config['sysmon'] = {
                 'conf' : "",
@@ -378,7 +409,7 @@ class CancamusaProject:
 
     def edit_siem_config(self):
         while True:
-            answer = prompt([{'type': 'list','name': 'option','message': 'Select a SIEM property:', 'choices' : ['Sysmon', 'Elasticsearch','Logstash','Winlogbeat','Back'], 'value' : "none"}])
+            answer = prompt([{'type': 'list','name': 'option','message': 'Select a SIEM property:', 'choices' : ['Sysmon', 'Elasticsearch','Logstash','Winlogbeat','SOCKS Proxy','Back'], 'value' : "none"}])
             if answer['option'] == 'Back':
                 self.save()
                 return
@@ -390,6 +421,8 @@ class CancamusaProject:
                 self.edit_logstash() 
             elif answer['option'] == 'Winlogbeat':  
                 self.edit_winlogbeat()
+            elif answer['option'] == 'SOCKS Proxy':  
+                self.edit_socks_proxy()
 
     def new_project_in_current_path():
         current_dir = os.getcwd()

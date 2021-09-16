@@ -1,0 +1,9 @@
+{% if not proxy.username -%}
+netsh winhttp set proxy proxy-server="socks={{proxy.ip}}:{{proxy.port}}" bypass-list="localhost"
+{% else %}
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyEnable /t REG_DWORD /d 1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyServer /t REG_SZ /d {{proxy.ip}}:{{proxy.port}}
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyUser /t REG_SZ /d {{proxy.username}}
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyPass /t REG_SZ /d {{proxy.password}}
+netsh winhttp import proxy source=ie
+{% endif %}

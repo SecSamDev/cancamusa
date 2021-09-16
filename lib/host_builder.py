@@ -217,6 +217,15 @@ iface vmbr{} inet static
                 file_w.write(template.render(networks=host.networks))
             builder.add_script(actual_file_out_path)
 
+        # Setup Socks Proxy
+        if 'proxy' in self.project.config:
+            with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'set-proxy.bat.jinja'), 'r') as file_r:
+                template = Template(file_r.read())
+                actual_file_out_path = os.path.join(host_path,'iso_file', 'set-proxy.bat')
+                with open(actual_file_out_path, 'w') as file_w:
+                    file_w.write(template.render(proxy=self.project.config['proxy']))
+                builder.add_script(actual_file_out_path)
+
         # Join Domain
         actual_domain = self.project.domain.get_domain(host.domain)
         if actual_domain == None:
