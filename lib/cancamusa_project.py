@@ -384,6 +384,7 @@ class CancamusaProject:
         # Check if the current path is a valid cancamusa project
         cancamusa_config = os.path.join(current_dir, 'cancamusa.json')
         if os.path.isfile(cancamusa_config):
+            create_config_path_if_not_exists(current_dir)
             with open(cancamusa_config,'r') as config_file:
                 json_config = json.loads(config_file.read())
                 cancamusa = CancamusaProject.load_from_object(json_config)
