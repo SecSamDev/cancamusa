@@ -158,7 +158,8 @@ class CancamusaProject:
         self.config['sysmon'] = {
             'conf' : conf_path,
             'driver' : 'SoundDrv',
-            'altitude' : 385201
+            'altitude' : 385201,
+            'description' : "Sound Driver"
         }
         return self
     
@@ -224,6 +225,10 @@ class CancamusaProject:
             answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon Driver Altitude:', 'default' : str(self.config['sysmon']['altitude'])}])
             altitude = int(answer['option'])
             self.config['sysmon']['altitude'] = altitude
+
+            answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon service Description:', 'default' : str(self.config['sysmon']['description'])}])
+            description = int(answer['option'])
+            self.config['sysmon']['description'] = description
 
 
         
