@@ -169,6 +169,16 @@ class CancamusaProject:
             'conf' : conf_path
         }
         return self
+    
+    def get_winlogbeat_file_if_not_exists(self):
+        if 'winlogbeat' in self.config:
+            if not os.path.exists(os.path.join(self.config_path,cancamusa_common.WINLOGBEAT_CONFIG_FILE)):
+                copy_config_file(self.config_path, self.config['winlogbeat']['conf'],cancamusa_common.WINLOGBEAT_CONFIG_FILE)
+    
+    def get_sysmon_file_if_not_exists(self):
+        if 'sysmon' in self.config:
+            if not os.path.exists(os.path.join(self.config_path,cancamusa_common.SYSMON_CONFIG_FILE)):
+                copy_config_file(self.config_path, self.config['sysmon']['conf'],cancamusa_common.SYSMON_CONFIG_FILE)
 
     def set_logstash_siem(self, host):
         self.config['siem']['logstash'] = {
@@ -187,8 +197,10 @@ class CancamusaProject:
         if answers['winlogbeat'].strip() == "":
             print("Creating custom winlogbeat configuration file...")
             content = create_custom_winlogbeat_file(self)
-            with open(os.path.join(self.config_path,'config_files',cancamusa_common.WINLOGBEAT_CONFIG_FILE), 'w') as write_file:
+            location = os.path.join(self.config_path,'config_files',cancamusa_common.WINLOGBEAT_CONFIG_FILE)
+            with open(location, 'w') as write_file:
                 write_file.write(content)
+            self.set_winlogbeat_conf(location)
         else:
             copy_config_file(self.config_path,answers['winlogbeat'],cancamusa_common.WINLOGBEAT_CONFIG_FILE)
             self.set_winlogbeat_conf(answers['winlogbeat'])
@@ -502,5 +514,5 @@ def create_custom_winlogbeat_file(cancamusa):
                 file_content += '\tssl.certificate: "./elastic_certificate.pem"\n'
                 file_content += '\tssl.key: "./elastic_key.pem"\n'
     
-    return file_content
+    return file_content.replace("\n","\r\n")
 

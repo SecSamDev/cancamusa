@@ -249,6 +249,8 @@ iface vmbr{} inet static
 
         # Install sysmon
         if 'sysmon' in self.project.config:
+            # If imported, download the sysmon config
+            self.project.get_sysmon_file_if_not_exists()
             sysmon_conf = cancamusa_common.SYSMON_CONFIG_FILE
             sysmon_drv = self.project.config['sysmon']['driver']
             sysmon_alt = self.project.config['sysmon']['altitude']
@@ -269,7 +271,9 @@ iface vmbr{} inet static
         # TODO: hide winlogbeat
         # https://artifacts.elastic.co/downloads/beats/winlogbeat/winlogbeat-7.14.1-windows-x86_64.zip
 
-        if os.path.exists(os.path.join(host_path, 'iso_file', cancamusa_common.WINLOGBEAT_CONFIG_FILE)):
+        if 'winlogbeat' in self.project.config:
+            # If imported, download the winlogbeat config
+            self.project.get_winlogbeat_file_if_not_exists()
             with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'install-winlogbeat.bat.jinja'), 'r') as file_r:
                 template = Template(file_r.read())
                 actual_file_out_path = os.path.join(host_path,'iso_file', 'install-winlogbeat.bat')

@@ -1,0 +1,29 @@
+winlogbeat.event_logs:
+    - name: Application
+      ignore_older: 72h
+    - name: Security
+    - name: System
+{% if config.sysmon -%}
+    - name: Microsoft-Windows-Sysmon/Operational
+{% endif %}
+{% if config.logstash -%}
+output.logstash:
+    hosts:["{{config.logstash.host}}"]
+{% endif %}
+{% if config.elasticsearch -%}
+output.elasticsearch:
+    hosts:["{{config.elasticsearch.host}}"]
+{% if config.elasticsearch.security -%}
+{% if config.elasticsearch.security.username -%}
+    username: "{{config.elasticsearch.security.username}}"
+    password: "{{config.elasticsearch.security.password}}"
+{% endif %}
+{% if config.elasticsearch.security.api_key -%}
+    api_key: "{{config.elasticsearch.security.api_key}}"
+{% endif %}
+{% if config.elasticsearch.security.certificate -%}
+    ssl.certificate: "./elastic_certificate.pem"
+    ssl.key: "./elastic_key.pem"
+{% endif %}
+{% endif %}
+{% endif %}
