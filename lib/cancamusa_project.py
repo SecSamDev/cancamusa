@@ -18,7 +18,6 @@ class CancamusaProject:
         self.project_name = "Cancamusa"
         self.description = "A simple lab project"
         self.config_path = config_path
-        self.virtio = 'stable'
         self.domain = CancamusaDomain()
         self.config = {
             'siem' : {},
@@ -119,7 +118,6 @@ class CancamusaProject:
                 'project_name' : self.project_name,
                 'description' : self.description,
                 'config' : self.config,
-                'virtio' : self.virtio,
                 'hosts' : [],
                 'domain' : self.domain.to_json(),
                 'host_id_counter' : self.host_id_counter,
@@ -138,7 +136,6 @@ class CancamusaProject:
         cancamusa = CancamusaProject(None)
         cancamusa.project_name = obj['project_name']
         cancamusa.description = obj['description']
-        cancamusa.virtio = obj['virtio']
         cancamusa.config = obj['config']
         cancamusa.hosts = []
         cancamusa.domain = CancamusaDomain.load_from_object(obj['domain'])
