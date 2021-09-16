@@ -277,7 +277,6 @@ class CancamusaProject:
         self.config['sysmon']['description'] = description
 
 
-        
 
     def new_project_in_path(pth):
         cancamusa = CancamusaProject(pth)
@@ -395,10 +394,13 @@ class CancamusaProject:
                 builder.build_net_interfaces()
             elif answer['option'] == 'Deploy':
                 # Depending if the project is alredy builded it deploys the project in Proxmox etc
+                answer = prompt([{'type': 'list','name': 'option','message': 'Deploy mode:', 'choices' : ['Hard','Soft'], 'value' : "none"}])
+                # Recreate disk images or only copy the qemu template
+                hard_mode = answer['option'] == 'Hard'
                 deployer = ProxmoxDeployer(self)
                 deployer.create_cpu_if_not_exists()
                 for host in self.hosts:
-                    deployer.deploy_host(host)
+                    deployer.deploy_host(host,hard_mode)
                 # Create resource pool
                 deployer.create_pool()
             elif answer['option'] == 'AD':  

@@ -18,7 +18,7 @@ class ProxmoxDeployer:
             os.mkdir(self.project_path)
         self.configuration = CancamusaConfiguration.load_or_create(None)
 
-    def deploy_host(self, host):
+    def deploy_host(self, host,hard=True):
         if not self.configuration.is_proxmox:
             return
         host_path = os.path.join(self.project_path,host.computer_name)
@@ -27,17 +27,18 @@ class ProxmoxDeployer:
         qemu_template_file = os.path.join(host_path, str(host.host_id) + ".conf")
         if not os.path.exists(qemu_template_file):
             return
+        create_disks = (not hard) or (not os.path.exists(os.path.join(self.configuration.proxmox_templates, os.path.basename(qemu_template_file))))
         # Copy QEMU template
         with open(qemu_template_file, 'r') as file_r:
             with open(os.path.join(self.configuration.proxmox_templates, os.path.basename(qemu_template_file)), 'w') as file_w:
                 file_w.write(file_r.read())
-        
-        dcisc_i = 0 
-        img_storage = [x for x in  self.configuration.proxmox_storages if x['name'] == self.configuration.proxmox_image_storage][0]['path']
-        # Create qcow2 images
-        for hdisk in host.disks:
-            qemu_disk_qcow2("{}/images/{}/vm-{}-disk-{}.qcow2".format(img_storage,host.host_id,host.host_id,dcisc_i), hdisk.size)
-            dcisc_i = dcisc_i + 1
+        if create_disks:
+            dcisc_i = 0 
+            img_storage = [x for x in  self.configuration.proxmox_storages if x['name'] == self.configuration.proxmox_image_storage][0]['path']
+            # Create qcow2 images
+            for hdisk in host.disks:
+                qemu_disk_qcow2("{}/images/{}/vm-{}-disk-{}.qcow2".format(img_storage,host.host_id,host.host_id,dcisc_i), hdisk.size)
+                dcisc_i = dcisc_i + 1
         
     def create_pool(self):
         if not self.configuration.is_proxmox:
