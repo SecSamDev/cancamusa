@@ -259,8 +259,8 @@ class CancamusaProject:
                 'altitude' : 385201,
                 'description' : "Sound Driver"
             }
-        answers = prompt([{'type': 'input','name': 'sysmon_conf','message': 'Sysmon configuration file path', 'default' : self.config['sysmon']['sysmon_conf']}])
-        if answers['sysmon_conf'] != self.config['sysmon']['sysmon_conf']:
+        answers = prompt([{'type': 'input','name': 'sysmon_conf','message': 'Sysmon configuration file path', 'default' : self.config['sysmon']['conf']}])
+        if answers['sysmon_conf'] != self.config['sysmon']['conf']:
             self.set_sysmon_conf(answers['sysmon_conf'])
             copy_config_file(self.config_path,answers['sysmon_conf'],cancamusa_common.SYSMON_CONFIG_FILE)
 
