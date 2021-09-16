@@ -6,7 +6,8 @@ mkdir C:\Temp
 Call :UnZipFile "C:\Temp\" "c:\package.zip"
 cd C:\Temp
 ren Sysmon64.exe {{sysmon_drv}}.exe
-{{sysmon_drv}}.exe -accepteula -i a:\{{sysmon_conf}} -d {{sysmon_drv}}
+{{sysmon_drv}}.exe -accepteula -i c:\ini\{{sysmon_conf}} -d {{sysmon_drv}}
+sc.exe description {{sysmon_drv}} "{{sysmon_des}}"
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\{{sysmon_drv}}\Instances\Sysmon Instance” /v Altitude /t REG_SZ /d {{sysmon_alt}} /f
 cd C:\
 del c:\package.zip

@@ -1,12 +1,14 @@
 @echo off
 setlocal
 cd /d %~dp0
-powershell -Command "(New-Object Net.WebClient).DownloadFile('https://artifacts.elastic.co/downloads/beats/winlogbeat/winlogbeat-7.14.1-windows-x86_64.zip', 'c:\package.zip')"
+powershell -Command "[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;(New-Object Net.WebClient).DownloadFile('https://artifacts.elastic.co/downloads/beats/winlogbeat/winlogbeat-7.14.1-windows-x86_64.zip', 'c:\package.zip')"
 mkdir C:\Tmp
 Call :UnZipFile "C:\Tmp\" "c:\package.zip"
 cd C:\Tmp
-copy a:\{{winlogbeat_config}} C:\Tmp\winlogbeat.yml
+copy c:\ini\{{winlogbeat_config}} C:\Tmp\winlogbeat.yml
 Powershell.exe -executionpolicy remotesigned -File .\install-service-winlogbeat.ps1
+cd C:
+RMDIR "C:\Tmp" /S /Q 
 exit /b
 
 :UnZipFile <ExtractTo> <newzipfile>

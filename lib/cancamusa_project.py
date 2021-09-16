@@ -148,7 +148,8 @@ class CancamusaProject:
 
     def set_elasticsearch_siem(self, host, security):
         self.config['siem']['elasticsearch'] = {
-            'host' : host
+            'host' : host,
+            'kibana' : ""
         }
         if security:
             self.config['siem']['elasticsearch']['security'] = security
@@ -209,26 +210,40 @@ class CancamusaProject:
                 copy_config_file(self.config_pathh,sec_answers['key'],cancamusa_common.ELASTIC_CERTIFICATE_KEY)
             else:
                 self.set_elasticsearch_siem(answers['elastic_url'],None)
+            answers = prompt([{'type': 'confirm','name': 'siem_elastic','message': 'Configure also Kibana?'}])
+            if answers['siem_elastic']:
+                answers = prompt([{'type': 'input','name': 'elastic_url','message': 'Kibana Host.','default' : 'http://192.168.100.100:5601'}])
+                self.config['siem']['elasticsearch']['kibana'] = answers['elastic_url']
     
 
     def edit_sysmon(self):
-        answers = prompt([{'type': 'confirm','name': 'sysmon','message': 'Install Sysmon in each host?'}])
-        if answers['sysmon']:
-            answers = prompt([{'type': 'input','name': 'sysmon_conf','message': 'Sysmon configuration file path'}])
+        if not 'sysmon' in self.config:
+            answers = prompt([{'type': 'confirm','name': 'sysmon','message': 'Install Sysmon in each host?'}])
+            if not answers['sysmon']:
+                del self.config['sysmon']
+                return
+            self.config['sysmon'] = {
+                'conf' : "",
+                'driver' : 'SoundDrv',
+                'altitude' : 385201,
+                'description' : "Sound Driver"
+            }
+        answers = prompt([{'type': 'input','name': 'sysmon_conf','message': 'Sysmon configuration file path', 'default' : self.config['sysmon']['sysmon_conf']}])
+        if answers['sysmon_conf'] != self.config['sysmon']['sysmon_conf']:
             self.set_sysmon_conf(answers['sysmon_conf'])
             copy_config_file(self.config_path,answers['sysmon_conf'],cancamusa_common.SYSMON_CONFIG_FILE)
 
-            answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon Driver Name ([a-zA-Z]{8}):', 'default' : str(self.config['sysmon']['driver'])}])
-            name = answer['option'][:8]# Only 8 characters
-            self.config['sysmon']['driver'] = name.encode("ascii", "ignore").decode()
-            
-            answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon Driver Altitude:', 'default' : str(self.config['sysmon']['altitude'])}])
-            altitude = int(answer['option'])
-            self.config['sysmon']['altitude'] = altitude
+        answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon Driver Name ([a-zA-Z]{8}):', 'default' : str(self.config['sysmon']['driver'])}])
+        name = answer['option'][:8]# Only 8 characters
+        self.config['sysmon']['driver'] = name.encode("ascii", "ignore").decode()
+        
+        answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon Driver Altitude:', 'default' : str(self.config['sysmon']['altitude'])}])
+        altitude = int(answer['option'])
+        self.config['sysmon']['altitude'] = altitude
 
-            answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon service Description:', 'default' : str(self.config['sysmon']['description'])}])
-            description = int(answer['option'])
-            self.config['sysmon']['description'] = description
+        answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon service Description:', 'default' : str(self.config['sysmon']['description'])}])
+        description = answer['option']
+        self.config['sysmon']['description'] = description
 
 
         
