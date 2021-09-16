@@ -6,7 +6,7 @@ A Deception Platform
 ## Configuration
 The cancamusa configuration is stored by default in `~/.cancamusa/preferences.json` and can be changed using the ENV_VAR **CANCAMUSA_HOME**
 
-## How to use it
+## Installation
 
 Set cancamusa command as a bash alias:
 ```
@@ -22,6 +22,12 @@ Install python requirements:
 ```
 python3 -m pip install -r requiremets.txt
 ```
+
+## Examples
+
+There are some laboratory examples here: https://github.com/SecSamDev/cancamusa-labs
+
+## How to use it
 
 Inside an empty directory type `cancamusa`:
 ```
