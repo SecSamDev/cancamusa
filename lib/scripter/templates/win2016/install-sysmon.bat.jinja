@@ -10,8 +10,8 @@ ren Sysmon64.exe {{sysmon_drv}}.exe
 sc.exe description {{sysmon_drv}} "{{sysmon_des}}"
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\{{sysmon_drv}}\Instances\Sysmon Instance” /v Altitude /t REG_SZ /d {{sysmon_alt}} /f
 cd C:\
-del c:\package.zip
-del -r C:\Temp
+del /F /Q c:\package.zip
+del /F /Q C:\Temp
 exit /b
 
 :UnZipFile <ExtractTo> <newzipfile>
