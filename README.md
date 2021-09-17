@@ -29,6 +29,8 @@ There are some laboratory examples here: https://github.com/SecSamDev/cancamusa-
 
 ## How to use it
 
+![Usage of Cancamusa](./img/UsageOfCancamusa.gif)
+
 Inside an empty directory type `cancamusa`:
 ```
 test1@Test1:~/cancamusa-labs/test2$ cancamusa
@@ -195,6 +197,15 @@ Configure as many servers as you want with failover enabled (if there is more th
 Adds as many scopes as networks has the laboratory.
 Reserves IPs for each host that has a network interface in fixed or static mode.
 Calculates the failover configuration
+
+### Deployment
+
+There are two options: soft and hard. The hard way replaces all files and qcow2 disks and the soft only deploys the new machines and updates the QEMU templates.
+
+### AutoInstallation
+
+With the deployment you only need to "Start" the VM and the installation will go by itself.
+![Usage of Cancamusa](./img/Win7Install.gif)
 
 ## TODO:
 - Proxmox template creation with all scripts and drivers bundled in a ISO mounted in a CD/DVD device.
