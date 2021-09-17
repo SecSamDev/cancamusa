@@ -38,9 +38,6 @@ def get_win_type(win_image):
         return 'win7'
     raise Exception('Cannot identify Windows OS version: ' + win_image)
 
-def replaceArgumentsFunction(content, arguments):
-    return content.replace('__LANG__', translate_lang(arguments.lang)).replace('__LANG_FALL__', translate_lang(arguments.lang_fall)).replace('__USR_NAME__', arguments.username).replace('__VERSION__', arguments.version).replace('__KVM__', arguments.kvm).replace('__USR_PSWD__', arguments.password).replace('__VIRTIO__', arguments.virtio).replace('__WIN_IMG__', str(arguments.win_image)).replace('__MACHINE_NAME__', arguments.machine_name).replace('__ISO_PATH__', arguments.iso_path).replace('__IMG_SELECTOR__', arguments.win_image_type).replace('__ISO_CHECKSUM__', arguments.iso_md5).replace('__VIRTIO_PATH__',arguments.virtio_path).replace('__CORP_COMMAND__', ' '.join(sys.argv).replace('\\','/'))
-
 def get_win_image_type(win_image):
     win_image = win_image.lower()
     if 'enterprise' in win_image:

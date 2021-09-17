@@ -731,6 +731,11 @@ class HostInfo:
         self.domain = None
         self.selected_img_idx = None
         self.selected_img_pth = None
+        self.language = "en-EN"
+
+    def set_language(self):
+        answer = prompt([{'type': 'input', 'name': 'option','message': 'Set Windows Language (en-EN) ', 'default': str(self.language)}])
+        self.language = answer['option']
 
     def get_account_for_domain(self, domain):
         for acc in self.accounts:
@@ -797,6 +802,7 @@ class HostInfo:
             to_ret['selected_img_idx'] = self.selected_img_idx
         if self.selected_img_pth != None:
             to_ret['selected_img_pth'] = self.selected_img_pth
+        to_ret['language'] = self.language
         return to_ret
 
     def from_json(obj):
@@ -835,18 +841,22 @@ class HostInfo:
         if 'selected_img_pth' in obj:
             host.selected_img_pth = obj['selected_img_pth']
         host.domain = obj['domain']
+        if 'language' in obj:
+            host.language = obj['language']
         return host
 
     def edit_interactive(self, project=None):
         while True:
             answer = prompt([{'type': 'list', 'name': 'option', 'message': 'Editing host: ' + self.computer_name, 'choices': [
-                            'Name', 'Disks', 'Bios','RAM', 'CPUs', 'Accounts','Domain','Roles', 'Network interfaces', 'OS Version', 'Resume', 'Back', 'Cancel']}])
+                            'Name', 'Disks', 'Bios','RAM', 'CPUs', 'Accounts','Language','Domain','Roles', 'Network interfaces', 'OS Version', 'Resume', 'Back', 'Cancel']}])
             if answer['option'] == 'Back':
                 return self
             elif answer['option'] == 'Resume':
                 print(self)
             elif answer['option'] == 'Cancel':
                 return None
+            elif answer['option'] == 'Language':
+                self.set_language()
             elif answer['option'] == 'Disks':
                 options = ['Add']
                 if len(self.disks) > 0:
