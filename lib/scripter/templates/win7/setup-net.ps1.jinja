@@ -4,7 +4,7 @@ $elements = (getmac /fo csv /v | Select-Object -Skip 1).replace('"','').split([E
 foreach($el in $elements) {
     $netw = $el.split(',')[0]
     if($el.split(',')[2] -eq "{{netw.mac_address}}".replace(":","-").ToUpper()) {
-        netsh interface ip set address  static "{{netw.ip_address[0]}}" "{{netw.ip_subnet[0]}}" "{{netw.ip_gateway[0]}}"
+        netsh interface ip set address $netw static "{{netw.ip_address[0]}}" "{{netw.ip_subnet[0]}}" "{{netw.ip_gateway[0]}}"
         try{
             netsh interface ipv4 add dns "$netw" {{netw.dns_servers[0]}}
             netsh interface ipv4 add dns "$netw" {{netw.dns_servers[1]}}
