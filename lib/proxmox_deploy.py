@@ -27,7 +27,7 @@ class ProxmoxDeployer:
         qemu_template_file = os.path.join(host_path, str(host.host_id) + ".conf")
         if not os.path.exists(qemu_template_file):
             return
-        create_disks = (not hard) or (not os.path.exists(os.path.join(self.configuration.proxmox_templates, os.path.basename(qemu_template_file))))
+        create_disks = hard or (not os.path.exists(os.path.join(self.configuration.proxmox_templates, os.path.basename(qemu_template_file))))
         # Copy QEMU template
         with open(qemu_template_file, 'r') as file_r:
             with open(os.path.join(self.configuration.proxmox_templates, os.path.basename(qemu_template_file)), 'w') as file_w:
