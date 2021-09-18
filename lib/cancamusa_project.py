@@ -158,9 +158,9 @@ class CancamusaProject:
     def set_sysmon_conf(self, conf_path):
         self.config['sysmon'] = {
             'conf' : conf_path,
-            'driver' : 'SoundDriver',
+            'driver' : 'UsbDrivr',
             'altitude' : 385202,
-            'description' : "Sound Driver"
+            'description' : "USB Driver"
         }
         return self
     
@@ -267,9 +267,9 @@ class CancamusaProject:
                 return
             self.config['sysmon'] = {
                 'conf' : "",
-                'driver' : 'SoundDrv',
+                'driver' : 'USBDrvr',
                 'altitude' : 385201,
-                'description' : "Sound Driver"
+                'description' : "USB Driver"
             }
         answers = prompt([{'type': 'input','name': 'sysmon_conf','message': 'Sysmon configuration file path', 'default' : self.config['sysmon']['conf']}])
         if answers['sysmon_conf'] != self.config['sysmon']['conf']:
