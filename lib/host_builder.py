@@ -218,9 +218,17 @@ iface vmbr{} inet static
         # Setup Network ----------------------------------------------------
         # O = Nombre de Adaptador, 2 = Direccion Fisica
         #"$headers = (getmac /fo csv /v | Select-Object -First 1).replace('\"','').split(',')"
-
+        actual_domain = self.project.domain.get_domain(host.domain)
         with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'setup-net.ps1.jinja'), 'r') as file_r:
             template = Template(file_r.read())
+            dc_server = self.project.primary_dc_config()
+            dc_ip = dc_server['ip'] if not dc_server['ip'] else dc_server['ip']
+            if dc_ip:
+                dc_ip = ipaddress.ip_address(dc_ip)
+                for netw in host.networks:
+                    if dc_ip in ipaddress.ip_network("{}/{}".format(netw.ip_address[0], netw.ip_subnet[0])):
+                        netw.dns_servers[0] = str(dc_ip)
+
             actual_file_out_path = os.path.join(host_path,'iso_file', 'setup-net.ps1')
             with open(actual_file_out_path, 'w') as file_w:
                 file_w.write(template.render(networks=host.networks))
@@ -236,7 +244,6 @@ iface vmbr{} inet static
                 builder.add_script(actual_file_out_path)
 
         # Join Domain ------------------------------------------------------
-        actual_domain = self.project.domain.get_domain(host.domain)
         if actual_domain == None:
             print("No domain configuration for: {}".format(host.domain))
         if len(self.project.domain.domains) > 0 and actual_domain and not ROLE_DOMAIN_CONTROLLER in host.roles.roles:

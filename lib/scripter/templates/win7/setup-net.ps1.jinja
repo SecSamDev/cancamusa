@@ -28,7 +28,7 @@ foreach($el in $elements) {
         netsh interface ip set address $netw static "{{netw.ip_address[0]}}" "{{netw.ip_subnet[0]}}" "{{netw.ip_gateway[0]}}"
         try{
             netsh interface ip add dns "$netw" {{netw.dns_servers[0]}}
-            netsh interface ip add dns "$netw" {{netw.dns_servers[1]}} index=2
+            netsh interface ip add dns "$netw" {{netw.dns_servers[1]}}
         }catch{
             "Error setting the DNS server"
         }
