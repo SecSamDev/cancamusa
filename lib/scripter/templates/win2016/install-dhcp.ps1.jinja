@@ -4,7 +4,7 @@ Restart-Service dhcpserver
 
 Add-DhcpServerInDC -DnsName {{host.computer_name}}.{{host.domain}} -IPAddress {{host.networks[0].ip_address[0]}}
 
-Set-ItemProperty –Path registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\ServerManager\Roles\12 –Name ConfigurationState –Value 2
+Set-ItemProperty -Path registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\ServerManager\Roles\12 -Name ConfigurationState -Value 2
 
 Set-DhcpServerv4DnsSetting -ComputerName "{{host.computer_name}}.{{host.domain}}" -DynamicUpdates "Always" -DeleteDnsRRonLeaseExpiry $True
 {% if not dns == None -%}

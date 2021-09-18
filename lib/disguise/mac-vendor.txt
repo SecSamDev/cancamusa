@@ -7458,7 +7458,7 @@
 001D3D	Avidyne Corporation
 001D3E	SAKA TECHNO SCIENCE CO.,LTD
 001D3F	Mitron Pty Ltd
-001D40	Intel – GE Care Innovations LLC
+001D40	Intel - GE Care Innovations LLC
 001D41	Hardy Instruments
 001D42	Nortel Networks
 001D43	Shenzhen G-link Digital Technology Co., Ltd.
@@ -14072,7 +14072,7 @@
 200A5E	Xiangshan Giant Eagle Technology Developing Co., Ltd.
 200BC7	HUAWEI TECHNOLOGIES CO.,LTD
 200CC8	Netgear
-200E95	IEC – TC9 WG43
+200E95	IEC - TC9 WG43
 20107A	Gemtek Technology Co., Ltd.
 201257	Most Lucky Trading Ltd
 2012D5	Scientech Materials Corporation
