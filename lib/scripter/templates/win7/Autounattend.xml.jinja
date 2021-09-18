@@ -37,10 +37,13 @@
                     <ModifyPartitions>
                         <ModifyPartition wcm:action="add">
                             <Format>NTFS</Format>
+                            <Order>1</Order>
+                            <PartitionID>1</PartitionID>
                             <Label>{{disk.volume_name}}</Label>
                             <Letter>{{disk.device_id}}</Letter>
                         </ModifyPartition>
                     </ModifyPartitions>
+                    <WillWipeDisk>true</WillWipeDisk> 
                     <DiskID>{{loop.index}}</DiskID>
                 </Disk>
                 {%- endfor %}
