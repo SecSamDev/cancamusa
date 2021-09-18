@@ -55,6 +55,7 @@
                             <Letter>{{disk.device_id}}</Letter>
                         </ModifyPartition>
                     </ModifyPartitions>
+                    <DiskID>{{loop.index + 1}}</DiskID>
                 </Disk>
                 {%- endfor %}
                 <WillShowUI>OnError</WillShowUI>
