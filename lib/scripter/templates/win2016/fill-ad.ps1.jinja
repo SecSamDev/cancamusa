@@ -9,6 +9,8 @@ New-ADOrganizationalUnit -name "{{ou.name}}" {% if ou.parent_path %}-path "{{ou.
 New-ADGroup -Name "{{grp.name}}" -SamAccountName {{grp.sam_account_name}} -GroupCategory {{grp.group_category}} -GroupScope {{grp.group_scope}} -DisplayName "{{grp.display_name}}" -Path "{{grp.path}}"
 {% endfor %}
 
+Set-ADDefaultDomainPasswordPolicy -Identity {{domain}} -LockoutDuration 00:40:00 -LockoutObservationWindow 00:20:00 -ComplexityEnabled $False -ReversibleEncryptionEnabled $False -MaxPasswordAge 10.00:00:00
+
 {% for user in user_list %}
 New-ADUser `
     -SamAccountName {{user.account_name}} `
@@ -19,7 +21,7 @@ New-ADUser `
     -Enabled $True `
     -ChangePasswordAtLogon $False `
     -DisplayName "{{user.display_name}}" `
-    -Department {{user.department}} `
-    -Path {{user.path}} `
+    -Department "{{user.department}}" `
+    -Path "{{user.path}}" `
     -AccountPassword (convertto-securestring {{user.password}} -AsPlainText -Force)
 {% endfor %}
