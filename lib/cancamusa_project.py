@@ -268,6 +268,7 @@ class CancamusaProject:
             self.config['sysmon'] = {
                 'conf' : "",
                 'driver' : 'USBDrvr',
+                'service' :'USBSrvc',
                 'altitude' : 385201,
                 'description' : "USB Driver"
             }
@@ -280,6 +281,12 @@ class CancamusaProject:
         name = answer['option'][:8]# Only 8 characters
         self.config['sysmon']['driver'] = name.encode("ascii", "ignore").decode()
         
+        if not 'service' in self.config['sysmon']:
+            self.config['sysmon']['service'] = self.config['sysmon']['driver'][0:4] + "Srvc"
+        answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon Service Name ([a-zA-Z]{8}):', 'default' : str(self.config['sysmon']['service'])}])
+        name = answer['option'][:8]# Only 8 characters
+        self.config['sysmon']['service'] = name.encode("ascii", "ignore").decode()
+
         answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon Driver Altitude:', 'default' : str(self.config['sysmon']['altitude'])}])
         altitude = int(answer['option'])
         self.config['sysmon']['altitude'] = altitude

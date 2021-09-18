@@ -253,12 +253,13 @@ iface vmbr{} inet static
             self.project.get_sysmon_file_if_not_exists()
             sysmon_conf = cancamusa_common.SYSMON_CONFIG_FILE
             sysmon_drv = self.project.config['sysmon']['driver']
+            sysmon_srv = self.project.config['sysmon']['service']
             sysmon_alt = self.project.config['sysmon']['altitude']
             with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'install-sysmon.bat.jinja'), 'r') as file_r:
                 template = Template(file_r.read())
                 actual_file_out_path = os.path.join(host_path,'iso_file', 'install-sysmon.bat')
                 with open(actual_file_out_path, 'w') as file_w:
-                    file_w.write(template.render(sysmon_conf=sysmon_conf,sysmon_drv=sysmon_drv,sysmon_alt=sysmon_alt))
+                    file_w.write(template.render(sysmon_conf=sysmon_conf,sysmon_drv=sysmon_drv,sysmon_alt=sysmon_alt,sysmon_srv=sysmon_srv))
                 builder.add_script(actual_file_out_path)
 
             actual_file_out_path = os.path.join(host_path, 'iso_file', sysmon_conf)
