@@ -126,7 +126,7 @@ iface vmbr{} inet static
         if not os.path.exists(os.path.join(host_path,'iso_file')):
             os.mkdir(os.path.join(host_path,'iso_file'))
         
-        # Build Autounattend
+        # Build Autounattend --------------------------------------------------------
         compatible_win_image = self.configuration.select_win_image(
             host, 'CANCAMUSA_DEBUG' in os.environ,True,'CLEAN_ISOS' in os.environ)
         
@@ -135,6 +135,15 @@ iface vmbr{} inet static
             for file in filenames:
                 # This scripts must not be added to the initial execution script
                 builder.add_config(os.path.join(dirpath, file))
+
+        # Use extra files to load files and directoris into the floppy disk
+        if os.path.exists(os.path.join(host_path,'extra_files')):
+            for (dirpath, dirnames, filenames) in os.walk(os.path.join(host_path,'extra_files')):
+                for file in filenames:
+                    # This scripts must not be added to the initial execution script
+                    builder.add_config(os.path.join(dirpath, file))
+                for dir in dirnames:
+                    builder.add_folder(os.path.join(dirpath, dir))
 
         with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'Autounattend.xml.jinja'), 'r') as file_r:
             template = Template(file_r.read())
@@ -206,8 +215,8 @@ iface vmbr{} inet static
 
             builder.add_config(os.path.join(host_path,'iso_file', 'Autounattend.xml'))
 
-
-        # Setup Network -> O = Nombre de Adaptador, 2 = Direccion Fisica
+        # Setup Network ----------------------------------------------------
+        # O = Nombre de Adaptador, 2 = Direccion Fisica
         #"$headers = (getmac /fo csv /v | Select-Object -First 1).replace('\"','').split(',')"
 
         with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'setup-net.ps1.jinja'), 'r') as file_r:
@@ -217,7 +226,7 @@ iface vmbr{} inet static
                 file_w.write(template.render(networks=host.networks))
             builder.add_script(actual_file_out_path)
 
-        # Setup Socks Proxy
+        # Setup Socks Proxy ------------------------------------------------
         if 'proxy' in self.project.config:
             with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'set-proxy.bat.jinja'), 'r') as file_r:
                 template = Template(file_r.read())
@@ -226,7 +235,7 @@ iface vmbr{} inet static
                     file_w.write(template.render(proxy=self.project.config['proxy']))
                 builder.add_script(actual_file_out_path)
 
-        # Join Domain
+        # Join Domain ------------------------------------------------------
         actual_domain = self.project.domain.get_domain(host.domain)
         if actual_domain == None:
             print("No domain configuration for: {}".format(host.domain))
@@ -247,7 +256,7 @@ iface vmbr{} inet static
                     file_w.write(template.render(domain_dc_ip=actual_domain.dc_ip,username=username,password=password,domain_name=actual_domain.domain))
                 builder.add_script(actual_file_out_path)
 
-        # Install sysmon
+        # Install sysmon ----------------------------------------------------
         if 'sysmon' in self.project.config:
             # If imported, download the sysmon config
             self.project.get_sysmon_file_if_not_exists()
@@ -268,7 +277,7 @@ iface vmbr{} inet static
                     file_w.write(file_r.read())
             builder.add_config(actual_file_out_path)
 
-        # Install Winlogbeat
+        # Install Winlogbeat ------------------------------------------------
         # TODO: hide winlogbeat
         # https://artifacts.elastic.co/downloads/beats/winlogbeat/winlogbeat-7.14.1-windows-x86_64.zip
 
@@ -288,7 +297,7 @@ iface vmbr{} inet static
                     file_w.write(file_r.read())
             builder.add_config(actual_file_out_path)
 
-        # Deception options
+        # Deception options --------------------------------------------------
         with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'deception.bat.jinja'), 'r') as file_r:
             template = Template(file_r.read())
             actual_file_out_path = os.path.join(host_path,'iso_file', 'deception.bat')
@@ -296,6 +305,21 @@ iface vmbr{} inet static
                 file_w.write(template.render(cpus=host.cpus))
             builder.add_script(actual_file_out_path)
 
+        # KMS Server ---------------------------------------------------------
+        kms_server = self.project.primary_kms_config()
+        if kms_server == None and actual_domain:
+            kms_server = actual_domain.kms_server
+        else:
+            kms_server = "{}:1688".format(kms_server['ip'])
+        if kms_server:
+            with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'setup-kms.bat.jinja'), 'r') as file_r:
+                template = Template(file_r.read())
+                actual_file_out_path = os.path.join(host_path,'iso_file', 'setup-kms.bat')
+                with open(actual_file_out_path, 'w') as file_w:
+                    file_w.write(template.render(kms_server=kms_server))
+                builder.add_script(actual_file_out_path)
+
+        
         # Build Windows ROLES -> Last to be executed (reboots needed) and need to be in domain
         generate_rol_files_for_host(host,builder,self.project)
 

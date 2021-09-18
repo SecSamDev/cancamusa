@@ -1,4 +1,3 @@
-from lib.scripter.rol_selector import ROLE_DOMAIN_CONTROLLER
 import os
 import json
 from PyInquirer import prompt
@@ -8,7 +7,7 @@ import random
 import codecs
 from mac_vendors import get_mac_list, search_wildcard_vendor, random_mac_for_vendor
 from cancamusa_common import random_guid, get_win_type
-from rol_selector import AVAILABLE_ROLES, roles_from_extracted_info, ROLE_DNS, ROLE_DHCP
+from rol_selector import AVAILABLE_ROLES, roles_from_extracted_info, ROLE_DNS, ROLE_DHCP,ROLE_KMS, ROLE_WEB_SERVER,ROLE_DOMAIN_CONTROLLER
 
 from processors import list_processors
 
@@ -169,7 +168,6 @@ class HostInfoRoles:
                           'message': 'External DNS server: ', 'default' : '8.8.8.8'}])
                 self.config[rol]['forwarder'] = answer['option']
             if rol == ROLE_DHCP:
-                self.config[rol]['failover_mode'] = answer['option']
                 answer = prompt([{'type': 'list', 'name': 'option',
                           'message': 'Failover mode: ', 'choices' : ['StandBy','Active']}])
                 self.config[rol]['failover_mode'] = answer['option']
@@ -177,6 +175,27 @@ class HostInfoRoles:
                     answer = prompt([{'type': 'input', 'name': 'option',
                             'message': 'Failover secret: ', 'default' : 'S3cret'}])
                     self.config[rol]['failover_secret'] = answer['option']
+            if rol == ROLE_WEB_SERVER:
+                # TODO
+                self.config[rol] = {}
+            if rol == ROLE_KMS:
+                if not 'license_keys' in self.config[rol]:
+                    self.config[rol]['license_keys'] = {}
+                while True:
+                    answer = prompt([{'type': 'list', 'name': 'option','message': 'Failover mode: ', 'choices' : ['Add','Remove','List','Exit']}])
+                    # https://docs.microsoft.com/en-us/deployoffice/vlactivation/configure-a-kms-host-computer-for-office
+                    if answer['option'] == 'Add':
+                        answer = prompt([{'type': 'input', 'name': 'option', 'message': 'Windows Activation ID: ', 'default' : ''}])
+                        answer2 = prompt([{'type': 'input', 'name': 'option', 'message': 'Windows Confirmation ID: ', 'default' : ''}])
+                        self.config[rol]['license_keys'][answer['option']] = answer2['option']
+                    elif answer['option'] == 'Remove':
+                        answer = prompt([{'type': 'list', 'name': 'option','message': 'ActivationID: ', 'choices' : list(self.config[rol]['license_keys'].keys()) }])
+                        self.config[rol]['license_keys'].pop(answer['option'],None)
+                    elif answer['option'] == 'List':
+                        print("{}".format(", ".join(list(self.config[rol]['license_keys'].keys()))))
+                    elif answer['option'] == 'Exit':
+                        break
+            
         return self
 
     def create_interactive():

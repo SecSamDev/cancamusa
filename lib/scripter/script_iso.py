@@ -7,6 +7,7 @@ import pycdlib
 import os
 import tempfile
 import subprocess
+from distutils.dir_util import copy_tree
 
 class ScriptIsoBuilder:
     """Allow to easily create custom ISOs with all the scripts and configuration files
@@ -15,6 +16,7 @@ class ScriptIsoBuilder:
     def __init__(self,host, scripts, configs):
         self.host = host
         self.scripts = []
+        self.folders = []
         self.configs = set()
         for scr in scripts:
             self.scripts.add(scr)
@@ -27,6 +29,9 @@ class ScriptIsoBuilder:
 
     def add_script(self,script_path):
         self.scripts.append(script_path)
+    
+    def add_folder(self,folder_path):
+        self.folders.append(folder_path)
 
     def init_script(self):
         script = ""
@@ -54,7 +59,10 @@ class ScriptIsoBuilder:
             with open(cfg,'rb') as file_r:
                 with open(os.path.join(tmp_dir, os.path.basename(cfg)), 'wb') as file_w:
                     file_w.write(file_r.read())
-        
+        for folder in self.folders:
+            copy_tree(folder, os.path.join(tmp_dir, os.path.basename(folder)))
+
+
         unmountCommand = 'genisoimage -o ' + output_dir + ' -J -R -l ' + str(tmp_dir)
         process = subprocess.Popen(unmountCommand.split(), stdout=subprocess.PIPE)
         out, err = process.communicate()

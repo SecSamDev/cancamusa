@@ -90,6 +90,7 @@ class ADStructure:
         self.account_generator = cancamusa_common.ACCOUNT_FORMAT_NAME_DOT_SURNAME
         self.default_admin_password = 'CancamusaRocks123!'
         self.dc_ip = '10.0.0.1'
+        self.kms_server = None
 
     def get_user(self, username):
         users = self.list_users()
@@ -113,6 +114,8 @@ class ADStructure:
             ret.default_admin_password = obj['default_admin_password']
         if 'dc_ip' in obj:
             ret.dc_ip = obj['dc_ip']
+        if 'kms_server' in obj:
+            ret.kms_server = obj['kms_server']
         return ret
 
     def __str__(self):
@@ -162,6 +165,7 @@ class ADStructure:
                 options.append('Default Local Admin')
                 options.append('Default Local Admin Password')
                 options.append('Set DC IP')
+                options.append('Set KMS Server')
                 options.append('Back')
                 options.append('Cancel')
                 answer = prompt([{'type': 'list','name': 'option','message': 'OrganizationalUnit edition mode:', 'choices' : options}])
@@ -203,6 +207,12 @@ class ADStructure:
                 elif answer['option'] == 'Set DC IP':
                     answer = prompt([{'type': 'input','name': 'option','message': 'Principal DC IP:', 'default' : self.dc_ip}])
                     self.dc_ip = answer["option"]
+                elif answer['option'] == 'Set KMS Server':
+                    answer = prompt([{'type': 'input','name': 'option','message': 'KMS Server (10.0.0.0:1688):', 'default' : ""}])
+                    if answer["option"] == "":
+                        self.kms_server = None
+                    else:
+                        self.kms_server = answer["option"]
                 elif answer['option'] == 'Cancel':
                     return None
             except KeyboardInterrupt as e:

@@ -8,7 +8,7 @@ from cancamusa_host import HostInfo
 from host_builder import WindowsHostBuilder
 from cancamusa_domain import CancamusaDomain
 from proxmox_deploy import ProxmoxDeployer
-from rol_selector import ROLE_DOMAIN_CONTROLLER, ROLE_DNS, ROLE_DHCP, calculate_dhcp_failover
+from rol_selector import ROLE_DOMAIN_CONTROLLER, ROLE_DNS, ROLE_KMS, ROLE_WEB_SERVER, ROLE_DHCP, calculate_dhcp_failover
 import ipaddress
 import os
 
@@ -33,11 +33,15 @@ class CancamusaProject:
         self.dns_servers = {}
         self.dc_servers = {}
         self.dhcp_servers = {}
+        self.kms_servers = {}
+        self.iis_servers = {}
     
     def scan_hosts(self):
         found_dc = None
         found_dns = None
         found_dhcp = None
+        found_iis = None
+        found_kms = None
         for host in self.hosts:
             for netw in host.networks:
                 # For simplicity use only the first IP of the list (IPV4)
@@ -51,6 +55,20 @@ class CancamusaProject:
                 self.dns_servers[host.computer_name]['primary'] = (found_dns == None)
                 if found_dns == None:
                     found_dns = host
+            if ROLE_KMS in host.roles.roles:
+                # KMS server
+                self.kms_servers[host.computer_name] = host.roles.config[ROLE_KMS]
+                self.kms_servers[host.computer_name]['ip'] = host.networks[0].ip_address[0]
+                self.kms_servers[host.computer_name]['primary'] = (found_kms == None)
+                if found_kms == None:
+                    found_kms = host
+            if ROLE_WEB_SERVER in host.roles.roles:
+                # KMS server
+                self.iis_servers[host.computer_name] = host.roles.config[ROLE_KMS]
+                self.iis_servers[host.computer_name]['ip'] = host.networks[0].ip_address[0]
+                self.iis_servers[host.computer_name]['primary'] = (found_iis == None)
+                if found_iis == None:
+                    found_iis = host
             if ROLE_DOMAIN_CONTROLLER in host.roles.roles:
                 # DC server
                 self.dc_servers[host.computer_name] = host.roles.config[ROLE_DOMAIN_CONTROLLER]
@@ -79,6 +97,12 @@ class CancamusaProject:
 
     def primary_dns_config(self):
         for key, srv in self.dns_servers.items():
+            if srv['primary']:
+                return srv
+        return None
+    
+    def primary_kms_config(self):
+        for key, srv in self.kms_servers.items():
             if srv['primary']:
                 return srv
         return None
@@ -271,7 +295,7 @@ class CancamusaProject:
                     'driver' : 'USBDrvr',
                     'service' :'USBSrvc',
                     'altitude' : 385201,
-                    'description' : "USB Driver"
+                    'description' : "USB Service"
                 }
             answers = prompt([{'type': 'input','name': 'sysmon_conf','message': 'Sysmon configuration file path', 'default' : self.config['sysmon']['conf']}])
             if answers['sysmon_conf'] != self.config['sysmon']['conf']:
