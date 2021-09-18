@@ -260,40 +260,45 @@ class CancamusaProject:
 
 
     def edit_sysmon(self):
-        if not 'sysmon' in self.config:
-            answers = prompt([{'type': 'confirm','name': 'sysmon','message': 'Install Sysmon in each host?'}])
-            if not answers['sysmon']:
-                self.config.pop('sysmon',None)
-                return
-            self.config['sysmon'] = {
-                'conf' : "",
-                'driver' : 'USBDrvr',
-                'service' :'USBSrvc',
-                'altitude' : 385201,
-                'description' : "USB Driver"
-            }
-        answers = prompt([{'type': 'input','name': 'sysmon_conf','message': 'Sysmon configuration file path', 'default' : self.config['sysmon']['conf']}])
-        if answers['sysmon_conf'] != self.config['sysmon']['conf']:
-            self.set_sysmon_conf(answers['sysmon_conf'])
-            copy_config_file(self.config_path,answers['sysmon_conf'],cancamusa_common.SYSMON_CONFIG_FILE)
+        while True:
+            if not 'sysmon' in self.config:
+                answers = prompt([{'type': 'confirm','name': 'sysmon','message': 'Install Sysmon in each host?'}])
+                if not answers['sysmon']:
+                    self.config.pop('sysmon',None)
+                    return
+                self.config['sysmon'] = {
+                    'conf' : "",
+                    'driver' : 'USBDrvr',
+                    'service' :'USBSrvc',
+                    'altitude' : 385201,
+                    'description' : "USB Driver"
+                }
+            answers = prompt([{'type': 'input','name': 'sysmon_conf','message': 'Sysmon configuration file path', 'default' : self.config['sysmon']['conf']}])
+            if answers['sysmon_conf'] != self.config['sysmon']['conf']:
+                self.set_sysmon_conf(answers['sysmon_conf'])
+                copy_config_file(self.config_path,answers['sysmon_conf'],cancamusa_common.SYSMON_CONFIG_FILE)
 
-        answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon Driver Name ([a-zA-Z]{8}):', 'default' : str(self.config['sysmon']['driver'])}])
-        name = answer['option'][:8]# Only 8 characters
-        self.config['sysmon']['driver'] = name.encode("ascii", "ignore").decode()
-        
-        if not 'service' in self.config['sysmon']:
-            self.config['sysmon']['service'] = self.config['sysmon']['driver'][0:4] + "Srvc"
-        answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon Service Name ([a-zA-Z]{8}):', 'default' : str(self.config['sysmon']['service'])}])
-        name = answer['option'][:8]# Only 8 characters
-        self.config['sysmon']['service'] = name.encode("ascii", "ignore").decode()
+            answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon Driver Name ([a-zA-Z]{8}):', 'default' : str(self.config['sysmon']['driver'])}])
+            name = answer['option'][:8]# Only 8 characters
+            self.config['sysmon']['driver'] = name.encode("ascii", "ignore").decode()
+            
+            if not 'service' in self.config['sysmon']:
+                self.config['sysmon']['service'] = self.config['sysmon']['driver'][0:4] + "Srvc"
+            answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon Service Name ([a-zA-Z]{8}):', 'default' : str(self.config['sysmon']['service'])}])
+            name = answer['option'][:8]# Only 8 characters
+            self.config['sysmon']['service'] = name.encode("ascii", "ignore").decode()
 
-        answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon Driver Altitude:', 'default' : str(self.config['sysmon']['altitude'])}])
-        altitude = int(answer['option'])
-        self.config['sysmon']['altitude'] = altitude
+            if self.config['sysmon']['driver'] == self.config['sysmon']['service']:
+                print('Sysmon driver and service must not be the same IDKW')
+                continue
 
-        answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon service Description:', 'default' : str(self.config['sysmon']['description'])}])
-        description = answer['option']
-        self.config['sysmon']['description'] = description
+            answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon Driver Altitude:', 'default' : str(self.config['sysmon']['altitude'])}])
+            altitude = int(answer['option'])
+            self.config['sysmon']['altitude'] = altitude
+            
+            answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon service Description:', 'default' : str(self.config['sysmon']['description'])}])
+            description = answer['option']
+            self.config['sysmon']['description'] = description
 
 
 
