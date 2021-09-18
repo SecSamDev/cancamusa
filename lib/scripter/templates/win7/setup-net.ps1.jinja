@@ -27,8 +27,8 @@ foreach($el in $elements) {
     if($el.split(',')[2] -eq "{{netw.mac_address}}".replace(":","-").ToUpper()) {
         netsh interface ip set address $netw static "{{netw.ip_address[0]}}" "{{netw.ip_subnet[0]}}" "{{netw.ip_gateway[0]}}"
         try{
-            netsh interface ipv4 add dns "$netw" {{netw.dns_servers[0]}}
-            netsh interface ipv4 add dns "$netw" {{netw.dns_servers[1]}}
+            netsh interface ip add dns "$netw" {{netw.dns_servers[0]}}
+            netsh interface ip add dns "$netw" {{netw.dns_servers[1]}} index=2
         }catch{
             "Error setting the DNS server"
         }
