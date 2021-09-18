@@ -158,8 +158,8 @@ class CancamusaProject:
     def set_sysmon_conf(self, conf_path):
         self.config['sysmon'] = {
             'conf' : conf_path,
-            'driver' : 'SoundDrv',
-            'altitude' : 385201,
+            'driver' : 'SoundDriver',
+            'altitude' : 385202,
             'description' : "Sound Driver"
         }
         return self
