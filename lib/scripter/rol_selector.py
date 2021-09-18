@@ -192,7 +192,7 @@ def calculate_dhcp_failover(host1, host2):
     scopes1 = set()
     scopes2 = set()
     for netw in host1.networks:
-        net = ipaddress.ip_network("{}/{}".format(netw.ip_address[0], netw.ip_subnet[0]),False)
+        net = ipaddress.ork("{}/{}".format(netw.ip_address[0], netw.ip_subnet[0]),False)
         scopes1.add(str(net.network_address))
     for netw in host2.networks:
         net = ipaddress.ip_network("{}/{}".format(netw.ip_address[0], netw.ip_subnet[0]),False)

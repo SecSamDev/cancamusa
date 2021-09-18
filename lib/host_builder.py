@@ -226,7 +226,7 @@ iface vmbr{} inet static
             if dc_ip:
                 dc_ip = ipaddress.ip_address(dc_ip)
                 for netw in host.networks:
-                    if dc_ip in ipaddress.ip_network("{}/{}".format(netw.ip_address[0], netw.ip_subnet[0])):
+                    if dc_ip in ipaddress.ip_network("{}/{}".format(netw.ip_address[0], netw.ip_subnet[0]), False):
                         netw.dns_servers[0] = str(dc_ip)
 
             actual_file_out_path = os.path.join(host_path,'iso_file', 'setup-net.ps1')
