@@ -300,6 +300,7 @@ class CancamusaProject:
             description = answer['option']
             self.config['sysmon']['description'] = description
 
+            break
 
 
     def new_project_in_path(pth):
