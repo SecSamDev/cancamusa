@@ -137,7 +137,8 @@ def compile_cloned_bios(bios,output_bios, SEABIOS_PATH=None):
         ["QEMU", NEW_BIOS_NAME],
         ["qemu bochs", NEW_BIOS_NAME],
         ["qemu", NEW_BIOS_NAME],
-        ["bochs", NEW_BIOS_NAME]
+        ["bochs", NEW_BIOS_NAME],
+        ["BOCHS", NEW_BIOS_NAME]
     ])
     replace_files([SRC_HW_BLOCKCMD_C], [
         ['"QEMU", 5', '"' + BIOS_VENDOR[0:7] + '", 8']
