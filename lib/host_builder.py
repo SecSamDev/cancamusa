@@ -124,7 +124,7 @@ iface vmbr{} inet static
             # SYSTEM
             smbios = smbios + "-smbios type=1,manufacturer={},product={},version={},serial={},uuid={},sku={},family={} ".format(smb("ASUS"), smb("All Series"), smb("System Version"),smb(uuid.uuid4()),smb(uuid.uuid4()),smb("All"),smb("ASUS MB"))
             # BaseBoard TODO: Extract info
-            #smbios = smbios + "-smbios type=2,manufacturer={},product={},version={},serial={},uuid={},sku={} ".format(smb("ASUSTEK COMPUTER INC."), smb("TRX40"),smb("Rev 1.2"), smb(uuid.uuid4()),smb(uuid.uuid4()),smb("All"))
+            smbios = smbios + "-smbios type=2,manufacturer={},product={},version={},serial={},uuid={},sku={} ".format(smb("ASUSTEK COMPUTER INC."), smb("TRX40"),smb("Rev 1.2"), smb(uuid.uuid4()),smb(uuid.uuid4()),smb("All"))
 
             qemu_template.write(
                 'args:-bios {} -boot menu=on,once=d,order=c,strict=on,splash={} -fda {} {}\n'.format(os.path.join(host_path, "bios.bin"),bootsplash, os.path.join(host_path, str(host.host_id) + ".img"), ""))
