@@ -259,8 +259,8 @@ iface vmbr{} inet static
                     else:
                         # Use domain account, not the local one
                         acc = actual_domain.get_user(acc.name)
-                        username = acc.account_name
-                        password = acc.password
+                        username = acc['account_name']
+                        password = acc['password']
 
                     file_w.write(template.render(domain_dc_ip=actual_domain.dc_ip,username=username,password=password,domain_name=actual_domain.domain))
                 builder.add_script(actual_file_out_path)
