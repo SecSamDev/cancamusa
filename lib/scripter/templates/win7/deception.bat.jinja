@@ -6,8 +6,10 @@ reg add "HKLM\HARDWARE\DESCRIPTION\System\CentralProcessor\{{n_core}}" /f /v Pro
 {%- endfor %}
 
 reg add "HKLM\HARDWARE\DESCRIPTION\System" /f /v SystemBiosVersion /t REG_SZ /d "{{bios.version}}"
+reg add "HKLM\HARDWARE\DESCRIPTION\System" /f /v SystemBiosDate /t REG_SZ /d "12/08/2018"
+
 reg add "HKLM\HARDWARE\DESCRIPTION\System\BIOS" /f /v BIOSVendor /t REG_SZ /d "{{bios.manufacturer}}"
-reg add "HKLM\HARDWARE\DESCRIPTION\System\BIOS" /f /v BIOSVersion /t REG_SZ /d "{bios.version} {{bios.name}}"
+reg add "HKLM\HARDWARE\DESCRIPTION\System\BIOS" /f /v BIOSVersion /t REG_SZ /d "{{bios.version}} {{bios.name}}"
 reg add "HKLM\HARDWARE\DESCRIPTION\System\BIOS" /f /v BIOSMajorRelease /t REG_DWORD /d {{bios.system_bios_major_version}}
 reg add "HKLM\HARDWARE\DESCRIPTION\System\BIOS" /f /v BIOSMinorRelease /t REG_SZ /d {{bios.system_bios_minor_version}}
 
