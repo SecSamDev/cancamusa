@@ -326,7 +326,7 @@ iface vmbr{} inet static
             template = Template(file_r.read())
             actual_file_out_path = os.path.join(host_path,'iso_file', 'deception.bat')
             with open(actual_file_out_path, 'w') as file_w:
-                file_w.write(template.render(cpus=host.cpus))
+                file_w.write(template.render(cpus=host.cpus, bios=host.bios))
             builder.add_script(actual_file_out_path)
 
         # KMS Server ---------------------------------------------------------
