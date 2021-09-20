@@ -37,7 +37,7 @@ foreach($el in $elements) {
 {% endif %}
 {%- endfor %}
 try{
-    Get-ChildItem -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList\Profiles" -recurse | foreach(Set-ItemProperty -Path $_.pspath -Name Category -value 1)
+    Get-ChildItem -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList\Profiles" -recurse | ForEach-Object{Set-ItemProperty -Path $_.pspath -Name Category -value 1}
 }catch{
     "Error setting the profile"
 }
