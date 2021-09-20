@@ -184,15 +184,11 @@ class CancamusaProject:
             'conf' : conf_path,
             'driver' : 'UsbDrivr',
             'altitude' : 385202,
-            'description' : "USB Driver"
+            'description' : "USB Driver",
+            'download' : "https://download.sysinternals.com/files/Sysmon.zip"
         }
         return self
     
-    def set_winlogbeat_conf(self, conf_path):
-        self.config['winlogbeat'] = {
-            'conf' : conf_path
-        }
-        return self
     
     def get_winlogbeat_file_if_not_exists(self):
         if 'winlogbeat' in self.config:
@@ -217,17 +213,29 @@ class CancamusaProject:
             self.set_logstash_siem(answers['logstash_host'])
     
     def edit_winlogbeat(self):
+        answers = prompt([{'type': 'confirm','name': 'winlog','message': 'Set Winlogbeat as a LOG shipper?'}])
+        if not answers['winlog']:
+            self.config.pop('winlogbeat',None)
+            return
         answers = prompt([{'type': 'input','name': 'winlogbeat','message': 'WinLogBeat configuration file path'}])
+        if not 'winlogbeat' in self.config:
+            self.config['winlogbeat'] = {}
         if answers['winlogbeat'].strip() == "":
             print("Creating custom winlogbeat configuration file...")
             content = create_custom_winlogbeat_file(self)
             location = os.path.join(self.config_path,'config_files',cancamusa_common.WINLOGBEAT_CONFIG_FILE)
             with open(location, 'w') as write_file:
                 write_file.write(content)
-            self.set_winlogbeat_conf(location)
+            self.config['winlogbeat']['conf'] = location
         else:
             copy_config_file(self.config_path,answers['winlogbeat'],cancamusa_common.WINLOGBEAT_CONFIG_FILE)
-            self.set_winlogbeat_conf(answers['winlogbeat'])
+            self.config['winlogbeat']['conf'] = answers['winlogbeat']
+        
+        answers = prompt([{'type': 'input','name': 'winlogbeat','message': 'WinLogBeat Download URL:'}])
+        if answers['winlogbeat'].strip() == "":
+            self.config['winlogbeat']['download'] = "https://artifacts.elastic.co/downloads/beats/winlogbeat/winlogbeat-7.14.1-windows-x86_64.zip"
+        else:
+            self.config['winlogbeat']['download'] = answers['winlogbeat']
 
     def edit_elasticsearch(self):
         answers = prompt([{'type': 'confirm','name': 'siem_elastic','message': 'Select ElasticSearch as a SIEM?'}])
@@ -317,12 +325,16 @@ class CancamusaProject:
                 continue
 
             answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon Driver Altitude:', 'default' : str(self.config['sysmon']['altitude'])}])
-            altitude = int(answer['option'])
-            self.config['sysmon']['altitude'] = altitude
+            self.config['sysmon']['altitude'] = int(answer['option'])
             
             answer = prompt([{'type': 'input','name': 'option','message': 'Edit Sysmon service Description:', 'default' : str(self.config['sysmon']['description'])}])
-            description = answer['option']
-            self.config['sysmon']['description'] = description
+            self.config['sysmon']['description'] = answer['option']
+
+            if not 'download' in self.config['sysmon']:
+                self.config['sysmon']['download'] = "https://download.sysinternals.com/files/Sysmon.zip"
+
+            answer = prompt([{'type': 'input','name': 'option','message': 'Set Sysmon download URL:', 'default' : self.config['sysmon']['download']}])
+            self.config['sysmon']['download'] = answer['option']
 
             break
 
