@@ -10,6 +10,7 @@ import ipaddress
 import cancamusa_common
 from rol_selector import generate_rol_files_for_host, ROLE_DNS, ROLE_DOMAIN_CONTROLLER
 import uuid
+import base64
 
 class WindowsHostBuilder:
     def __init__(self, project):
@@ -116,11 +117,11 @@ iface vmbr{} inet static
             
             bootsplash = os.path.join(self.project_path,'..','bootsplash.bmp')
             # BIOS
-            smbios = "-smbios type=0,manufacturer=\"{}\",product=\"{}\",version=\"{}\",serial={},uuid={},sku=\"{}\",family=\"{}\" ".format(host.bios.manufacturer, host.bios.version, host.bios.smbios_bios_version,uuid.uuid4(),uuid.uuid4(),"Al","ALASKA")
+            smbios = "-smbios type=0,manufacturer={},product={},version={},serial={},uuid={},sku={},family={},base64=1 ".format(b64(host.bios.manufacturer), b64(host.bios.version), b64(host.bios.smbios_bios_version),b64(uuid.uuid4()),b64(uuid.uuid4()),b64("Al"),b64("ALASKA"))
             # SYSTEM
-            smbios = smbios + "-smbios type=1,manufacturer=\"{}\",product=\"{}\",version=\"{}\",serial={},uuid={},sku=\"{}\",family=\"{}\" ".format("ASUS", "All Series", "System Version",uuid.uuid4(),uuid.uuid4(),"All","ASUS MB")
+            smbios = smbios + "-smbios type=1,manufacturer={},product={},version={},serial={},uuid={},sku={},family={},base64=1 ".format(b64("ASUS"), b64("All Series"), b64("System Version"),b64(uuid.uuid4()),b64(uuid.uuid4()),b64("All"),b64("ASUS MB"))
             # BaseBoard TODO: Extract info
-            smbios = smbios + "-smbios type=2,manufacturer=\"{}\",product=\"{}\",version=\"{}\",serial={},uuid={},sku=\"{}\" ".format("ASUSTEK COMPUTER INC.", "TRX40","Rev 1.2", uuid.uuid4(),uuid.uuid4(),"All")
+            smbios = smbios + "-smbios type=2,manufacturer={},product={},version={},serial={},uuid={},sku={},base64=1 ".format(b64("ASUSTEK COMPUTER INC."), b64("TRX40"),b64("Rev 1.2"), b64(uuid.uuid4()),b64(uuid.uuid4()),b64("All"))
 
             qemu_template.write(
                 'args:-bios {} -boot menu=on,once=d,order=c,strict=on,splash={} -fda {} {}\n'.format(os.path.join(host_path, "bios.bin"),bootsplash, os.path.join(host_path, str(host.host_id) + ".img"), smbios))
@@ -358,3 +359,7 @@ def qemu_disk_qcow2(pth, size):
     output, error = process.communicate()
     p_status = process.wait()
     process.terminate()
+
+def b64(txt):
+    message_bytes = str(txt).encode('ascii')
+    return str(base64.b64encode(message_bytes).decode('ascii'))
