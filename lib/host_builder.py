@@ -362,7 +362,7 @@ def qemu_disk_qcow2(pth, size):
     process.terminate()
 
 def b64(txt):
-    txt = str(txt).replace(".","").replace(",","")
+    txt = str(txt).replace(".","").replace(",","").replace(" - "," ").replace(" -"," ")
     #message_bytes = txt.encode('ascii')
     #return str(base64.b64encode(message_bytes).decode('ascii'))
     return txt
