@@ -95,7 +95,7 @@ class ADStructure:
     def get_user(self, username):
         users = self.list_users()
         for usr in users:
-            if usr.account_name == username:
+            if usr['account_name'] == username:
                 return usr
         return None
     
