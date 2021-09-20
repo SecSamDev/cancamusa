@@ -116,17 +116,21 @@ iface vmbr{} inet static
             qemu_template.write('scsihw: virtio-scsi-pci\n')
             
             bootsplash = os.path.join(self.project_path,'..','bootsplash.bmp')
+
+            ### ARGS smbios for proxmox not working in 6.4
             # BIOS
             # Note: base64=1 not working... we will use b64 to remove characters
-            smbios = "-smbios type=0,manufacturer={},product={},version={},serial={},uuid={},sku={},family={} ".format(b64(host.bios.manufacturer), b64(host.bios.version), b64(host.bios.smbios_bios_version),b64(uuid.uuid4()),b64(uuid.uuid4()),b64("Al"),b64("ALASKA"))
+            smbios = "-smbios type=0,manufacturer={},product={},version={},serial={},uuid={},sku={},family={} ".format(smb(host.bios.manufacturer), smb(host.bios.version), smb(host.bios.smbios_bios_version),smb(uuid.uuid4()),smb(uuid.uuid4()),smb("Al"),smb("ALASKA"))
             # SYSTEM
-            smbios = smbios + "-smbios type=1,manufacturer={},product={},version={},serial={},uuid={},sku={},family={} ".format(b64("ASUS"), b64("All Series"), b64("System Version"),b64(uuid.uuid4()),b64(uuid.uuid4()),b64("All"),b64("ASUS MB"))
+            smbios = smbios + "-smbios type=1,manufacturer={},product={},version={},serial={},uuid={},sku={},family={} ".format(smb("ASUS"), smb("All Series"), smb("System Version"),smb(uuid.uuid4()),smb(uuid.uuid4()),smb("All"),smb("ASUS MB"))
             # BaseBoard TODO: Extract info
-            #smbios = smbios + "-smbios type=2,manufacturer={},product={},version={},serial={},uuid={},sku={} ".format(b64("ASUSTEK COMPUTER INC."), b64("TRX40"),b64("Rev 1.2"), b64(uuid.uuid4()),b64(uuid.uuid4()),b64("All"))
+            #smbios = smbios + "-smbios type=2,manufacturer={},product={},version={},serial={},uuid={},sku={} ".format(smb("ASUSTEK COMPUTER INC."), smb("TRX40"),smb("Rev 1.2"), smb(uuid.uuid4()),smb(uuid.uuid4()),smb("All"))
 
             qemu_template.write(
-                'args:-bios {} -boot menu=on,once=d,order=c,strict=on,splash={} -fda {} {}\n'.format(os.path.join(host_path, "bios.bin"),bootsplash, os.path.join(host_path, str(host.host_id) + ".img"), smbios))
+                'args:-bios {} -boot menu=on,once=d,order=c,strict=on,splash={} -fda {} {}\n'.format(os.path.join(host_path, "bios.bin"),bootsplash, os.path.join(host_path, str(host.host_id) + ".img"), ""))
             qemu_template.write("vmstatestorage: {}\n".format(self.configuration.proxmox_image_storage))
+
+            qemu_template.write("smbios1: base64=1,manufacturer={},product={},version={},serial={},uuid={},sku={},family={} ".format(b64("ASUS"), b64("All Series"), b64("System Version"),b64(uuid.uuid4()),b64(uuid.uuid4()),b64("All"),b64("ASUS MB")))
         print('QEMU template for proxmox created: ' + qemu_template_file)
 
     def build_extra_iso(self, host):
@@ -361,8 +365,12 @@ def qemu_disk_qcow2(pth, size):
     p_status = process.wait()
     process.terminate()
 
-def b64(txt):
+def smb(txt):
     txt = str(txt).replace(".","").replace(",","").replace(" - "," ").replace(" -"," ")
     #message_bytes = txt.encode('ascii')
     #return str(base64.b64encode(message_bytes).decode('ascii'))
     return txt
+
+def b64(txt):
+    message_bytes = str(txt).encode('ascii')
+    return str(base64.b64encode(message_bytes).decode('ascii'))
