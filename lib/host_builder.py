@@ -257,7 +257,9 @@ iface vmbr{} inet static
                         username = actual_domain.default_admin
                         password = actual_domain.default_admin_password
                     else:
-                        username = acc.name
+                        # Use domain account, not the local one
+                        acc = actual_domain.get_user(acc.name)
+                        username = acc.account_name
                         password = acc.password
 
                     file_w.write(template.render(domain_dc_ip=actual_domain.dc_ip,username=username,password=password,domain_name=actual_domain.domain))
