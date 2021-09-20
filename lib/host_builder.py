@@ -298,11 +298,11 @@ iface vmbr{} inet static
                 template = Template(file_r.read())
                 actual_file_out_path = os.path.join(host_path,'iso_file', 'install-winlogbeat.bat')
                 with open(actual_file_out_path, 'w') as file_w:
-                    file_w.write(template.render(winlogbeat_config=cancamusa_common.WINLOGBEAT_CONFIG_FILE))
+                    file_w.write(template.render(winlogbeat_config=cancamusa_common.WINLOGBEAT_CONFIG_FILE,winlogbeat_url=self.project.config['winlogbeat']['download']))
                 builder.add_script(actual_file_out_path)
 
             actual_file_out_path = os.path.join(host_path, 'iso_file', cancamusa_common.WINLOGBEAT_CONFIG_FILE)
-            with open(os.path.join('config_files', cancamusa_common.WINLOGBEAT_CONFIG_FILE, winlogbeat_url=self.project.config['winlogbeat']['download']),'r') as file_r:
+            with open(os.path.join('config_files', cancamusa_common.WINLOGBEAT_CONFIG_FILE),'r') as file_r:
                 with open(actual_file_out_path,'w') as file_w:
                     file_w.write(file_r.read())
             builder.add_config(actual_file_out_path)

@@ -303,7 +303,8 @@ class CancamusaProject:
                     'driver' : 'USBDrvr',
                     'service' :'USBSrvc',
                     'altitude' : 385201,
-                    'description' : "USB Service"
+                    'description' : "USB Service",
+                    "download" : "https://download.sysinternals.com/files/Sysmon.zip"
                 }
             answers = prompt([{'type': 'input','name': 'sysmon_conf','message': 'Sysmon configuration file path', 'default' : self.config['sysmon']['conf']}])
             if answers['sysmon_conf'] != self.config['sysmon']['conf']:
