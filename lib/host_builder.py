@@ -273,11 +273,12 @@ iface vmbr{} inet static
             sysmon_drv = self.project.config['sysmon']['driver']
             sysmon_srv = self.project.config['sysmon']['service']
             sysmon_alt = self.project.config['sysmon']['altitude']
+            sysmon_url = self.project.config['sysmon']['download']
             with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'install-sysmon.bat.jinja'), 'r') as file_r:
                 template = Template(file_r.read())
                 actual_file_out_path = os.path.join(host_path,'iso_file', 'install-sysmon.bat')
                 with open(actual_file_out_path, 'w') as file_w:
-                    file_w.write(template.render(sysmon_conf=sysmon_conf,sysmon_drv=sysmon_drv,sysmon_alt=sysmon_alt,sysmon_srv=sysmon_srv))
+                    file_w.write(template.render(sysmon_conf=sysmon_conf,sysmon_drv=sysmon_drv,sysmon_alt=sysmon_alt,sysmon_srv=sysmon_srv, sysmon_url=sysmon_url))
                 builder.add_script(actual_file_out_path)
 
             actual_file_out_path = os.path.join(host_path, 'iso_file', sysmon_conf)
@@ -301,7 +302,7 @@ iface vmbr{} inet static
                 builder.add_script(actual_file_out_path)
 
             actual_file_out_path = os.path.join(host_path, 'iso_file', cancamusa_common.WINLOGBEAT_CONFIG_FILE)
-            with open(os.path.join('config_files', cancamusa_common.WINLOGBEAT_CONFIG_FILE),'r') as file_r:
+            with open(os.path.join('config_files', cancamusa_common.WINLOGBEAT_CONFIG_FILE, winlogbeat_url=self.project.config['winlogbeat']['download']),'r') as file_r:
                 with open(actual_file_out_path,'w') as file_w:
                     file_w.write(file_r.read())
             builder.add_config(actual_file_out_path)

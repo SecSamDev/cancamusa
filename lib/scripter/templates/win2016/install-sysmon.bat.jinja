@@ -1,7 +1,7 @@
 @echo off
 setlocal
 cd /d %~dp0
-powershell -Command "[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;(New-Object Net.WebClient).DownloadFile('https://download.sysinternals.com/files/Sysmon.zip', 'c:\package.zip')"
+powershell -Command "[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;(New-Object Net.WebClient).DownloadFile('{{sysmon_url}}', 'c:\package.zip')"
 mkdir C:\Temp
 Call :UnZipFile "C:\Temp\" "c:\package.zip"
 cd C:\Temp
