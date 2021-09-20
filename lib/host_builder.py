@@ -116,11 +116,11 @@ iface vmbr{} inet static
             
             bootsplash = os.path.join(self.project_path,'..','bootsplash.bmp')
             # BIOS
-            smbios = "-smbios type=0,manufacturer={},product=\"{}\",version=\"{}\",serial={},uuid={},sku=\"{}\",family={} ".format(host.bios.manufacturer, host.bios.version, host.bios.smbios_bios_version,uuid.uuid4(),uuid.uuid4(),"Al","ALASKA")
+            smbios = "-smbios type=0,manufacturer=\"{}\",product=\"{}\",version=\"{}\",serial={},uuid={},sku=\"{}\",family=\"{}\" ".format(host.bios.manufacturer, host.bios.version, host.bios.smbios_bios_version,uuid.uuid4(),uuid.uuid4(),"Al","ALASKA")
             # SYSTEM
-            smbios = smbios + "-smbios type=1,manufacturer={},product=\"{}\",version=\"{}\",serial={},uuid={},sku={},family={} ".format("ASUS", "All Series", "System Version",uuid.uuid4(),uuid.uuid4(),"All","ASUS MB")
+            smbios = smbios + "-smbios type=1,manufacturer=\"{}\",product=\"{}\",version=\"{}\",serial={},uuid={},sku=\"{}\",family=\"{}\" ".format("ASUS", "All Series", "System Version",uuid.uuid4(),uuid.uuid4(),"All","ASUS MB")
             # BaseBoard TODO: Extract info
-            smbios = smbios + "-smbios type=2,manufacturer={},product=\"{}\",version=\"{}\",serial={},uuid={},sku={} ".format("ASUSTEK COMPUTER INC.", "TRX40","Rev 1.2", uuid.uuid4(),uuid.uuid4(),"All")
+            smbios = smbios + "-smbios type=2,manufacturer=\"{}\",product=\"{}\",version=\"{}\",serial={},uuid={},sku=\"{}\" ".format("ASUSTEK COMPUTER INC.", "TRX40","Rev 1.2", uuid.uuid4(),uuid.uuid4(),"All")
 
             qemu_template.write(
                 'args:-bios {} -boot menu=on,once=d,order=c,strict=on,splash={} -fda {} {}\n'.format(os.path.join(host_path, "bios.bin"),bootsplash, os.path.join(host_path, str(host.host_id) + ".img"), smbios))
