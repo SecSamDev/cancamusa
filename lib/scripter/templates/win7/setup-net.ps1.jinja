@@ -36,9 +36,13 @@ foreach($el in $elements) {
 }
 {% endif %}
 {%- endfor %}
+
+Start-Sleep -m 2000
+
 try{
     Get-ChildItem -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList\Profiles" -recurse | ForEach-Object{Set-ItemProperty -Path $_.pspath -Name Category -value 1}
 }catch{
     "Error setting the profile"
 }
 netsh advfirewall set allprofiles state off
+Start-Sleep -m 5000
