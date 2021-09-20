@@ -117,11 +117,12 @@ iface vmbr{} inet static
             
             bootsplash = os.path.join(self.project_path,'..','bootsplash.bmp')
             # BIOS
-            smbios = "-smbios type=0,base64=1,manufacturer={},product={},version={},serial={},uuid={},sku={},family={} ".format(b64(host.bios.manufacturer), b64(host.bios.version), b64(host.bios.smbios_bios_version),b64(uuid.uuid4()),b64(uuid.uuid4()),b64("Al"),b64("ALASKA"))
+            # Note: base64=1 not working... we will use b64 to remove characters
+            smbios = "-smbios type=0,manufacturer={},product={},version={},serial={},uuid={},sku={},family={} ".format(b64(host.bios.manufacturer), b64(host.bios.version), b64(host.bios.smbios_bios_version),b64(uuid.uuid4()),b64(uuid.uuid4()),b64("Al"),b64("ALASKA"))
             # SYSTEM
-            smbios = smbios + "-smbios type=1,base64=1,manufacturer={},product={},version={},serial={},uuid={},sku={},family={} ".format(b64("ASUS"), b64("All Series"), b64("System Version"),b64(uuid.uuid4()),b64(uuid.uuid4()),b64("All"),b64("ASUS MB"))
+            smbios = smbios + "-smbios type=1,manufacturer={},product={},version={},serial={},uuid={},sku={},family={} ".format(b64("ASUS"), b64("All Series"), b64("System Version"),b64(uuid.uuid4()),b64(uuid.uuid4()),b64("All"),b64("ASUS MB"))
             # BaseBoard TODO: Extract info
-            smbios = smbios + "-smbios type=2,base64=1,manufacturer={},product={},version={},serial={},uuid={},sku={} ".format(b64("ASUSTEK COMPUTER INC."), b64("TRX40"),b64("Rev 1.2"), b64(uuid.uuid4()),b64(uuid.uuid4()),b64("All"))
+            smbios = smbios + "-smbios type=2,manufacturer={},product={},version={},serial={},uuid={},sku={} ".format(b64("ASUSTEK COMPUTER INC."), b64("TRX40"),b64("Rev 1.2"), b64(uuid.uuid4()),b64(uuid.uuid4()),b64("All"))
 
             qemu_template.write(
                 'args:-bios {} -boot menu=on,once=d,order=c,strict=on,splash={} -fda {} {}\n'.format(os.path.join(host_path, "bios.bin"),bootsplash, os.path.join(host_path, str(host.host_id) + ".img"), smbios))
@@ -361,6 +362,7 @@ def qemu_disk_qcow2(pth, size):
     process.terminate()
 
 def b64(txt):
-    txt = str(txt).replace(".","")
-    message_bytes = txt.encode('ascii')
-    return str(base64.b64encode(message_bytes).decode('ascii'))
+    txt = str(txt).replace(".","").replace(",","")
+    #message_bytes = txt.encode('ascii')
+    #return str(base64.b64encode(message_bytes).decode('ascii'))
+    return txt
