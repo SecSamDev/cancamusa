@@ -37,7 +37,6 @@ If (!(Test-Path "C:\inetpub\temp\apppools")) {
 }
 
 if (Test-Path -Path "C:\ini\WWWRoot") {
-  # Copy IIS folder into C:\Inetpub\WWWRoot
   cmd.exe /c copy C:\ini\WWWRoot\ C:\Inetpub\WWWRoot\
 }
 
