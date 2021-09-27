@@ -15,7 +15,7 @@ alias cancamusa='python3 ~/Workspace/cancamusa/cancamusa.py'
 
 Install the required libraries: 
 ```
-apt-get install wimtools git
+apt-get install wimtools git acpica-tools
 ```
 
 Install python requirements:
