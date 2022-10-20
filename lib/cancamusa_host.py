@@ -370,8 +370,20 @@ class HostInfoNetwork:
                 if to_parse.endswith("]"):
                     to_parse = to_parse[:-1]
                 split = list(map(lambda x: x.replace(
-                    "'", '').strip(), to_parse.split(',')))
+                    "'", '').replace('[','').replace(']','').strip(), to_parse.split(',')))
                 self.ip_gateway = split
+                continue
+            if prop == 'dns_servers':
+                answer = prompt([{'type': 'input', 'name': 'option',
+                                  'message': 'Edit Gateway', 'default': str(getattr(self, prop))}])
+                to_parse = answer['option'].strip()
+                if to_parse.startswith("["):
+                    to_parse = to_parse[1:]
+                if to_parse.endswith("]"):
+                    to_parse = to_parse[:-1]
+                split = list(map(lambda x: x.replace(
+                    "'", '').replace('[','').replace(']','').strip(), to_parse.split(',')))
+                self.dns_servers = split
                 continue
             answer = prompt([{'type': 'input', 'name': 'option', 'message': 'Edit: ' +
                               str(prop), 'default': str(getattr(self, prop))}])
