@@ -11,6 +11,10 @@ ACCOUNT_FORMAT_NAME_DOT_SURNAME = "bill.doe"
 ACCOUNT_FORMAT_LETTER_SURNAME = "bdoe"
 ACCOUNT_FORMAT_TRHEE_LETTERS = "bildoefer"
 
+PASSWORD_GENERATOR_FIRSTNAME_YEAR = "FirstNameYear"
+PASSWORD_GENERATOR_USERNAME_YEAR = "UsernameYear"
+PASSWORD_GENERATOR_FIRST_LAST_YEAR = "FirstNameLastNameYear"
+
 def random_guid():
     return str(uuid.uuid4())
 

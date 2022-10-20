@@ -5,8 +5,10 @@ import bios_database
 import re
 import random
 import codecs
+from datetime import date
+
 from mac_vendors import get_mac_list, search_wildcard_vendor, random_mac_for_vendor
-from cancamusa_common import random_guid, get_win_type
+from cancamusa_common import PASSWORD_GENERATOR_FIRSTNAME_YEAR, PASSWORD_GENERATOR_USERNAME_YEAR, random_guid, get_win_type
 from rol_selector import AVAILABLE_ROLES, roles_from_extracted_info, ROLE_DNS, ROLE_DHCP,ROLE_KMS, ROLE_WEB_SERVER,ROLE_DOMAIN_CONTROLLER
 
 from processors import list_processors
@@ -655,7 +657,7 @@ class HostInfoRAM:
 
 
 class HostInfoWindowsAccounts:
-    def __init__(self, account):
+    def __init__(self, account, password_generator=PASSWORD_GENERATOR_FIRSTNAME_YEAR):
         self.name = account['Name']
         self.local_account = account['LocalAccount']
         self.account_type = account['AccountType']
@@ -669,13 +671,14 @@ class HostInfoWindowsAccounts:
         if 'Password' in account:
             self.password = account['Password']
         else:
-            self.password = "CancamusaRocks123!"
+            self.password = 'CancamusaRocks123!'
         if 'Domain' in account:
             self.domain = account['Domain']
         else:
             self.domain = self.ps_computer_name
+        self.password_generator = password_generator
 
-    def edit_interactive(self):
+    def edit_interactive(self, password_generator=PASSWORD_GENERATOR_FIRSTNAME_YEAR):
         # If needed change in cancamusa.json
         """
         property_names = list(map(lambda x: str(x), dir(self)))
@@ -687,6 +690,11 @@ class HostInfoWindowsAccounts:
         for prop in property_names:
             if prop.startswith("_"):
                 continue
+            if prop == 'password':
+                if self.password_generator == PASSWORD_GENERATOR_FIRSTNAME_YEAR:
+                    self.password = self.name + str(date.today().year)
+                elif self.password_generator == PASSWORD_GENERATOR_USERNAME_YEAR:
+                    self.password = self.name + str(date.today().year)
             answer = prompt([{'type': 'input', 'name': 'option', 'message': 'Edit: ' +
                               str(prop), 'default': str(getattr(self, prop))}])
             setattr(self, prop, answer['option'])
@@ -695,7 +703,7 @@ class HostInfoWindowsAccounts:
     def __str__(self):
         return "{} : {}".format(self.name, self.description)
 
-    def create_interactive(host_name="Windows"):
+    def create_interactive(host_name="Windows", password_generator=PASSWORD_GENERATOR_FIRSTNAME_YEAR):
         disk = HostInfoWindowsAccounts({
             'Name': 'Administrator',
             'LocalAccount': True,
@@ -708,9 +716,9 @@ class HostInfoWindowsAccounts:
             'PasswordExpires': False,
             'PasswordRequired': True,
             'Domain' : host_name,
-            'Password' : "CancamusaRocks123!"
+            'Password' : 'password'
         })
-        disk = disk.edit_interactive()
+        disk = disk.edit_interactive(password_generator=password_generator)
         return disk
 
     def to_json(self):
@@ -734,7 +742,7 @@ class HostInfoWindowsAccounts:
 
 
 class HostInfo:
-    def __init__(self, host_id=1000):
+    def __init__(self, host_id=1000, password_generator='CancamusaRocks123!',default_language="en-EN"):
         self.host_id = host_id
         self.disks = []
         self.bios = HostInfoBios(
@@ -750,7 +758,8 @@ class HostInfo:
         self.domain = None
         self.selected_img_idx = None
         self.selected_img_pth = None
-        self.language = "en-EN"
+        self.language = default_language
+        self.password_generator = password_generator
 
     def set_language(self):
         answer = prompt([{'type': 'input', 'name': 'option','message': 'Set Windows Language (en-EN) ', 'default': str(self.language)}])
@@ -815,7 +824,7 @@ class HostInfo:
         to_ret['bios'] = self.bios.to_json()
         to_ret['roles'] = self.roles.to_json()
         to_ret["os"] = self.os.to_json()
-        to_ret["computer_name"] = self.computer_name
+        to_ret["computer_name"] = self.computer_name[0:min(15, len(self.computer_name))]
         to_ret["domain"] = self.domain
         if self.selected_img_idx != None:
             to_ret['selected_img_idx'] = self.selected_img_idx
@@ -930,6 +939,7 @@ class HostInfo:
                 answer2 = prompt([{'type': 'input', 'name': 'option',
                                    'message': 'Edit Hostname ', 'default': str(self.computer_name)}])
                 self.computer_name = answer2['option']
+                self.computer_name = self.computer_name[0:min(15, len(self.computer_name))]
                 self.bios.ps_computer_name = answer2['option']
             elif answer['option'] == 'Accounts':
                 options = ['Add']
@@ -948,7 +958,7 @@ class HostInfo:
                     continue
                 elif answer['option'] == 'Add':
                     acc = HostInfoWindowsAccounts.create_interactive(
-                        self.computer_name)
+                        self.computer_name, password_generator=self.password_generator)
                     if acc:
                         self.accounts.append(acc)
                 else:

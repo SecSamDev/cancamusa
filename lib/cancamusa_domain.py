@@ -1,16 +1,21 @@
 from PyInquirer import prompt
+from datetime import date
 import cancamusa_common
 
 class CancamusaDomain:
-    def __init__(self, domains=[]):
+    def __init__(self, domains=[], default_admin_password='CancamusaRocks123!',password_generator=cancamusa_common.PASSWORD_GENERATOR_FIRSTNAME_YEAR):
         self.domains = domains
+        self.default_admin_password = default_admin_password
+        self.password_generator = password_generator
     
-    def load_from_object(obj):
+    def load_from_object(obj, default_admin_password='CancamusaRocks123!',password_generator=cancamusa_common.PASSWORD_GENERATOR_FIRSTNAME_YEAR):
         domains = []
         for dmn in obj["domains"]:
             domain = ADStructure.from_json(dmn)
+            domain.default_admin_password = default_admin_password
+            domain.password_generator = password_generator
             domains.append(domain)
-        cancamusa = CancamusaDomain(domains)
+        cancamusa = CancamusaDomain(domains,default_admin_password=default_admin_password,password_generator=password_generator)
         return cancamusa
 
     def get_domain(self,domain):
@@ -52,7 +57,7 @@ class CancamusaDomain:
                         print(domain)
                 elif answer['option'] == 'Add domain':
                     answer = prompt([{'type': 'input','name': 'option','message': 'Domain name:', 'default' : "cancamusa.com"}])
-                    domain = ADStructure(answer['option'])
+                    domain = ADStructure(answer['option'], default_admin_password=self.default_admin_password, password_generator=self.password_generator)
                     domain = domain.edit_interactive()
                     if domain:
                         self.add_domain(domain)
@@ -80,7 +85,7 @@ class CancamusaDomain:
         return toret
 
 class ADStructure:
-    def __init__(self, domain):
+    def __init__(self, domain, default_admin_password='CancamusaRocks123!', password_generator=cancamusa_common.PASSWORD_GENERATOR_FIRSTNAME_YEAR):
         self.ou = {}
         self.domain = domain
         self.name = "CNCMS"
@@ -88,9 +93,10 @@ class ADStructure:
         self.path = dc_path_string
         self.default_admin = 'Admin'
         self.account_generator = cancamusa_common.ACCOUNT_FORMAT_NAME_DOT_SURNAME
-        self.default_admin_password = 'CancamusaRocks123!'
+        self.default_admin_password = default_admin_password
         self.dc_ip = '10.0.0.1'
         self.kms_server = None
+        self.password_generator = password_generator
 
     def get_user(self, username):
         users = self.list_users()
@@ -100,7 +106,7 @@ class ADStructure:
         return None
     
     def from_json(obj):
-        ret = ADStructure(obj["domain"])
+        ret = ADStructure(obj["domain"], default_admin_password='CancamusaRocks123!', password_generator=cancamusa_common.PASSWORD_GENERATOR_FIRSTNAME_YEAR)
         for name, ou in obj["ou"].items():
             parsed_ou = ADOrganizationalUnit.from_json(ou,parent=ret)
             ret.ou[parsed_ou.name] = parsed_ou
@@ -116,6 +122,8 @@ class ADStructure:
             ret.dc_ip = obj['dc_ip']
         if 'kms_server' in obj:
             ret.kms_server = obj['kms_server']
+        if 'default_admin_password' in obj:
+            ret.default_admin_password = obj['default_admin_password']
         return ret
 
     def __str__(self):
@@ -282,6 +290,19 @@ class ADOrganizationalUnit:
         for name, usr in self.users.items():
             to_join.append("{}>{} (User)".format("  "*(level+1), usr.account_name))
         return "\n".join(to_join)
+
+    def get_password_generator(self):
+        if self.parent:
+            if hasattr(self.parent,'password_generator'):
+                return self.parent.password_generator
+            else:
+                return self.parent.get_password_generator()
+        else:
+            if hasattr(self,'password_generator'):
+                return self.password_generator
+            else:
+                return cancamusa_common.PASSWORD_GENERATOR_FIRSTNAME_YEAR
+
 
     def list_child_ou(self):
         ret = [self.to_json()]
@@ -499,10 +520,19 @@ class ADUser:
         class_props =  list(map(lambda x: str(x),dir(ADUser)))
         for element in class_props:
             property_names.pop(property_names.index(element))
-
+        property_names.remove("password")
+        property_names.append("password")
         for prop in property_names:
             if prop.startswith("_") or prop == 'parent' or prop == 'path':
                 continue
+            if prop == 'password' and self.parent:
+                pass_gen = self.parent.get_password_generator()
+                if pass_gen == cancamusa_common.PASSWORD_GENERATOR_FIRSTNAME_YEAR:
+                    self.password = self.first_name + str(date.today().year)
+                elif pass_gen == cancamusa_common.PASSWORD_GENERATOR_USERNAME_YEAR:
+                    self.password = self.account_name + str(date.today().year)
+                elif pass_gen == cancamusa_common.PASSWORD_GENERATOR_FIRST_LAST_YEAR:
+                    self.password = self.first_name + self.second_name + str(date.today().year)
             answer = prompt([{'type': 'input','name': 'option','message': "Editing {}".format(prop), 'default' :str(getattr(self,prop))}])
             setattr(self,prop,answer['option'])
         return self

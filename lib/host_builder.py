@@ -11,6 +11,8 @@ import cancamusa_common
 from rol_selector import generate_rol_files_for_host, ROLE_DNS, ROLE_DOMAIN_CONTROLLER
 import uuid
 import base64
+from os.path import expanduser
+
 
 class WindowsHostBuilder:
     def __init__(self, project):
@@ -343,6 +345,20 @@ iface vmbr{} inet static
                     file_w.write(template.render(kms_server=kms_server))
                 builder.add_script(actual_file_out_path)
 
+        if 'ssh' in self.project.config and self.project.config['ssh']:
+            ssh_path = os.path.join(os.path.dirname(__file__), 'scripter', 'scripts', compatible_win_image['win_type'], 'install-sshd.ps1')
+            if self.project.config['ssh']['enabled'] and os.path.exists(ssh_path):
+                builder.add_script(ssh_path)
+                # Enable SSH
+                if self.project.config['ssh']['copy_public_key']:
+                    public_rsa_key_location = os.path.join(expanduser("~"),".ssh","id_rsa.pub")
+                    with open(public_rsa_key_location, 'rb') as file_r:
+                        actual_file_out_path = os.path.join(host_path,'iso_file', 'authorized_keys')
+                        with open(actual_file_out_path, 'wb') as file_w:
+                            file_w.write(file_r.read())
+                        builder.add_config(actual_file_out_path)
+                
+                
         
         # Build Windows ROLES -> Last to be executed (reboots needed) and need to be in domain
         generate_rol_files_for_host(host,builder,self.project)

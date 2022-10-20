@@ -18,11 +18,18 @@ class CancamusaProject:
         self.project_name = "Cancamusa"
         self.description = "A simple lab project"
         self.config_path = config_path
-        self.domain = CancamusaDomain()
         self.config = {
             'siem' : {},
-            'account_generator' : cancamusa_common.ACCOUNT_FORMAT_NAME_DOT_SURNAME
+            'account_generator' : cancamusa_common.ACCOUNT_FORMAT_NAME_DOT_SURNAME,
+            'language' : 'en',
+            'admin_password' : 'CancamusaRocks123!',
+            'password_generator' : cancamusa_common.PASSWORD_GENERATOR_FIRSTNAME_YEAR,
+            'ssh' : {
+                'enabled' : False,
+                'copy_public_key' : False
+            }
         }
+        self.domain = CancamusaDomain([],default_admin_password=self.config['admin_password'],password_generator=self.config['password_generator'])
         # QEMU machine ID
         self.host_id_start = 1000
         self.host_id_counter = 1000
@@ -160,9 +167,12 @@ class CancamusaProject:
         cancamusa = CancamusaProject(None)
         cancamusa.project_name = obj['project_name']
         cancamusa.description = obj['description']
-        cancamusa.config = obj['config']
+        for key in obj['config']:
+            cancamusa.config[key] = obj['config'][key]
         cancamusa.hosts = []
         cancamusa.domain = CancamusaDomain.load_from_object(obj['domain'])
+        cancamusa.domain.default_admin_password=cancamusa.config['admin_password']
+        cancamusa.domain.password_generator=cancamusa.config['password_generator']
         cancamusa.host_id_start = int(obj['host_id_start']) if 'host_id_start' in obj else 1000
         cancamusa.host_id_counter = int(obj['host_id_counter']) if 'host_id_counter' in obj else cancamusa.host_id_start
         for host in obj['hosts']:
@@ -380,7 +390,7 @@ class CancamusaProject:
                     print(host.computer_name)
 
             if answer['option'] == 'Add host':
-                host = HostInfo(self.host_id_counter)
+                host = HostInfo(self.host_id_counter,self.config["password_generator"])
                 host = host.edit_interactive(project=self)
                 if host:
                     self.add_host(host)
@@ -433,7 +443,7 @@ class CancamusaProject:
     def edit_project_interactive(self):
         self.scan_hosts()
         while True:
-            answer = prompt([{'type': 'list','name': 'option','message': 'Select a project property:', 'choices' : ['Description','Edit hosts','AD','SIEM','Build', 'Rebuild','Deploy','Exit'], 'value' : "none"}])
+            answer = prompt([{'type': 'list','name': 'option','message': 'Select a project property:', 'choices' : ['Description','Edit hosts','AD','SIEM','Config','Build', 'Rebuild','Deploy','Exit'], 'value' : "none"}])
             if answer['option'] == 'Exit':
                 self.save()
                 return
@@ -441,6 +451,8 @@ class CancamusaProject:
                 self.edit_hosts()
             elif answer['option'] == 'SIEM':
                 self.edit_siem_config()
+            elif answer['option'] == 'Config':
+                self.edit_project_config()
             elif answer['option'] == 'Build':
                 # Building the project: Creating ISOs, fill templates based on project specifications
                 builder = WindowsHostBuilder(self)
@@ -487,6 +499,43 @@ class CancamusaProject:
                 self.edit_winlogbeat()
             elif answer['option'] == 'SOCKS Proxy':  
                 self.edit_socks_proxy()
+    
+    def edit_project_config(self):
+        while True:
+            answer = prompt([{'type': 'list','name': 'option','message': 'Select a Project property:', 'choices' : ['Password generator','Default Admin Password', 'Default Language', 'SSH','Back'], 'value' : "none"}])
+            if answer['option'] == 'Back':
+                self.save()
+                return
+            elif answer['option'] == 'Password generator':
+                self.edit_password_generator() 
+            elif answer['option'] == 'Default Admin Password':
+                self.edit_default_admin_password() 
+            elif answer['option'] == 'Default Language':
+                self.edit_default_language()
+            elif answer['option'] == 'SSH':
+                self.edit_ssh()
+    
+    def edit_default_language(self):
+        answer = prompt([{'type': 'input','name': 'option','message': 'Default computer language:', 'default' : str(self.config['language'])}])
+        self.config['language'] = answer['option']
+
+    def edit_default_admin_password(self):
+        answer = prompt([{'type': 'input','name': 'option','message': 'Default admin password:', 'default' : str(self.config['admin_password'])}])
+        self.config['admin_password'] = answer['option']
+    
+    def edit_password_generator(self):
+        print(self.config)
+        answer = prompt([{'type': 'list','name': 'option','message': 'Password generator:','choices' : [cancamusa_common.PASSWORD_GENERATOR_FIRSTNAME_YEAR,cancamusa_common.PASSWORD_GENERATOR_USERNAME_YEAR,cancamusa_common.PASSWORD_GENERATOR_FIRST_LAST_YEAR], 'default' : str(self.config['password_generator'])}])
+        self.config['password_generator'] = answer['option']
+    
+    def edit_ssh(self):
+        answer = prompt([{'type': 'confirm','name': 'option','message': 'Enable SSH?:'}])
+        enabled = bool(answer['option'])
+        self.config['ssh']['enabled'] = enabled
+        if not enabled:
+            return
+        answer = prompt([{'type': 'confirm','name': 'option','message': 'Copy Known Host file?:'}])
+        self.config['ssh']['copy_public_key'] = bool(answer['option'])
 
     def new_project_in_current_path():
         current_dir = os.getcwd()
