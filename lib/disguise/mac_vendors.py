@@ -40,4 +40,10 @@ def search_wildcard_vendor(mac_list, vendor="*"):
     return mac_list[random.randint(0,len(mac_list))]
 
 def random_mac_for_vendor(vendor):
-    return ":".join([str(vendor[0:2]),str(vendor[2:4]),str(vendor[4:6]), hex(random.randint(0, 255)).lstrip("0x"),hex(random.randint(0, 255)).lstrip("0x"),hex(random.randint(0, 255)).lstrip("0x")])
+    return ":".join([str(vendor[0:2]),str(vendor[2:4]),str(vendor[4:6]), rand_hex(),rand_hex(),rand_hex()])
+
+def rand_hex():
+    ret = hex(random.randint(0, 255)).lstrip("0x")
+    if len(ret) == 1:
+        ret = "0" + ret
+    return ret

@@ -69,8 +69,7 @@ def process_windows_image(win_image):
     isoMountPath = '/mnt/' + md5_value
     if not os.path.isdir(isoMountPath):
         os.makedirs(isoMountPath)
-    mountCommand = 'mount -o loop ' + win_image + ' ' + isoMountPath
-    process = subprocess.Popen(mountCommand.split(), stdout=subprocess.PIPE)
+    process = subprocess.Popen(["mount", "-o","loop", win_image, isoMountPath], stdout=subprocess.PIPE)
     output, error = process.communicate()
     p_status = process.wait()
     process.terminate()
@@ -90,8 +89,9 @@ def process_windows_image(win_image):
 
     print('Available windows images:')
     win_images = {}
+    win_type = ""
     for img in windows_list:
         print(str(img['id']) + " " + img['name'])
         win_type = get_win_type(img['name'])
         win_images[str(img['id'])] = img['name']
-    return {"path" : win_image, "md5" : md5_value, "win_type" : win_type, "images" : win_images}
+    return {"path" : win_image, "md5" : md5_value, "win_type" : win_type, "images" : win_images, "architecture" : "x64"}

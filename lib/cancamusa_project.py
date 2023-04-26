@@ -9,6 +9,7 @@ from host_builder import WindowsHostBuilder
 from cancamusa_domain import CancamusaDomain
 from proxmox_deploy import ProxmoxDeployer
 from rol_selector import ROLE_DOMAIN_CONTROLLER, ROLE_DNS, ROLE_KMS, ROLE_WEB_SERVER, ROLE_DHCP, calculate_dhcp_failover
+from configuration import CancamusaConfiguration
 import ipaddress
 import os
 
@@ -18,6 +19,7 @@ class CancamusaProject:
         self.project_name = "Cancamusa"
         self.description = "A simple lab project"
         self.config_path = config_path
+        global_config = CancamusaConfiguration.load_or_create(None)
         self.config = {
             'siem' : {},
             'account_generator' : cancamusa_common.ACCOUNT_FORMAT_NAME_DOT_SURNAME,
@@ -27,7 +29,8 @@ class CancamusaProject:
             'ssh' : {
                 'enabled' : False,
                 'copy_public_key' : False
-            }
+            },
+            "start_vmbr" : global_config.start_vmbr
         }
         self.domain = CancamusaDomain([],default_admin_password=self.config['admin_password'],password_generator=self.config['password_generator'])
         # QEMU machine ID
@@ -369,10 +372,6 @@ class CancamusaProject:
         # ---------- Sysmon ----------
         cancamusa.edit_sysmon()
         cancamusa.save()
-        # Copy bootsplash
-        with open(os.path.join(pth,'bootsplash.bmp','wb')) as file_w:
-            with open(os.path.join(os.path.dirname(__file__),'..','img','cancamusa_boot.bmp'), 'rb') as file_r:
-                file_w.write(file_r.read())
         return cancamusa
 
 
@@ -390,7 +389,7 @@ class CancamusaProject:
                     print(host.computer_name)
 
             if answer['option'] == 'Add host':
-                host = HostInfo(self.host_id_counter,self.config["password_generator"])
+                host = HostInfo(self.host_id_counter,self.config["password_generator"], default_language=self.config["language"])
                 host = host.edit_interactive(project=self)
                 if host:
                     self.add_host(host)
@@ -458,6 +457,8 @@ class CancamusaProject:
                 builder = WindowsHostBuilder(self)
                 for host in self.hosts:
                     builder.build_host_image(host)
+                    # Guardar una vez construido
+                    self.save()
                 builder.build_net_interfaces()
             elif answer['option'] == 'Rebuild':
                 # Rebuilding the project letting the user select the ISOs: Creating ISOs, fill templates based on project specifications
@@ -502,7 +503,7 @@ class CancamusaProject:
     
     def edit_project_config(self):
         while True:
-            answer = prompt([{'type': 'list','name': 'option','message': 'Select a Project property:', 'choices' : ['Password generator','Default Admin Password', 'Default Language', 'SSH','Back'], 'value' : "none"}])
+            answer = prompt([{'type': 'list','name': 'option','message': 'Select a Project property:', 'choices' : ['Password generator','Default Admin Password', 'Default Language', 'SSH', "Network Bridges",'Back'], 'value' : "none"}])
             if answer['option'] == 'Back':
                 self.save()
                 return
@@ -514,6 +515,8 @@ class CancamusaProject:
                 self.edit_default_language()
             elif answer['option'] == 'SSH':
                 self.edit_ssh()
+            elif answer['option'] == 'Network Bridges':
+                self.network_bridges()
     
     def edit_default_language(self):
         answer = prompt([{'type': 'input','name': 'option','message': 'Default computer language:', 'default' : str(self.config['language'])}])
@@ -528,6 +531,11 @@ class CancamusaProject:
         answer = prompt([{'type': 'list','name': 'option','message': 'Password generator:','choices' : [cancamusa_common.PASSWORD_GENERATOR_FIRSTNAME_YEAR,cancamusa_common.PASSWORD_GENERATOR_USERNAME_YEAR,cancamusa_common.PASSWORD_GENERATOR_FIRST_LAST_YEAR], 'default' : str(self.config['password_generator'])}])
         self.config['password_generator'] = answer['option']
     
+    def network_bridges(self):
+        answer = prompt([{'type': 'confirm','name': 'option','message': 'Start ID of network Bridge:'}])
+        self.config['start_vmbr'] = int(answer['option'])
+
+
     def edit_ssh(self):
         answer = prompt([{'type': 'confirm','name': 'option','message': 'Enable SSH?:'}])
         enabled = bool(answer['option'])

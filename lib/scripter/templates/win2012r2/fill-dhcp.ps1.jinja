@@ -1,0 +1,12 @@
+{%- for host in hosts %}
+Set-DhcpServerv4Reservation -ComputerName "{{thishost.computer_name}}.{{host.domain}}" -IPAddress {{host.networks[0].ip_address[0]}} -Description "{{host.computer_name}}" -Name "{{host.computer_name}}.{{host.domain}}"
+{%- endfor %}
+
+
+{%- for failover in config.failovers %}
+{% if failover.mode == 'Standby' -%}
+Add-DhcpServerv4Failover -ComputerName "{{thishost.computer_name}}.{{thishost.domain}}" -Name "{{failover.name}}" -PartnerServer "{{failover.partner}}" -ServerRole Standby -ScopeId {{failover.scopes_ids}}
+{%- else -%}
+Add-DhcpServerv4Failover -ComputerName "{{thishost.computer_name}}" -Name "{{failover.name}}" -PartnerServer "{{failover.partner}}" -ScopeId {{failover.scopes_ids}} -LoadBalancePercent 70 -MaxClientLeadTime 2:00:00 -AutoStateTransition $True -StateSwitchInterval 2:00:00
+{% endif %}
+{%- endfor %}

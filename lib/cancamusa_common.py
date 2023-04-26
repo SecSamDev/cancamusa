@@ -27,7 +27,9 @@ def translate_lang(lang):
 
 def get_win_type(win_image):
     if '2008' in win_image:
-        return 'win2008'
+        return 'win2008r2'
+    if '2012' in win_image:
+        return 'win2012r2'
     if '2016' in win_image:
         return 'win2016'
     if '2019' in win_image:
@@ -38,8 +40,14 @@ def get_win_type(win_image):
         return 'win7'
     if '10' in win_image.lower():
         return 'win10'
+    if '11' in win_image.lower():
+        return 'win11'
     if '7' in win_image.lower():
         return 'win7'
+    if '8.1' in win_image.lower():
+        return 'win81'
+    if '81' in win_image.lower():
+        return 'win81'
     raise Exception('Cannot identify Windows OS version: ' + win_image)
 
 def get_win_image_type(win_image):

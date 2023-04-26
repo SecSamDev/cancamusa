@@ -102,6 +102,7 @@ class CancamusaConfiguration:
         if debug:
             return {
                 'win_type' : win_image,
+                "architecture" : "x64",
                 'md5' : '00000',
                 'images' : {'0' : 'Windows X Professional'},
                 'selected_img' : 0,
@@ -113,9 +114,11 @@ class CancamusaConfiguration:
             for name, image in self.win_images.items():
                 if host.selected_img_pth == image['path']:
                     selected_image = image
+                    print("SelectedImage=" + image['path'])
                     return {
                         'path' : image['path'],
                         'win_type' : image['win_type'],
+                        "architecture" : image['architecture'],
                         'md5' : image['md5'],
                         'selected_img' : host.selected_img_idx,
                         'images' : image['images']
@@ -128,10 +131,9 @@ class CancamusaConfiguration:
             if image["win_type"] == win_type:
                 select_image.append(image)
                 images.append(os.path.basename(image['path']))
-
         #images = list(map(lambda x: os.path.basename(x['path']), select_image))
         if prompter:
-            answer = prompt([{'type': 'list', 'name': 'option','message': 'Select a Windows Image for {}:'.format(host.os.name), 'choices': images}])
+            answer = prompt([{'type': 'list', 'name': 'option','message': 'Select a Windows Image for {} ({}):'.format(host.os.name, host.cpus[0].architecture), 'choices': images}])
             pos = images.index(answer['option'])
             selected_image = select_image[pos]
             image_ids = list(selected_image['images'].values())
@@ -140,11 +142,14 @@ class CancamusaConfiguration:
             return {
                 'path' : selected_image['path'],
                 'win_type' : selected_image['win_type'],
+                "architecture" : selected_image['architecture'],
                 'md5' : selected_image['md5'],
                 'selected_img' : pos,
                 'images' : selected_image['images']
             }
         else:
+            if len(select_image) == 0:
+                raise BaseException("Cannot find a viable image for {}".format(host.computer_name))
             image = select_image[0].copy()
             image['selected_img'] = 0
             return image
@@ -197,10 +202,14 @@ def configuration_mode():
             if len(cancamusa_config.win_images) == 0:
                 print("No registered Windows Images")
             else:
-                answers = prompt([{'type': 'list','name': 'selected_image','message': 'Registered images:', 'choices' : cancamusa_config.win_images.keys()},{'type' : 'list', 'name' : 'action', 'message' : 'What do you want to do?', 'choices' : ['Unregister image', 'Show']}])
+                answers = prompt([{'type': 'list','name': 'selected_image','message': 'Registered images:', 'choices' : cancamusa_config.win_images.keys()},{'type' : 'list', 'name' : 'action', 'message' : 'What do you want to do?', 'choices' : ['Unregister image', 'Show', 'Edit Architecture']}])
                 if answers['action'] == 'Unregister image':
                     cancamusa_config.win_images.pop(answers['selected_image'],None)
                 elif answers['action'] == 'Show':
                     image = cancamusa_config.win_images[answers['selected_image']]
                     print(image)
+                elif answers['action'] == 'Edit Architecture':
+                    answer = prompt([{'type': 'list', 'name': 'option',
+                        'message': 'Select a processor architecture:', 'choices': ['x86','x64','ARM64']}])
+                    cancamusa_config.win_images[answers['selected_image']]["architecture"] = answer["option"]
 

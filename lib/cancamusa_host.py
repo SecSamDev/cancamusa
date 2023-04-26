@@ -267,9 +267,8 @@ class HostInfoDisk:
         self.free_space = random_free_size(size)
         return self
 
-    def create_interactive(last_leter="B"):
-        disk = HostInfoDisk(next_letter(last_leter),
-                            "My PC", 64098583552, 20828822016)
+    def create_interactive(last_leter="B", computer_name="My PC"):
+        disk = HostInfoDisk(next_letter(last_leter), computer_name, 64098583552, 20828822016)
         disk = disk.edit_interactive()
         return disk
 
@@ -501,12 +500,20 @@ class HostInfoWindowsVersion:
 
     def edit_interactive(self):
         answer = prompt([{'type': 'list', 'name': 'option',
-            'message': 'Select a QEMU cpu type:', 'choices': ['Basic Edit','Full Edit']}])
+            'message': 'Select a Windows type:', 'choices': ['Basic Edit','Full Edit']}])
         if answer['option'] == 'Basic Edit':
             answer = prompt([{'type': 'list', 'name': 'option',
-            'message': 'Select a QEMU cpu type:', 'choices': ['Win10','Win7','Win2012','Win2016','Win2019']}])
+            'message': 'Select a Windows type:', 'choices': ['Win7','Win8.1','Win10','Win11','Win2008r2','Win2012r2','Win2016','Win2019']}])
             if answer['option'] == 'Win10':
                 self.name = 'Windows 10'
+                self.major = 10
+                self.minor = 0
+                self.build = 1909
+                self.revision = 18363
+                self.major_revision = 1
+                self.minor_revision = 0
+            elif answer['option'] == 'Win11':
+                self.name = 'Windows 11'
                 self.major = 10
                 self.minor = 0
                 self.build = 1909
@@ -521,8 +528,24 @@ class HostInfoWindowsVersion:
                 self.revision = 65536
                 self.major_revision = 1
                 self.minor_revision = 0
-            elif answer['option'] == 'Win2012':
-                self.name = 'Windows Server 2012'
+            elif answer['option'] == 'Win8.1':
+                self.name = 'Windows 8.1'
+                self.major = 6
+                self.minor = 1
+                self.build = 7601
+                self.revision = 65536
+                self.major_revision = 1
+                self.minor_revision = 0
+            elif answer['option'] == 'Win2008r2':
+                self.name = 'Windows Server 2008 R2'
+                self.major = 6
+                self.minor = 1
+                self.build = 7600
+                self.revision = 1
+                self.major_revision = 1
+                self.minor_revision = 0
+            elif answer['option'] == 'Win2012r2':
+                self.name = 'Windows Server 2012 R2'
                 self.major = 6
                 self.minor = 2
                 self.build = 7600
@@ -595,9 +618,10 @@ class HostInfoCpu:
         self.cores = cores
         self.threads = threads
         self.processor_type = "Haswell"
+        self.architecture = "x64"
 
     def __str__(self):
-        return "{} {}/{}".format(self.name, self.cores, self.threads)
+        return "{} {} {}/{}".format(self.name,self.architecture, self.cores, self.threads)
 
     def edit_interactive(self):
         answer = prompt([{'type': 'input', 'name': 'option',
@@ -610,6 +634,9 @@ class HostInfoCpu:
         answer = prompt([{'type': 'input', 'name': 'option',
                           'message': 'Threads: ', 'default': str(self.threads)}])
         self.threads = int(answer['option'])
+        answer = prompt([{'type': 'list', 'name': 'option',
+            'message': 'Select a processor architecture:', 'choices': ['x86','x64','ARM64']}])
+        self.architecture = answer['option']
         #answer = prompt([{'type': 'list', 'name': 'option','message': 'Select a QEMU cpu type:', 'choices': list_processors(self.family)}])
         #self.processor_type = answer['option']
         return self
@@ -631,11 +658,15 @@ class HostInfoCpu:
             'NumberOfCores': self.cores,
             'NumberOfLogicalProcessors': self.threads,
             'Family': self.family,
-            'CpuType': self.processor_type
+            'CpuType': self.processor_type,
+            "Architecture" : self.architecture
         }
 
     def from_json(version_file):
-        return HostInfoCpu(version_file['Name'], version_file['NumberOfCores'], version_file['NumberOfLogicalProcessors'])
+        host = HostInfoCpu(version_file['Name'], version_file['NumberOfCores'], version_file['NumberOfLogicalProcessors'])
+        if "Architecture" in version_file:
+            host.architecture = version_file["Architecture"]
+        return host
 
 class HostInfoRAM:
     def __init__(self, manufacturer,capacity):
@@ -715,7 +746,7 @@ class HostInfoWindowsAccounts:
     def __str__(self):
         return "{} : {}".format(self.name, self.description)
 
-    def create_interactive(host_name="Windows", password_generator=PASSWORD_GENERATOR_FIRSTNAME_YEAR):
+    def create_interactive(host_name="", password_generator=PASSWORD_GENERATOR_FIRSTNAME_YEAR):
         disk = HostInfoWindowsAccounts({
             'Name': 'Administrator',
             'LocalAccount': True,
@@ -759,14 +790,14 @@ class HostInfo:
         self.disks = []
         self.bios = HostInfoBios(
             bios_database.BIOS_AMERICAN_MEGATREND_ALASKA_F5)
-        self.computer_name = "Windows"
+        self.computer_name = ""
         self.networks = []
         self.os = HostInfoWindowsVersion('Windows 10 Enterprise',10, 0, 0, 0, 0, 0)
         self.accounts = []
         self.programs = []
         self.roles = HostInfoRoles([])
         self.cpus = []
-        self.ram = HostInfoRAM("Crucial",size_textual_to_numeric("8G"))
+        self.ram = HostInfoRAM("Crucial",size_textual_to_numeric("4G"))
         self.domain = None
         self.selected_img_idx = None
         self.selected_img_pth = None
@@ -911,7 +942,7 @@ class HostInfo:
                 elif answer['option'] == 'Add':
                     last_letter = 'B' if len(self.disks) == 0 else (
                         self.disks[-1].device_id[0] + "")
-                    disk = HostInfoDisk.create_interactive(last_letter)
+                    disk = HostInfoDisk.create_interactive(last_letter, computer_name=self.computer_name)
                     if disk:
                         self.add_disk(disk)
                 else:
@@ -938,7 +969,7 @@ class HostInfo:
                 else:
                     print("No domains available...")
             elif answer['option'] == 'Roles':
-                if self.os.win_type.lower() in ['win2016','win2012','win2019']:
+                if self.os.win_type.lower() in ['win2008r2','win2012r2','win2016','win2019']:
                     self.roles.edit_interactive()
                 else:
                     print(self.os.win_type)

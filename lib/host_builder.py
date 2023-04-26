@@ -26,7 +26,7 @@ class WindowsHostBuilder:
 
     
     def build_net_interfaces(self):
-        vmbrX = self.configuration.start_vmbr
+        vmbrX = self.project.config["start_vmbr"]
         net_file = "# To be added in /etc/network/interfaces"
         for net in self.project.networks:
             net_file += """
@@ -93,7 +93,7 @@ iface vmbr{} inet static
             qemu_template.write('name: {}\n'.format(
                 host.computer_name.replace("-", "").replace("_", "")))
             net_i = 0
-            bridge_i = self.configuration.start_vmbr
+            bridge_i = self.project.config["start_vmbr"]
             for hnet in host.networks:
                 qemu_template.write(
                     'net{}: rtl8139={},bridge=vmbr{},firewall=1\n'.format(net_i, hnet.mac_address,bridge_i))
@@ -117,7 +117,7 @@ iface vmbr{} inet static
             dcisc_i = dcisc_i + 1
             qemu_template.write('scsihw: virtio-scsi-pci\n')
             
-            bootsplash = os.path.join(self.project_path,'..','bootsplash.bmp')
+            # bootsplash = os.path.join(self.project_path,'..','bootsplash.bmp')
 
             ### ARGS smbios for proxmox not working in 6.4
             # BIOS
@@ -129,7 +129,7 @@ iface vmbr{} inet static
             smbios = smbios + "-smbios type=2,manufacturer={},product={},version={},serial={},uuid={},sku={} ".format(smb("ASUSTEK COMPUTER INC."), smb("TRX40"),smb("Rev 1.2"), smb(uuid.uuid4()),smb(uuid.uuid4()),smb("All"))
 
             qemu_template.write(
-                'args:-bios {} -boot menu=on,once=d,order=c,strict=on,splash={} -fda {} {}\n'.format(os.path.join(host_path, "bios.bin"),bootsplash, os.path.join(host_path, str(host.host_id) + ".img"), ""))
+                'args:-bios {} -boot menu=on,once=d,order=c,strict=on -fda {} {}\n'.format(os.path.join(host_path, "bios.bin"), os.path.join(host_path, str(host.host_id) + ".img"), ""))
             qemu_template.write("vmstatestorage: {}\n".format(self.configuration.proxmox_image_storage))
 
             qemu_template.write("smbios1: base64=1,manufacturer={},product={},version={},serial={},uuid={},sku={},family={} ".format(b64("ASUS"), b64("All Series"), b64("System Version"),b64(uuid.uuid4()),b64(uuid.uuid4()),b64("All"),b64("ASUS MB")))

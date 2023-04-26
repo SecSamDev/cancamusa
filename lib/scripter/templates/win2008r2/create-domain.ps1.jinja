@@ -1,0 +1,70 @@
+$ip = "{{domain_ip}}"
+$domain = "{{domain_name}}"
+$domainNetBios = "{{domain_netbios}}"
+$dns1 = "{{dns1}}"
+$dns2 = "{{dns2}}"
+$domain_subnet = "{{domain_subnet}}"
+$subnet = $ip -replace "\.\d+$", ""
+
+{% if config.primary == True -%}
+if ((gwmi win32_computersystem).partofdomain -eq $false) {
+    # If its not in a domain
+    Write-Host 'Installing RSAT tools'
+    Import-Module ServerManager
+    Add-WindowsFeature RSAT-AD-PowerShell,RSAT-AD-AdminCenter
+
+    Write-Host 'Creating domain controller'
+
+    # Eliminar política de contraseña robusta
+    secedit /export /cfg C:\secpol.cfg
+    (gc C:\secpol.cfg).replace("PasswordComplexity = 1", "PasswordComplexity = 0") | Out-File C:\secpol.cfg
+    secedit /configure /db C:\Windows\security\local.sdb /cfg C:\secpol.cfg /areas SECURITYPOLICY
+    Remove-Item -path C:\secpol.cfg -Force -Confirm:$false
+
+    $PlainPassword = "{{config.safe_mode_password}}" # "P@ssw0rd"
+    $SecurePassword = $PlainPassword | ConvertTo-SecureString -AsPlainText -Force
+
+    # Instalar Forest y convertir la maquina en un DC
+    Install-WindowsFeature AD-domain-services -IncludeManagementTools
+    Import-Module ADDSDeployment
+
+    Install-ADDSForest -SafeModeAdministratorPassword $SecurePassword `
+        -CreateDnsDelegation:$false `
+        -DatabasePath "C:\Windows\NTDS" `
+        -DomainMode "7" `
+        -DomainName $domain `
+        -DomainNetbiosName $domainNetBios `
+        -ForestMode "7" `
+        -InstallDns:$true `
+        -LogPath "C:\Windows\NTDS" `
+        -NoRebootOnCompletion:$true `
+        -SysvolPath "C:\Windows\SYSVOL" `
+        -Force:$true
+    
+    # Next reboot fill AD
+    reg.exe ADD "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" /f /v FillDomain /t REG_SZ /d 'C:\Windows\System32\cmd.exe /c powershell -File "C:\ini\fill-ad.ps1"'
+}
+{% else %}
+Import-Module ServerManager
+Add-WindowsFeature RSAT-AD-PowerShell,RSAT-AD-AdminCenter
+secedit /export /cfg C:\secpol.cfg
+(gc C:\secpol.cfg).replace("PasswordComplexity = 1", "PasswordComplexity = 0") | Out-File C:\secpol.cfg
+secedit /configure /db C:\Windows\security\local.sdb /cfg C:\secpol.cfg /areas SECURITYPOLICY
+Remove-Item -path C:\secpol.cfg -Force -Confirm:$false
+
+Install-WindowsFeature AD-domain-services -IncludeManagementTools
+Import-Module ADDSDeployment
+[string]$userName = '{{config.admin_user}}'
+[string]$userPassword = '{{config.admin_password}}'
+[securestring]$secStringPassword = ConvertTo-SecureString $userPassword -AsPlainText -Force
+[pscredential]$Credential = New-Object System.Management.Automation.PSCredential ($userName, $secStringPassword)
+
+Install-ADDSDomainController -NoGlobalCatalog:$false -CreateDnsDelegation:$false -CriticalReplicationOnly:$false -DatabasePath "C:\Windows\NTDS" -DomainName $domain -InstallDns:$true -LogPath "C:\Windows\NTDS" -NoRebootOnCompletion:$false -SiteName "Default-First-Site-Name" -SysvolPath "C:\Windows\SYSVOL" -Force:$true -Credential $Credential
+{% endif %}
+
+$newDNSServers = $dns1, $dns2
+$adapters = Get-WmiObject Win32_NetworkAdapterConfiguration | Where-Object { $_.DefaultIPGateway -ne $null -and $_.DefaultIPGateway[0].StartsWith($subnet) }
+if ($adapters) {
+    Write-Host Setting DNS
+    $adapters | ForEach-Object {$_.SetDNSServerSearchOrder($newDNSServers)}
+}

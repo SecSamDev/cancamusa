@@ -1,0 +1,48 @@
+{%- for netw in networks %}
+{% if netw.assign_method == 'static' -%}
+$elements = (getmac /fo csv /v | Select-Object -Skip 1).replace('"','').split([Environment]::NewLine)
+foreach($el in $elements) {
+    $netw = $el.split(',')[0]
+    if($el.split(',')[2] -eq "{{netw.mac_address}}".replace(":","-").ToUpper()) {
+        netsh interface ip set address $netw static "{{netw.ip_address[0]}}" "{{netw.ip_subnet[0]}}" "{{netw.ip_gateway[0]}}"
+        try{
+            netsh interface ip add dns "$netw" {{netw.dns_servers[0]}}
+            netsh interface ip add dns "$netw" {{netw.dns_servers[1]}}
+        }catch{
+            "Error setting the DNS server"
+        }
+    }
+}
+{%- elif netw.assign_method == 'dynamic' or netw.assign_method == 'fixed' -%}
+$elements = (getmac /fo csv /v | Select-Object -Skip 1).replace('"','').split([Environment]::NewLine)
+foreach($el in $elements) { 
+    if($el.split(',')[2] -eq "{{netw.mac_address}}".replace(":","-").ToUpper()) {
+        netsh interface ip set address $el.split(',')[0] dhcp
+    }
+}
+{%- else -%}
+$elements = (getmac /fo csv /v | Select-Object -Skip 1).replace('"','').split([Environment]::NewLine)
+foreach($el in $elements) { 
+    $netw = $el.split(',')[0]
+    if($el.split(',')[2] -eq "{{netw.mac_address}}".replace(":","-").ToUpper()) {
+        netsh interface ip set address $netw static "{{netw.ip_address[0]}}" "{{netw.ip_subnet[0]}}" "{{netw.ip_gateway[0]}}"
+        try{
+            netsh interface ip add dns "$netw" {{netw.dns_servers[0]}}
+            netsh interface ip add dns "$netw" {{netw.dns_servers[1]}}
+        }catch{
+            "Error setting the DNS server"
+        }
+    }
+}
+{% endif %}
+{%- endfor %}
+
+Start-Sleep -m 2000
+
+try{
+    Get-ChildItem -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList\Profiles" -recurse | ForEach-Object{Set-ItemProperty -Path $_.pspath -Name Category -value 1}
+}catch{
+    "Error setting the profile"
+}
+netsh advfirewall set allprofiles state off
+Start-Sleep -m 5000

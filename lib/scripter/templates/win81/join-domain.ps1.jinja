@@ -1,0 +1,11 @@
+Write-Host "Unirse al dominio"
+
+$user = "{{domain_name}}\{{username}}"
+$pass = ConvertTo-SecureString "{{password}}" -AsPlainText -Force
+$DomainCred = New-Object System.Management.Automation.PSCredential $user, $pass
+Add-Computer -DomainName {{domain_name}} -credential $DomainCred -PassThru
+
+Set-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name AutoAdminLogon -Value 1
+Set-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name DefaultUserName -Value "{{username}}"
+Set-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name DefaultPassword -Value "{{password}}"
+Set-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name DefaultDomainName -Value "{{domain_name}}"

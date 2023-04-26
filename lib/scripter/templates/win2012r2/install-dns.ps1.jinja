@@ -1,0 +1,2 @@
+Install-WindowsFeature -Name DNS -IncludeManagementTools
+Add-DnsServerForwarder -IPAddress {{dns.forwarder}} -PassThru
