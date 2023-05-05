@@ -1,17 +1,18 @@
-from script_iso import ScriptIsoBuilder
 import os
-from cancamusa_host import HostInfo
-import bios_cloner
-from configuration import CancamusaConfiguration
-from script_iso import ScriptIsoBuilder
-from jinja2 import Template
+import re
 import subprocess
 import ipaddress
-import cancamusa_common
-from rol_selector import generate_rol_files_for_host, ROLE_DNS, ROLE_DOMAIN_CONTROLLER
 import uuid
 import base64
 from os.path import expanduser
+from jinja2 import Template
+
+from lib.host.host import HostInfo
+from lib.disguise.bios_cloner import download_seabios, compile_cloned_bios
+from lib.configuration import CancamusaConfiguration
+from lib.cancamusa_common import SYSMON_CONFIG_FILE, WINLOGBEAT_CONFIG_FILE
+from lib.scripter.script_iso import ScriptIsoBuilder
+from lib.scripter.rol_selector import generate_rol_files_for_host, ROLE_DNS, ROLE_DOMAIN_CONTROLLER
 
 
 class WindowsHostBuilder:
@@ -56,9 +57,6 @@ iface vmbr{} inet static
         Args:
             host HostInfo: Object that stores all host configuration
         """
-        # TODO: Generate templates
-        # TODO: copy scripts
-        # TODO: create floppy ISO
 
         self.build_qemu_template(host)
         self.build_extra_iso(host)
@@ -69,9 +67,8 @@ iface vmbr{} inet static
             os.mkdir(host_path)
         if not os.path.exists(os.path.join(host_path, "bios.bin")) or ('CLEAN_ISOS' in os.environ and os.environ['CLEAN_ISOS'] == 'True'):
             if not self.seabios_path:
-                self.seabios_path = bios_cloner.download_seabios()
-            bios_cloner.compile_cloned_bios(host.bios, os.path.join(
-                host_path, "bios.bin"), SEABIOS_PATH=self.seabios_path)
+                self.seabios_path = download_seabios()
+            compile_cloned_bios(host.bios, os.path.join(host_path, "bios.bin"), SEABIOS_PATH=self.seabios_path)
 
     def build_qemu_template(self, host):
         host_path = os.path.join(self.project_path, host.computer_name)
@@ -80,12 +77,13 @@ iface vmbr{} inet static
 
         qemu_template_file = os.path.join(
             host_path, str(host.host_id) + ".conf")
+        ark = host.cpus[0].architecture.upper()
         with open(qemu_template_file, 'w') as qemu_template:
             compatible_win_image = self.configuration.select_win_image(
                 host, 'CANCAMUSA_DEBUG' in os.environ,False)
             qemu_template.write('bootdisk: ide0\n')
             # Custom CPU with QEMU flags that hides virtualization
-            qemu_template.write('cpu: custom-Cancamusa\n')
+            qemu_template.write('cpu: custom-Cancamusa{}\n'.format(ark))
             qemu_template.write('vcpus: {}\n'.format(host.cpus[0].threads))
             qemu_template.write('cores: {}\n'.format(host.cpus[0].cores))
             qemu_template.write('sockets: {}\n'.format(str(len(host.cpus))))
@@ -122,17 +120,18 @@ iface vmbr{} inet static
             ### ARGS smbios for proxmox not working in 6.4
             # BIOS
             # Note: base64=1 not working... we will use b64 to remove characters
-            smbios = "-smbios type=0,manufacturer={},product={},version={},serial={},uuid={},sku={},family={} ".format(smb(host.bios.manufacturer), smb(host.bios.version), smb(host.bios.smbios_bios_version),smb(uuid.uuid4()),smb(uuid.uuid4()),smb("Al"),smb("ALASKA"))
+            smbios = "-smbios type=0,vendor={},version={},date={},release={} ".format(smb(host.bios.manufacturer), smb(host.bios.smbios_major_version)+"."+smb(host.bios.smbios_minor_version), release_version(host.bios.release_date),bios_date(host.bios.release_date))
             # SYSTEM
-            smbios = smbios + "-smbios type=1,manufacturer={},product={},version={},serial={},uuid={},sku={},family={} ".format(smb("ASUS"), smb("All Series"), smb("System Version"),smb(uuid.uuid4()),smb(uuid.uuid4()),smb("All"),smb("ASUS MB"))
+            # smbios = smbios + "-smbios type=1,manufacturer={},product={},version={},serial={},uuid={},sku={},family={} ".format(smb("ASUS"), smb("All Series"), smb("System Version"),smb(uuid.uuid4()),smb(uuid.uuid4()),smb("All"),smb("ASUS MB"))
             # BaseBoard TODO: Extract info
-            smbios = smbios + "-smbios type=2,manufacturer={},product={},version={},serial={},uuid={},sku={} ".format(smb("ASUSTEK COMPUTER INC."), smb("TRX40"),smb("Rev 1.2"), smb(uuid.uuid4()),smb(uuid.uuid4()),smb("All"))
+            smbios = smbios + "-smbios type=2,manufacturer={},product={},version={},serial={} ".format(smb("ASUSTEK COMPUTER INC."), smb("TRX40"),smb("Rev 1.2"), smb(uuid.uuid4()))
 
             qemu_template.write(
-                'args:-bios {} -boot menu=on,once=d,order=c,strict=on -fda {} {}\n'.format(os.path.join(host_path, "bios.bin"), os.path.join(host_path, str(host.host_id) + ".img"), ""))
+                'args:-bios {} -boot menu=on,once=d,order=c,strict=on -fda {} {}\n'.format(os.path.join(host_path, "bios.bin"), os.path.join(host_path, str(host.host_id) + ".img"), smbios))
             qemu_template.write("vmstatestorage: {}\n".format(self.configuration.proxmox_image_storage))
 
-            qemu_template.write("smbios1: base64=1,manufacturer={},product={},version={},serial={},uuid={},sku={},family={} ".format(b64("ASUS"), b64("All Series"), b64("System Version"),b64(uuid.uuid4()),b64(uuid.uuid4()),b64("All"),b64("ASUS MB")))
+            # smbios1 = System Information https://en.wikipedia.org/wiki/System_Management_BIOS
+            qemu_template.write("smbios1: uuid={},manufacturer={},product={},version={},serial={},sku={},family={},base64=1 ".format(uuid.uuid4(), b64("ASUS"), b64("All Series"), b64("System Version"),b64(uuid.uuid4()),b64("All"),b64("ASUS MB")))
         print('QEMU template for proxmox created: ' + qemu_template_file)
 
     def build_extra_iso(self, host):
@@ -147,7 +146,7 @@ iface vmbr{} inet static
             host, 'CANCAMUSA_DEBUG' in os.environ,True,'CLEAN_ISOS' in os.environ)
         
         # Copy all scripts and configs that are not templates into the ISO file
-        for (dirpath, dirnames, filenames) in os.walk(os.path.join(os.path.dirname(__file__), 'scripter', 'scripts', compatible_win_image['win_type'])):
+        for (dirpath, dirnames, filenames) in os.walk(os.path.join(os.path.dirname(__file__),'..', 'scripter', 'scripts', compatible_win_image['win_type'])):
             for file in filenames:
                 # This scripts must not be added to the initial execution script
                 builder.add_config(os.path.join(dirpath, file))
@@ -161,7 +160,7 @@ iface vmbr{} inet static
                 for dir in dirnames:
                     builder.add_folder(os.path.join(dirpath, dir))
 
-        with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'Autounattend.xml.jinja'), 'r') as file_r:
+        with open(os.path.join(os.path.dirname(__file__), '..', 'scripter', 'templates', compatible_win_image['win_type'], 'Autounattend.xml.jinja'), 'r') as file_r:
             template = Template(file_r.read())
             lang = {
                 'principal': host.language,
@@ -235,7 +234,7 @@ iface vmbr{} inet static
         # O = Nombre de Adaptador, 2 = Direccion Fisica
         #"$headers = (getmac /fo csv /v | Select-Object -First 1).replace('\"','').split(',')"
         actual_domain = self.project.domain.get_domain(host.domain)
-        with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'setup-net.ps1.jinja'), 'r') as file_r:
+        with open(os.path.join(os.path.dirname(__file__), '..', 'scripter', 'templates', compatible_win_image['win_type'], 'setup-net.ps1.jinja'), 'r') as file_r:
             template = Template(file_r.read())
             dc_server = self.project.primary_dc_config()
             dc_ip = dc_server['ip'] if not dc_server['ip'] else dc_server['ip']
@@ -252,7 +251,7 @@ iface vmbr{} inet static
 
         # Setup Socks Proxy ------------------------------------------------
         if 'proxy' in self.project.config:
-            with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'set-proxy.bat.jinja'), 'r') as file_r:
+            with open(os.path.join(os.path.dirname(__file__), '..', 'scripter', 'templates', compatible_win_image['win_type'], 'set-proxy.bat.jinja'), 'r') as file_r:
                 template = Template(file_r.read())
                 actual_file_out_path = os.path.join(host_path,'iso_file', 'set-proxy.bat')
                 with open(actual_file_out_path, 'w') as file_w:
@@ -264,7 +263,7 @@ iface vmbr{} inet static
             print("No domain configuration for: {}".format(host.domain))
         if len(self.project.domain.domains) > 0 and actual_domain and not ROLE_DOMAIN_CONTROLLER in host.roles.roles:
             # TODO: Improve Join Domain for multiple DomainControllers
-            with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'join-domain.ps1.jinja'), 'r') as file_r:
+            with open(os.path.join(os.path.dirname(__file__), '..', 'scripter', 'templates', compatible_win_image['win_type'], 'join-domain.ps1.jinja'), 'r') as file_r:
                 template = Template(file_r.read())
                 actual_file_out_path = os.path.join(host_path,'iso_file', 'join-domain.ps1')
                 with open(actual_file_out_path, 'w') as file_w:
@@ -285,12 +284,12 @@ iface vmbr{} inet static
         if 'sysmon' in self.project.config:
             # If imported, download the sysmon config
             self.project.get_sysmon_file_if_not_exists()
-            sysmon_conf = cancamusa_common.SYSMON_CONFIG_FILE
+            sysmon_conf = SYSMON_CONFIG_FILE
             sysmon_drv = self.project.config['sysmon']['driver']
             sysmon_srv = self.project.config['sysmon']['service']
             sysmon_alt = self.project.config['sysmon']['altitude']
             sysmon_url = self.project.config['sysmon']['download']
-            with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'install-sysmon.bat.jinja'), 'r') as file_r:
+            with open(os.path.join(os.path.dirname(__file__), '..', 'scripter', 'templates', compatible_win_image['win_type'], 'install-sysmon.bat.jinja'), 'r') as file_r:
                 template = Template(file_r.read())
                 actual_file_out_path = os.path.join(host_path,'iso_file', 'install-sysmon.bat')
                 with open(actual_file_out_path, 'w') as file_w:
@@ -298,7 +297,7 @@ iface vmbr{} inet static
                 builder.add_script(actual_file_out_path)
 
             actual_file_out_path = os.path.join(host_path, 'iso_file', sysmon_conf)
-            with open(os.path.join('config_files', cancamusa_common.SYSMON_CONFIG_FILE),'r') as file_r:
+            with open(os.path.join('config_files', SYSMON_CONFIG_FILE),'r') as file_r:
                 with open(actual_file_out_path,'w') as file_w:
                     file_w.write(file_r.read())
             builder.add_config(actual_file_out_path)
@@ -310,21 +309,21 @@ iface vmbr{} inet static
         if 'winlogbeat' in self.project.config:
             # If imported, download the winlogbeat config
             self.project.get_winlogbeat_file_if_not_exists()
-            with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'install-winlogbeat.bat.jinja'), 'r') as file_r:
+            with open(os.path.join(os.path.dirname(__file__), '..', 'scripter', 'templates', compatible_win_image['win_type'], 'install-winlogbeat.bat.jinja'), 'r') as file_r:
                 template = Template(file_r.read())
                 actual_file_out_path = os.path.join(host_path,'iso_file', 'install-winlogbeat.bat')
                 with open(actual_file_out_path, 'w') as file_w:
-                    file_w.write(template.render(winlogbeat_config=cancamusa_common.WINLOGBEAT_CONFIG_FILE,winlogbeat_url=self.project.config['winlogbeat']['download']))
+                    file_w.write(template.render(winlogbeat_config=WINLOGBEAT_CONFIG_FILE,winlogbeat_url=self.project.config['winlogbeat']['download']))
                 builder.add_script(actual_file_out_path)
 
-            actual_file_out_path = os.path.join(host_path, 'iso_file', cancamusa_common.WINLOGBEAT_CONFIG_FILE)
-            with open(os.path.join('config_files', cancamusa_common.WINLOGBEAT_CONFIG_FILE),'r') as file_r:
+            actual_file_out_path = os.path.join(host_path, 'iso_file', WINLOGBEAT_CONFIG_FILE)
+            with open(os.path.join('config_files', WINLOGBEAT_CONFIG_FILE),'r') as file_r:
                 with open(actual_file_out_path,'w') as file_w:
                     file_w.write(file_r.read())
             builder.add_config(actual_file_out_path)
 
         # Deception options --------------------------------------------------
-        with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'deception.bat.jinja'), 'r') as file_r:
+        with open(os.path.join(os.path.dirname(__file__), '..', 'scripter', 'templates', compatible_win_image['win_type'], 'deception.bat.jinja'), 'r') as file_r:
             template = Template(file_r.read())
             actual_file_out_path = os.path.join(host_path,'iso_file', 'deception.bat')
             with open(actual_file_out_path, 'w') as file_w:
@@ -338,7 +337,7 @@ iface vmbr{} inet static
         else:
             kms_server = "{}:1688".format(kms_server['ip'])
         if kms_server:
-            with open(os.path.join(os.path.dirname(__file__), 'scripter', 'templates', compatible_win_image['win_type'], 'setup-kms.bat.jinja'), 'r') as file_r:
+            with open(os.path.join(os.path.dirname(__file__), '..', 'scripter', 'templates', compatible_win_image['win_type'], 'setup-kms.bat.jinja'), 'r') as file_r:
                 template = Template(file_r.read())
                 actual_file_out_path = os.path.join(host_path,'iso_file', 'setup-kms.bat')
                 with open(actual_file_out_path, 'w') as file_w:
@@ -346,7 +345,7 @@ iface vmbr{} inet static
                 builder.add_script(actual_file_out_path)
 
         if 'ssh' in self.project.config and self.project.config['ssh']:
-            ssh_path = os.path.join(os.path.dirname(__file__), 'scripter', 'scripts', compatible_win_image['win_type'], 'install-sshd.ps1')
+            ssh_path = os.path.join(os.path.dirname(__file__), '..', 'scripter', 'scripts', compatible_win_image['win_type'], 'install-sshd.ps1')
             if self.project.config['ssh']['enabled'] and os.path.exists(ssh_path):
                 builder.add_script(ssh_path)
                 # Enable SSH
@@ -382,7 +381,7 @@ def qemu_disk_qcow2(pth, size):
     process.terminate()
 
 def smb(txt):
-    txt = str(txt).replace(".","").replace(",","").replace(" - "," ").replace(" -"," ")
+    txt = str(txt).replace(".","").replace(",","").replace(" - "," ").replace(" -"," ").replace(" ","")
     #message_bytes = txt.encode('ascii')
     #return str(base64.b64encode(message_bytes).decode('ascii'))
     return txt
@@ -390,3 +389,21 @@ def smb(txt):
 def b64(txt):
     message_bytes = str(txt).encode('ascii')
     return str(base64.b64encode(message_bytes).decode('ascii'))
+
+def release_version(txt):
+    mtc = re.search(r"([0-9]{8})[0-9]{6}\.[0-9]{6}\+[0-9]{3}", txt)
+    if mtc:
+        date = mtc.group(1)
+        return "{}/{}/{}".format(date[6:8], date[4:6], date[0:4])
+        
+    else:
+        "07/06/2019"
+
+def bios_date(txt):
+    mtc = re.search(r"([0-9]{8})[0-9]{6}\.[0-9]{6}\+[0-9]{3}", txt)
+    if mtc:
+        date = mtc.group(1)
+        return "{}.{}".format(date[4:6], date[2:4])
+        
+    else:
+        "06.19"

@@ -1,17 +1,19 @@
 import os
 import json
-from PyInquirer import prompt
-import cancamusa_common
+import ipaddress
 import errno
 import requests
-from cancamusa_host import HostInfo
-from host_builder import WindowsHostBuilder
-from cancamusa_domain import CancamusaDomain
+from PyInquirer import prompt
+
+import cancamusa_common
+from lib.host.host import HostInfo
+from lib.domain import CancamusaDomain
+from lib.host.builder import WindowsHostBuilder
 from proxmox_deploy import ProxmoxDeployer
-from rol_selector import ROLE_DOMAIN_CONTROLLER, ROLE_DNS, ROLE_KMS, ROLE_WEB_SERVER, ROLE_DHCP, calculate_dhcp_failover
+from lib.scripter.rol_selector import ROLE_DOMAIN_CONTROLLER, ROLE_DNS, ROLE_KMS, ROLE_WEB_SERVER, ROLE_DHCP, calculate_dhcp_failover
 from configuration import CancamusaConfiguration
-import ipaddress
-import os
+
+
 
 class CancamusaProject:
     """ Loads and stores information about a Cancamusa project """
@@ -30,7 +32,18 @@ class CancamusaProject:
                 'enabled' : False,
                 'copy_public_key' : False
             },
-            "start_vmbr" : global_config.start_vmbr
+            "start_vmbr" : global_config.start_vmbr,
+            "logos" : [],
+            "oem" : {
+                'Logo' : None,
+                'Manufacturer' : 'CancamusaLabs',
+                'Support Phone' : '+00 123456789',
+                'Support URL' : 'http://support.com',
+                'Support App URL' : 'mailto://support@cancamusa.com',
+                'Model' : 'HidenLab'
+            },
+            "scripts" : [],
+            "default_scripts" : []
         }
         self.domain = CancamusaDomain([],default_admin_password=self.config['admin_password'],password_generator=self.config['password_generator'])
         # QEMU machine ID
@@ -147,23 +160,30 @@ class CancamusaProject:
     def save(self):
         if not self.config_path:
             raise Exception("Invalid config file path")
+        if os.path.exists(os.path.join(self.config_path,'cancamusa.json.bckp')):
+            raise Exception("There is an old backup file!")
+        with open(os.path.join(self.config_path,'cancamusa.json.bckp'), 'w') as config_file_backup:
+            with open(os.path.join(self.config_path,'cancamusa.json'), 'r') as config_file:
+                config_file_backup.write(config_file.read())
+        to_write = {
+            'project_name' : self.project_name,
+            'description' : self.description,
+            'config' : self.config,
+            'hosts' : [],
+            'domain' : self.domain.to_json(),
+            'host_id_counter' : self.host_id_counter,
+            'host_id_start' : self.host_id_start
+        }
+        for host in self.hosts:
+            host = host.to_json()
+            if not 'host_id' in host:
+                host['host_id'] = self.host_id_counter
+                self.host_id_counter = self.host_id_counter + 1
+            to_write['hosts'].append(host)
+        config_json = json.dumps(to_write,indent=4,) 
         with open(os.path.join(self.config_path,'cancamusa.json'), 'w') as config_file:
-            to_write = {
-                'project_name' : self.project_name,
-                'description' : self.description,
-                'config' : self.config,
-                'hosts' : [],
-                'domain' : self.domain.to_json(),
-                'host_id_counter' : self.host_id_counter,
-                'host_id_start' : self.host_id_start
-            }
-            for host in self.hosts:
-                host = host.to_json()
-                if not 'host_id' in host:
-                    host['host_id'] = self.host_id_counter
-                    self.host_id_counter = self.host_id_counter + 1
-                to_write['hosts'].append(host)
-            config_file.write(json.dumps(to_write,indent=4,))
+            config_file.write(config_json)
+        os.remove(os.path.join(self.config_path,'cancamusa.json.bckp'))
         return self
 
     def load_from_object(obj):
@@ -473,7 +493,8 @@ class CancamusaProject:
                 # Recreate disk images or only copy the qemu template
                 hard_mode = answer['option'] == 'Hard'
                 deployer = ProxmoxDeployer(self)
-                deployer.create_cpu_if_not_exists()
+                deployer.create_cpu_if_not_exists("X64")
+                deployer.create_cpu_if_not_exists("X86")
                 for host in self.hosts:
                     deployer.deploy_host(host,hard_mode)
                 # Create resource pool
@@ -485,54 +506,183 @@ class CancamusaProject:
                 self.description = answer['description']
 
     def edit_siem_config(self):
+        properties = {
+            'Sysmon' : self.edit_sysmon,
+            'Elasticsearch' : self.edit_elasticsearch, 
+            'Logstash' : self.edit_logstash, 
+            'Winlogbeat' : self.edit_winlogbeat, 
+            'SOCKS Proxy' : self.edit_socks_proxy,
+            'Back' : self.save,
+        }
         while True:
-            answer = prompt([{'type': 'list','name': 'option','message': 'Select a SIEM property:', 'choices' : ['Sysmon', 'Elasticsearch','Logstash','Winlogbeat','SOCKS Proxy','Back'], 'value' : "none"}])
+            answer = prompt([{'type': 'list','name': 'option','message': 'Select a SIEM property:', 'choices' : properties.keys(), 'value' : "none"}])
             if answer['option'] == 'Back':
                 self.save()
                 return
-            elif answer['option'] == 'Sysmon':
-                self.edit_sysmon() 
-            elif answer['option'] == 'Elasticsearch':
-                self.edit_elasticsearch() 
-            elif answer['option'] == 'Logstash':
-                self.edit_logstash() 
-            elif answer['option'] == 'Winlogbeat':  
-                self.edit_winlogbeat()
-            elif answer['option'] == 'SOCKS Proxy':  
-                self.edit_socks_proxy()
+            elif answer['option'] in properties:
+                properties[answer['option']]()
     
     def edit_project_config(self):
+        properties = {
+            'Password generator' : self.edit_password_generator,
+            'Default Admin Password' : self.edit_default_admin_password, 
+            'Default Language' : self.edit_default_language, 
+            'SSH' : self.edit_ssh, 
+            'Network Bridges' : self.network_bridges,
+            'Logos' : self.edit_logo,
+            'Scripts' : self.edit_scripts,
+            'Default scripts' : self.default_scripts,
+            'OEM' : self.edit_oem,
+            'Back' : self.save,
+        }
         while True:
-            answer = prompt([{'type': 'list','name': 'option','message': 'Select a Project property:', 'choices' : ['Password generator','Default Admin Password', 'Default Language', 'SSH', "Network Bridges",'Back'], 'value' : "none"}])
+            answer = prompt([{'type': 'list','name': 'option','message': 'Select a Project property:', 'choices' : properties.keys(), 'value' : "none"}])
             if answer['option'] == 'Back':
                 self.save()
                 return
-            elif answer['option'] == 'Password generator':
-                self.edit_password_generator() 
-            elif answer['option'] == 'Default Admin Password':
-                self.edit_default_admin_password() 
-            elif answer['option'] == 'Default Language':
-                self.edit_default_language()
-            elif answer['option'] == 'SSH':
-                self.edit_ssh()
-            elif answer['option'] == 'Network Bridges':
-                self.network_bridges()
+            elif answer['option'] in properties:
+                properties[answer['option']]()
     
     def edit_default_language(self):
         answer = prompt([{'type': 'input','name': 'option','message': 'Default computer language:', 'default' : str(self.config['language'])}])
         self.config['language'] = answer['option']
+    
+    def edit_oem(self):
+        if not 'oem' in self.config:
+            self.config['oem'] = {
+                'Logo' : None,
+                'Manufacturer' : 'CancamusaLabs',
+                'Support Phone' : '+00 123456789',
+                'Support URL' : 'http://support.com',
+                'Support App URL' : 'mailto://support@cancamusa.com',
+                'Model' : 'HidenLab',
+                'Back' : 'Back'
+            }
+        while True:
+            answer = prompt([{'type': 'list','name': 'option','message': 'Edit logos:', 'choices' : self.config['oem'].keys(), 'value' : "none"}])
+            if answer['option'] == 'Back':
+                self.save()
+                return
+            elif answer['option'] == 'Logo':
+                if len(self.config['logos']) == 0:
+                    print("Load some logos")
+                    continue
+                logos = list(self.config['logos'])
+                selected_logo = prompt([{'type': 'list','name': 'option','message': 'Edit logos:', 'choices' : logos, 'value' : "none"}])
+                self.config['oem']['Logo'] = selected_logo['option']
+            elif answer['option'] in self.config['oem']:
+                value = prompt([{'type': 'input','name': 'option','message': 'Edit property {}:'.format(answer['option']), 'default' : ''}])
+                self.config['oem'][answer['option']] = value['option']
 
+    def default_scripts(self):
+        if not 'default_scripts' in self.config:
+            self.config['default_scripts'] = []
+        answer = prompt([{'type': 'checkbox','name': 'option','message': 'Edit scripts:', 'choices': [{'name': x, 'checked': (x in self.config['default_scripts'])} for x in self.config['scripts']]}])
+        answer = answer['option']
+        for scrpt in self.config['scripts']:
+            if scrpt in answer:
+                self.config['default_scripts'].append(scrpt)
+            else:
+                self.config['default_scripts'].remove(scrpt)
+
+    def edit_scripts(self):
+        properties = {
+            'Add' : self.add_script,
+            'Remove' : self.remove_script,
+            'Empty' : self.empty_script,
+            'Back' : self.save,
+        }
+        if not 'scripts' in self.config:
+            self.config['scripts'] = []
+        while True:
+            answer = prompt([{'type': 'list','name': 'option','message': 'Edit scripts:', 'choices' : properties.keys(), 'value' : "none"}])
+            if answer['option'] == 'Back':
+                self.save()
+                return
+            elif answer['option'] in properties:
+                properties[answer['option']]()
+    
+    def remove_script(self):
+        answer = prompt([{'type': 'input','name': 'option','message': 'Script location:', 'default' : ''}])
+        self.config['scripts'].remove(answer['option'])  
+
+    def empty_script(self):
+        self.config['scripts'] = []
+    
+    def add_script(self):
+        answer = prompt([{'type': 'input','name': 'option','message': 'Script location:', 'default' : ''}])
+        script = answer['option']
+
+        script_name = os.path.basename(script)
+        
+        if not os.path.exists(script):
+            print("Path {} does not exist".format(script))
+            return
+        if script_name in self.config['scripts']:
+            return
+        
+        try:
+            with open(script, 'r') as r_f:
+                with open(os.path.join('config_files',script_name), 'w') as w_f:
+                    w_f.write(r_f.read())
+            self.config['scripts'].append(script_name)
+        except Exception as e:
+            print(e)
+
+    def edit_logo(self):
+        properties = {
+            'Add' : self.add_logo,
+            'Remove' : self.remove_logo,
+            'Empty' : self.empty_logo,
+            'Back' : self.save,
+        }
+        if not 'logos' in self.config:
+            self.config['logos'] = []
+        while True:
+            answer = prompt([{'type': 'list','name': 'option','message': 'Edit logos:', 'choices' : properties.keys(), 'value' : "none"}])
+            if answer['option'] == 'Back':
+                self.save()
+                return
+            elif answer['option'] in properties:
+                properties[answer['option']]()
+
+    def remove_logo(self):
+        answer = prompt([{'type': 'input','name': 'option','message': 'Logo location:', 'default' : ''}])
+        self.config['logos'].remove(answer['option'])  
+
+    def empty_logo(self):
+        self.config['logos'] = []
+    
+    def add_logo(self):
+        answer = prompt([{'type': 'input','name': 'option','message': 'Logo location:', 'default' : ''}])
+        logo = answer['option']
+
+        logo_name = os.path.basename(logo)
+        
+        if not os.path.exists(logo):
+            print("Path {} does not exist".format(logo))
+            return
+        if logo_name in self.config['logos']:
+            return
+        
+        try:
+            with open(logo, 'r') as r_f:
+                with open(os.path.join('config_files',logo_name), 'w') as w_f:
+                    w_f.write(r_f.read())
+            self.config['logos'].append(logo_name)
+        except Exception as e:
+            print(e)
+        
     def edit_default_admin_password(self):
         answer = prompt([{'type': 'input','name': 'option','message': 'Default admin password:', 'default' : str(self.config['admin_password'])}])
         self.config['admin_password'] = answer['option']
     
     def edit_password_generator(self):
-        print(self.config)
         answer = prompt([{'type': 'list','name': 'option','message': 'Password generator:','choices' : [cancamusa_common.PASSWORD_GENERATOR_FIRSTNAME_YEAR,cancamusa_common.PASSWORD_GENERATOR_USERNAME_YEAR,cancamusa_common.PASSWORD_GENERATOR_FIRST_LAST_YEAR], 'default' : str(self.config['password_generator'])}])
         self.config['password_generator'] = answer['option']
     
     def network_bridges(self):
-        answer = prompt([{'type': 'confirm','name': 'option','message': 'Start ID of network Bridge:'}])
+        answer = prompt([{'type': 'input','name': 'option','message': 'Start ID of network Bridge:'}])
         self.config['start_vmbr'] = int(answer['option'])
 
 

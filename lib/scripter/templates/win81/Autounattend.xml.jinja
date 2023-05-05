@@ -55,9 +55,7 @@
                 <Organization>{{principal_user.organization}}</Organization>
                 <!-- Product Key from http://technet.microsoft.com/en-us/library/jj612867.aspx -->
                 <ProductKey>
-                    <!-- Do not uncomment the Key element if you are using trial ISOs -->
-                    <!-- You must uncomment the Key element (and optionally insert your own key) if you are using retail or volume license ISOs -->
-                    <!--<Key>33PXH-7Y6KF-2VJC9-XBBR8-HVTHH</Key>-->
+                    <Key></Key>
                     <WillShowUI>Never</WillShowUI>
                 </ProductKey>
             </UserData>
@@ -67,7 +65,7 @@
                         <DiskID>0</DiskID>
                         <PartitionID>1</PartitionID>
                     </InstallTo>
-                    <WillShowUI>OnError</WillShowUI>
+                    <WillShowUI>Never</WillShowUI>
                     <InstallToAvailablePartition>false</InstallToAvailablePartition>
                     <InstallFrom>
                         <MetaData wcm:action="add">
@@ -125,7 +123,7 @@
             <OOBE>
                 <HideEULAPage>true</HideEULAPage>
                 <HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE>
-                <NetworkLocation>Home</NetworkLocation>
+                <NetworkLocation>Work</NetworkLocation>
                 <ProtectYourPC>1</ProtectYourPC>
             </OOBE>
             <AutoLogon>
@@ -303,11 +301,25 @@
             </OEMInformation>
             <!-- Rename computer here. -->
             <ComputerName>{{computer_name}}</ComputerName>
-            <TimeZone>Pacific Standard Time</TimeZone>
+            <TimeZone>Central European Summer Time</TimeZone>
             <RegisteredOwner />
+            <ProductKey>GCRJD-8NW9H-F2CDX-CCM8D-9D6T9</ProductKey>
         </component>
         <component name="Microsoft-Windows-Security-SPP-UX" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
             <SkipAutoActivation>true</SkipAutoActivation>
+        </component>
+        <component name="Microsoft-Windows-SQMApi" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS"
+            xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <CEIPEnabled>0</CEIPEnabled>
+        </component>
+        <component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS"
+            xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <SystemLocale>{{lang.principal}}</SystemLocale>
+            <UILanguage>{{lang.principal}}</UILanguage>
+            <UILanguageFallback>{{lang.fall}}</UILanguageFallback>
+            <UserLocale>{{lang.principal}}</UserLocale>
         </component>
     </settings>
 </unattend>

@@ -1,7 +1,7 @@
 import os
 import re
 from random import randrange
-from cancamusa_host import HostInfoBios
+from lib.host.host import HostInfoBios
 import tempfile
 import subprocess
 import os, shutil

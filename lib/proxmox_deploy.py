@@ -1,12 +1,11 @@
-from script_iso import ScriptIsoBuilder
 import os
-from cancamusa_host import HostInfo
-import bios_cloner
-from configuration import CancamusaConfiguration
 import subprocess
-from proxmox_utils import get_host_processor
-from processors import list_processors
 from PyInquirer import prompt
+
+from lib.proxmox_utils import get_host_processor
+from lib.disguise.processors import list_processors
+from lib.host.host import HostInfo
+from lib.configuration import CancamusaConfiguration
 
 
 class ProxmoxDeployer:
@@ -61,7 +60,7 @@ class ProxmoxDeployer:
         with open(usr_cfg, 'w') as file_w:
                 file_w.write(usr_cfg_edit)
     
-    def create_cpu_if_not_exists(self):
+    def create_cpu_if_not_exists(self, ark):
         if not self.configuration.is_proxmox:
             return
         # Creates a new Proxmox CPU in /etc/pve/virtual-guest/cpu-models.conf called Cancamusa
@@ -74,23 +73,23 @@ class ProxmoxDeployer:
                 cpu_edit = file_r.read()
         except:
             pass
-        cpu_pos = cpu_edit.find("cpu-model: Cancamusa")
+        cpu_pos = cpu_edit.find("cpu-model: Cancamusa{}".format(ark))
         if cpu_pos < 0:
             try:
                 processor = get_host_processor()
             except:
                 answer = prompt([{'type': 'list', 'name': 'option',
-                          'message': 'Creating the "Cancamusa" processor. Select a QEMU cpu type:', 'choices': list_processors()}])
+                          'message': 'Creating the "Cancamusa{}" processor. Select a QEMU cpu type:'.format(ark), 'choices': list_processors()}])
                 processor = answer['option']
             cpu_edit += """
-cpu-model: Cancamusa
+cpu-model: Cancamusa{}
     flags +sse;+sse2;-hypervisor
     phys-bits host
     hidden 1
     hv-vendor-id GenuineIntel
     reported-model {}
 
-""".format(processor)
+""".format(ark, processor)
         with open("/etc/pve/virtual-guest/cpu-models.conf", 'w+') as file_w:
             file_w.write(cpu_edit)
 

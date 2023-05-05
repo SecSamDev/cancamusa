@@ -1,11 +1,11 @@
 import hashlib
-from sys import platform
-import json
 import re
 import os
 import sys
-from cancamusa_common import get_win_type
+from sys import platform
 import subprocess
+
+from lib.cancamusa_common import get_win_type
 
 class WindowsImage:
     def __init__(self,iso,md5,win_type,images):

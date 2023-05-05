@@ -1,8 +1,7 @@
 import os
 import re
 import subprocess
-from sys import platform
-from processors import get_processor
+from lib.disguise.processors import get_processor
 
 def is_proxmox_system():
     return os.path.isdir('/etc/pve')
