@@ -42,7 +42,7 @@ if ((gwmi win32_computersystem).partofdomain -eq $false) {
         -Force:$true
     
     # Next reboot fill AD
-    reg.exe ADD "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" /f /v FillDomain /t REG_SZ /d 'C:\Windows\System32\cmd.exe /c powershell -File "C:\ini\fill-ad.ps1"'
+    #reg.exe ADD "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" /f /v FillDomain /t REG_SZ /d 'C:\Windows\System32\cmd.exe /c powershell -File "C:\ini\fill-ad.ps1"'
 }
 {% else %}
 Import-Module ServerManager

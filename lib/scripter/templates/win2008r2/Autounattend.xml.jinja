@@ -9,13 +9,8 @@
             </DriverPaths>
         </component>
         <component name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-            <SetupUILanguage>
-                <UILanguage>{{lang.fall}}</UILanguage>
-            </SetupUILanguage>
             <InputLocale>{{lang.principal}}</InputLocale>
-            <SystemLocale>{{lang.principal}}</SystemLocale>
             <UILanguage>{{lang.principal}}</UILanguage>
-            <UILanguageFallback>{{lang.fall}}</UILanguageFallback>
             <UserLocale>{{lang.principal}}</UserLocale>
         </component>
         <component name="Microsoft-Windows-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -109,7 +104,7 @@
                 <HelpCustomized>false</HelpCustomized>
             </OEMInformation>
             <ComputerName>{{computer_name}}</ComputerName>
-            <TimeZone>Central European Summer Time</TimeZone>
+            <TimeZone>Romance Standard Time</TimeZone>
             <RegisteredOwner/>
         </component>
         <component name="Microsoft-Windows-ServerManager-SvrMgrNc" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -226,7 +221,7 @@
                     <Description>Copy script files</Description>
                 </SynchronousCommand>
                 <SynchronousCommand wcm:action="add">
-                    <CommandLine>%SystemRoot%\System32\reg.exe ADD "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" /f /v CancamusaStart /t REG_SZ /d "C:\ini\init_script.bat"</CommandLine>
+                    <CommandLine>%SystemRoot%\System32\reg.exe ADD "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" /f /v CancamusaStart /t REG_SZ /d "C:\ini\init_script_0.bat"</CommandLine>
                     <Order>28</Order>
                     <Description>Setup init script that does the same as PACKER</Description>
                 </SynchronousCommand>
@@ -261,13 +256,10 @@
             </FirstLogonCommands>
             <OOBE>
                 <HideEULAPage>true</HideEULAPage>
-                <HideLocalAccountScreen>true</HideLocalAccountScreen>
-                <HideOEMRegistrationScreen>true</HideOEMRegistrationScreen>
-                <HideOnlineAccountScreens>true</HideOnlineAccountScreens>
-                <HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE>
                 <NetworkLocation>Work</NetworkLocation>
                 <ProtectYourPC>1</ProtectYourPC>
             </OOBE>
+            <DisableAutoDaylightTimeSet>false</DisableAutoDaylightTimeSet>
             <UserAccounts>
                 <AdministratorPassword>
                     <Value>{{principal_user.password}}</Value>

@@ -10,11 +10,11 @@ def size_textual_to_numeric(text):
     total_size = 0
     convert = convert[0]
     if convert[1] == 'G':
-        total_size = int(convert[0]) * 1000000000
+        total_size = int(convert[0]) * 1024 * 1024 * 1024
     elif convert[1] == 'M':
-        total_size = int(convert[0]) * 1000000
+        total_size = int(convert[0]) * 1024 * 1024
     elif convert[1] == 'K':
-        total_size = int(convert[0]) * 1000
+        total_size = int(convert[0]) * 1024
     elif convert[1] == 'B':
         total_size = int(convert[0])
     return total_size

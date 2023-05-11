@@ -25,3 +25,13 @@ New-ADUser `
     -Path "{{user.path}}" `
     -AccountPassword (convertto-securestring {{user.password}} -AsPlainText -Force)
 {% endfor %}
+
+$domain_sid = (Get-ADDomain).DomainSID.Value
+# Domain Admins
+Add-ADGroupMember -Identity "$($domain_sid)-512" -Members $env:UserName
+# Schema Admins
+Add-ADGroupMember -Identity "$($domain_sid)-518" -Members $env:UserName
+# Enterprise Admins
+Add-ADGroupMember -Identity "$($domain_sid)-519" -Members $env:UserName
+# DHCP Admins
+Add-ADGroupMember -Identity "$($domain_sid)-1002" -Members $env:UserName

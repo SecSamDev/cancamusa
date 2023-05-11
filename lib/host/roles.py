@@ -1,3 +1,6 @@
+from PyInquirer import prompt
+
+from lib.scripter.rol_selector import *
 
 class HostInfoRoles:
     def __init__(self, roles, config={}):
@@ -15,7 +18,8 @@ class HostInfoRoles:
             if rol in answ:
                 self.roles.add(rol)
             else:
-                self.roles.remove(rol)
+                if rol in self.roles:
+                    self.roles.remove(rol)
         for rol in self.roles:
             # Customize properties for each ROL
             # DNS: DNS user and password for DHCP Server
@@ -69,7 +73,7 @@ class HostInfoRoles:
     def create_interactive():
         roles = set()
         answer = prompt([{'type': 'checkbox', 'name': 'option',
-                          'message': 'Select server roles: ', 'choices': [{'name': x, 'checked': (x in self.roles)} for x in AVAILABLE_ROLES]}])
+                          'message': 'Select server roles: ', 'choices': [{'name': x, 'checked': []} for x in AVAILABLE_ROLES]}])
         answ = answer['option']
         if len(answ) == 0:
             return HostInfoRoles([])

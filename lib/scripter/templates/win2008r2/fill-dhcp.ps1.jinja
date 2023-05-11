@@ -1,5 +1,5 @@
 {%- for host in hosts %}
-Set-DhcpServerv4Reservation -ComputerName "{{host.computer_name}}.{{host.domain}}" -IPAddress {{host.networks[0].ip_address[0]}} -Description "{{host.computer_name}}" -Name "{{host.computer_name}}.{{host.domain}}" -ClientId "{{host.networks[0].mac_address}}".replace(":","-").toUpper()
+Add-DhcpServerv4Reservation -IPAddress {{host.ip_address}} -Description "{{host.computer_name}}" -Name "{{host.computer_name}}.{{host.domain}}" -ClientId "{{host.mac_address}}".replace(":","-").toUpper() -ScopeId {{host.scope}}
 {%- endfor %}
 
 

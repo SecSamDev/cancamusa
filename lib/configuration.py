@@ -109,12 +109,12 @@ class CancamusaConfiguration:
                 'path' : '/data/templates/iso/WindowsX.iso'
             }
 
-        if host.selected_img_pth != None and clean == False:
+        if host.selected_img_md5 != None and clean == False:
             selected_image = None
             for name, image in self.win_images.items():
-                if host.selected_img_pth == image['path']:
+                if host.selected_img_md5 == image['md5']:
                     selected_image = image
-                    print("SelectedImage=" + image['path'])
+                    print("SelectedImage=" + image['images'][str(host.selected_img_idx + 1)])
                     return {
                         'path' : image['path'],
                         'win_type' : image['win_type'],

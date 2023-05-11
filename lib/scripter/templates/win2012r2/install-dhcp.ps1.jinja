@@ -2,6 +2,8 @@ Install-WindowsFeature DHCP -IncludeManagementTools
 netsh dhcp add securitygroups
 Restart-Service dhcpserver
 
+Start-Sleep -m 3000
+
 Add-DhcpServerInDC -DnsName {{host.computer_name}}.{{host.domain}} -IPAddress {{host.networks[0].ip_address[0]}}
 
 Set-ItemProperty -Path registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\ServerManager\Roles\12 -Name ConfigurationState -Value 2
@@ -22,6 +24,9 @@ Add-DhcpServerv4Scope -name "{{scope.name}}" -StartRange {{scope.start_range}} -
 Add-DhcpServerv4ExclusionRange -ScopeID {{scope.scope_id}} -StartRange {{exclusion}} -EndRange {{exclusion}}
 {%- endfor %}
 Set-DhcpServerv4OptionValue -OptionID 3 -Value {{host.networks[0].ip_address[0]}} -ScopeID {{scope.scope_id}} -ComputerName {{host.computer_name}}.{{host.domain}}
+$option121 = "0,{{scope.start_range}}".split(".")
+$option121 = ($option121[0..($option121.Length - 2)] -join ",") + ",1"
+Set-DhcpServerv4OptionValue -ScopeId {{scope.scope_id}} -OptionId 121 -Value $option121
 {% if not dns == None -%}
 Set-DhcpServerv4OptionValue -DnsDomain {{host.domain}} -DnsServer {{dns.ip}}
 {% endif %}

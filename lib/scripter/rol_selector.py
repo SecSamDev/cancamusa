@@ -20,12 +20,12 @@ def generate_rol_files_for_host(host,builder, project):
     host_path = os.path.join(project_path, host.computer_name)
     if len(host.roles.roles) > 0:
         selected_roles = set(host.roles.roles)
-        if ROLE_DHCP in selected_roles:
-            generate_files_for_DHCP(host,builder, project)
-        if ROLE_DNS in selected_roles:
-            generate_files_for_DNS(host,builder, project)
         if ROLE_DOMAIN_CONTROLLER in selected_roles:
             generate_files_for_DC(host,builder,project)
+        if ROLE_DNS in selected_roles:
+            generate_files_for_DNS(host,builder, project)
+        if ROLE_DHCP in selected_roles:
+            generate_files_for_DHCP(host,builder, project)
         if ROLE_WEB_SERVER in selected_roles:
             generate_files_for_WS(host,builder,project)
         if ROLE_KMS in selected_roles:
@@ -72,7 +72,7 @@ def generate_files_for_DC(host,builder, project):
         actual_file_out_path = os.path.join(host_path,'iso_file', 'fill-ad.ps1')
         with open(actual_file_out_path, 'w') as file_w:
             file_w.write(template.render(user_list=user_list, ad_groups=ad_groups, ad_ous=ad_ous, domain=actual_domain.domain))
-        builder.add_config(actual_file_out_path)
+        builder.add_script(actual_file_out_path)
     
 
 def generate_files_for_WS(host,builder, project):
@@ -122,13 +122,24 @@ def generate_files_for_DHCP(host,builder, project):
         builder.add_script(actual_file_out_path)
     
     fixed_hosts = []
-    for hst in project.hosts:
-        if host.networks[0].ip_address[0] in fixed_ips:
-            fixed_hosts.append(hst)
-
+    
     with open(os.path.join(os.path.dirname(__file__), 'templates', host.os.win_type, 'fill-dhcp.ps1.jinja'), 'r') as file_r:
         template = Template(file_r.read())
         actual_file_out_path = os.path.join(host_path,'iso_file', 'fill-dhcp.ps1')
+
+        for scope in scopes:
+            for host in project.hosts:
+                for netw in host.networks:
+                    network = str(ipaddress.ip_network('{}/{}'.format(netw.ip_address[0],netw.ip_subnet[0]),False)).split("/")[0]
+                    if network == scope["scope_id"]:
+                        fixed_hosts.append({
+                            "scope" : scope["scope_id"],
+                            "computer_name" : host.computer_name,
+                            "domain" : host.domain,
+                            "ip_address" : netw.ip_address[0],
+                            "mac_address" : netw.mac_address
+                        })
+
         with open(actual_file_out_path, 'w') as file_w:
             file_w.write(template.render(thishost=host, dmn=domain, hosts=fixed_hosts, config=dhcp_config))
         thishost = None

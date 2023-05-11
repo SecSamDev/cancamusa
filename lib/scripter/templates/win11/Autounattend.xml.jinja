@@ -12,39 +12,64 @@
         <component xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="Microsoft-Windows-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
             <DiskConfiguration>
                 <Disk wcm:action="add">
+                    <DiskID>0</DiskID>
+                    <WillWipeDisk>true</WillWipeDisk>
                     <CreatePartitions>
+                        <!-- Windows RE Tools partition -->
                         <CreatePartition wcm:action="add">
                             <Order>1</Order>
-                            <Size>350</Size>
                             <Type>Primary</Type>
+                            <Size>300</Size>
                         </CreatePartition>
+                        <!-- System partition (ESP) -->
                         <CreatePartition wcm:action="add">
                             <Order>2</Order>
-                            <Extend>true</Extend>
+                            <Type>EFI</Type>
+                            <Size>100</Size>
+                        </CreatePartition>
+                        <!-- Microsoft reserved partition (MSR) -->
+                        <CreatePartition wcm:action="add">
+                            <Order>3</Order>
+                            <Type>MSR</Type>
+                            <Size>128</Size>
+                        </CreatePartition>
+                        <!-- Windows partition -->
+                        <CreatePartition wcm:action="add">
+                            <Order>4</Order>
                             <Type>Primary</Type>
+                            <Extend>true</Extend>
                         </CreatePartition>
                     </CreatePartitions>
                     <ModifyPartitions>
+                        <!-- Windows RE Tools partition -->
                         <ModifyPartition wcm:action="add">
-                            <Active>true</Active>
-                            <Extend>false</Extend>
-                            <Format>NTFS</Format>
-                            <Label>Boot</Label>
                             <Order>1</Order>
                             <PartitionID>1</PartitionID>
-                        </ModifyPartition>
-                        <ModifyPartition wcm:action="add">
-                            <Active>false</Active>
-                            <Extend>false</Extend>
+                            <Label>WINRE</Label>
                             <Format>NTFS</Format>
-                            <Label>{{principal_disk.volume_name}}</Label>
-                            <Letter>{{principal_disk.device_id}}</Letter>
+                            <TypeID>DE94BBA4-06D1-4D40-A16A-BFD50179D6AC</TypeID>
+                        </ModifyPartition>
+                        <!-- System partition (ESP) -->
+                        <ModifyPartition wcm:action="add">
                             <Order>2</Order>
                             <PartitionID>2</PartitionID>
+                            <Label>System</Label>
+                            <Format>FAT32</Format>
+                        </ModifyPartition>
+                        <!-- MSR partition does not need to be modified -->
+                        <ModifyPartition wcm:action="add">
+                            <Order>3</Order>
+                            <PartitionID>3</PartitionID>
+                        </ModifyPartition>
+                        <!-- Windows partition -->
+                        <ModifyPartition wcm:action="add">
+                            <Order>4</Order>
+                            <PartitionID>4</PartitionID>
+                            <Label>{{principal_disk.volume_name}}</Label>
+                            <Letter>{{principal_disk.device_id}}</Letter>
+                            <Format>NTFS</Format>
                         </ModifyPartition>
                     </ModifyPartitions>
-                    <DiskID>0</DiskID>
-                    <WillWipeDisk>true</WillWipeDisk>
                 </Disk>
                 {%- for disk in disk_list %}
                 <Disk wcm:action="add">
@@ -83,7 +108,7 @@
                 <OSImage>
                     <InstallTo>
                         <DiskID>0</DiskID>
-                        <PartitionID>2</PartitionID>
+                        <PartitionID>4</PartitionID>
                     </InstallTo>
                     <WillShowUI>OnError</WillShowUI>
                     <InstallToAvailablePartition>false</InstallToAvailablePartition>
@@ -98,18 +123,13 @@
         </component>
         <component xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
             <SetupUILanguage>
-                <UILanguage>{{lang.fall}}</UILanguage>
+                <UILanguage>{{lang.principal}}</UILanguage>
             </SetupUILanguage>
             <InputLocale>{{lang.principal}}</InputLocale>
             <SystemLocale>{{lang.principal}}</SystemLocale>
             <UILanguage>{{lang.principal}}</UILanguage>
-            <UILanguageFallback>{{lang.fall}}</UILanguageFallback>
+            <UILanguageFallback>{{lang.principal}}</UILanguageFallback>
             <UserLocale>{{lang.principal}}</UserLocale>
-        </component>
-    </settings>
-    <settings pass="offlineServicing">
-        <component name="Microsoft-Windows-LUA-Settings" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
-            <EnableLUA>false</EnableLUA>
         </component>
     </settings>
     <settings pass="oobeSystem">
@@ -117,6 +137,7 @@
             <InputLocale>{{lang.principal}}</InputLocale>
             <SystemLocale>{{lang.principal}}</SystemLocale>
             <UILanguage>{{lang.principal}}</UILanguage>
+            <UILanguageFallback>{{lang.principal}}</UILanguageFallback>
             <UserLocale>{{lang.principal}}</UserLocale>
         </component>
         <component xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
@@ -154,6 +175,7 @@
                 <Enabled>true</Enabled>
                 <Username>{{principal_user.name}}</Username>
             </AutoLogon>
+            <TimeZone>Central European Summer Time</TimeZone>
             <FirstLogonCommands>
                 <SynchronousCommand wcm:action="add">
                     <CommandLine>cmd.exe /c powershell -Command "Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Force"</CommandLine>
@@ -241,7 +263,7 @@
                     <Description>Copy script files</Description>
                 </SynchronousCommand>
                 <SynchronousCommand wcm:action="add">
-                    <CommandLine>%SystemRoot%\System32\reg.exe ADD "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" /f /v CancamusaStart /t REG_SZ /d "C:\ini\init_script.bat"</CommandLine>
+                    <CommandLine>%SystemRoot%\System32\reg.exe ADD "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" /f /v CancamusaStart /t REG_SZ /d "C:\ini\init_script_0.bat"</CommandLine>
                     <Order>28</Order>
                     <Description>Setup init script that does the same as PACKER</Description>
                 </SynchronousCommand>
@@ -275,6 +297,11 @@
                 <!-- END WITH WINDOWS UPDATES -->
             </FirstLogonCommands>
             <ShowWindowsLive>false</ShowWindowsLive>
+        </component>
+    </settings>
+    <settings pass="offlineServicing">
+        <component name="Microsoft-Windows-LUA-Settings" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+            <EnableLUA>false</EnableLUA>
         </component>
     </settings>
     <settings pass="specialize">

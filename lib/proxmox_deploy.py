@@ -38,6 +38,15 @@ class ProxmoxDeployer:
             for hdisk in host.disks:
                 qemu_disk_qcow2("{}/images/{}/vm-{}-disk-{}.qcow2".format(img_storage,host.host_id,host.host_id,dcisc_i), hdisk.size)
                 dcisc_i = dcisc_i + 1
+            
+            # Create TPM disk
+            if host.os.win_type == 'win11':
+                # TPM
+                qemu_disk_tpm(host.host_id, self.configuration.proxmox_image_storage, dcisc_i)
+                dcisc_i = dcisc_i + 1
+                # UEFI
+                qemu_disk_efi(host.host_id, self.configuration.proxmox_image_storage, dcisc_i)
+                dcisc_i = dcisc_i + 1
         
     def create_pool(self):
         if not self.configuration.is_proxmox:
@@ -108,3 +117,29 @@ def qemu_disk_qcow2(pth,size):
     p_status = process.wait()
     process.terminate()
     
+def qemu_disk_raw(pth,size):
+    if 'CANCAMUSA_DEBUG' in os.environ:
+        return
+    parent = os.path.dirname(pth)
+    if not os.path.exists(parent):
+        os.mkdir(parent)
+    process = subprocess.Popen(["qemu-img","create","-f","raw",pth,str(size)], stdout=subprocess.PIPE)
+    output, error = process.communicate()
+    p_status = process.wait()
+    process.terminate()
+    
+def qemu_disk_efi(id, storage, disk_i):
+    if 'CANCAMUSA_DEBUG' in os.environ:
+        return
+    process = subprocess.Popen(["qm","set", str(id),"--efidisk0", "{}:{},format=qcow2,efitype=4m,pre-enrolled-keys=1".format(storage, int(disk_i - 1))], stdout=subprocess.PIPE)
+    output, error = process.communicate()
+    p_status = process.wait()
+    process.terminate()
+
+def qemu_disk_tpm(id, storage, disk_i):
+    if 'CANCAMUSA_DEBUG' in os.environ:
+        return
+    process = subprocess.Popen(["qm","set", str(id),"--tpmstate0", "{}:{},version=v2.0".format(storage, int(disk_i - 1))], stdout=subprocess.PIPE)
+    output, error = process.communicate()
+    p_status = process.wait()
+    process.terminate()

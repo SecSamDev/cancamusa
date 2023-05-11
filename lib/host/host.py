@@ -49,7 +49,7 @@ class HostInfo:
         self.ram = HostInfoRAM("Crucial",size_textual_to_numeric("4G"))
         self.domain = None
         self.selected_img_idx = None
-        self.selected_img_pth = None
+        self.selected_img_md5 = None
         self.language = default_language
         self.password_generator = password_generator
         self.oem = HostInfoOEM()
@@ -121,8 +121,8 @@ class HostInfo:
         to_ret["domain"] = self.domain
         if self.selected_img_idx != None:
             to_ret['selected_img_idx'] = self.selected_img_idx
-        if self.selected_img_pth != None:
-            to_ret['selected_img_pth'] = self.selected_img_pth
+        if self.selected_img_md5 != None:
+            to_ret['selected_img_md5'] = self.selected_img_md5
         to_ret['language'] = self.language
         to_ret["oem"] = self.oem.to_json()
         return to_ret
@@ -162,8 +162,8 @@ class HostInfo:
         host.roles = HostInfoRoles.from_json(obj['roles'])
         if 'selected_img_idx' in obj:
             host.selected_img_idx = obj['selected_img_idx']
-        if 'selected_img_pth' in obj:
-            host.selected_img_pth = obj['selected_img_pth']
+        if 'selected_img_md5' in obj:
+            host.selected_img_md5 = obj['selected_img_md5']
         host.domain = obj['domain']
         if 'language' in obj:
             host.language = obj['language']

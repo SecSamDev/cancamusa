@@ -86,8 +86,8 @@ class CancamusaProject:
                 if found_kms == None:
                     found_kms = host
             if ROLE_WEB_SERVER in host.roles.roles:
-                # KMS server
-                self.iis_servers[host.computer_name] = host.roles.config[ROLE_KMS]
+                # WebServer
+                self.iis_servers[host.computer_name] = host.roles.config[ROLE_WEB_SERVER]
                 self.iis_servers[host.computer_name]['ip'] = host.networks[0].ip_address[0]
                 self.iis_servers[host.computer_name]['primary'] = (found_iis == None)
                 if found_iis == None:
@@ -479,13 +479,17 @@ class CancamusaProject:
                     builder.build_host_image(host)
                     # Guardar una vez construido
                     self.save()
+                builder.build_adm_scripts(self.hosts)
                 builder.build_net_interfaces()
+                
+
             elif answer['option'] == 'Rebuild':
                 # Rebuilding the project letting the user select the ISOs: Creating ISOs, fill templates based on project specifications
                 os.environ['CLEAN_ISOS']='True'
                 builder = WindowsHostBuilder(self)
                 for host in self.hosts:
                     builder.build_host_image(host)
+                builder.build_adm_scripts(self.hosts)
                 builder.build_net_interfaces()
             elif answer['option'] == 'Deploy':
                 # Depending if the project is alredy builded it deploys the project in Proxmox etc

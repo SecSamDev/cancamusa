@@ -25,7 +25,16 @@ class WindowsHostBuilder:
         self.configuration = CancamusaConfiguration.load_or_create(None)
         self.seabios_path = None
 
-    
+    def build_adm_scripts(self, hosts):
+        print("Creating ADM scripts in: {}/*.sh".format(self.project_path))
+        with open(os.path.join(self.project_path,'start_all.sh'),'w') as file_w:
+            for host in hosts:
+                file_w.write("qm start {}\n".format(host.host_id))
+
+        with open(os.path.join(self.project_path,'stop_all.sh'),'w') as file_w:
+            for host in hosts:
+                file_w.write("qm stop {}\n".format(host.host_id))
+
     def build_net_interfaces(self):
         vmbrX = self.project.config["start_vmbr"]
         net_file = "# To be added in /etc/network/interfaces"
@@ -61,7 +70,6 @@ iface vmbr{} inet static
         self.build_qemu_template(host)
         self.build_extra_iso(host)
 
-        print(self.project_path)
         host_path = os.path.join(self.project_path, host.computer_name)
         if not os.path.exists(host_path):
             os.mkdir(host_path)
@@ -69,7 +77,7 @@ iface vmbr{} inet static
             if not self.seabios_path:
                 self.seabios_path = download_seabios()
             compile_cloned_bios(host.bios, os.path.join(host_path, "bios.bin"), SEABIOS_PATH=self.seabios_path)
-
+        
     def build_qemu_template(self, host):
         host_path = os.path.join(self.project_path, host.computer_name)
         if not os.path.exists(host_path):
@@ -99,20 +107,21 @@ iface vmbr{} inet static
                 bridge_i = bridge_i + 1
             qemu_template.write('numa: 0\n')
             qemu_template.write(
-                'ostype: {}\n'.format("win"+str(host.os.major)))
+                'ostype: {}\n'.format(get_win_os(host.os.win_type)))
 
-            dcisc_i = 0
+            sata_i = 0
             for hnet in host.disks:
                 # ide0:106/vm-106-disk-0.qcow2,size=128G
-                qemu_template.write('ide{}: {}:{}/vm-{}-disk-{}.qcow2,size={}\n'.format(
-                    dcisc_i, self.configuration.proxmox_image_storage, host.host_id, host.host_id, dcisc_i, hnet.size))
+                qemu_template.write('sata{}: {}:{}/vm-{}-disk-{}.qcow2,size={}\n'.format(
+                    sata_i, self.configuration.proxmox_image_storage, host.host_id, host.host_id, sata_i, hnet.size))
                 storage_path = [x for x in self.configuration.proxmox_storages if x['name']
                                 == self.configuration.proxmox_image_storage][0]['path']
                 #qemu_disk_qcow2("{}/images/{}/vm-{}-disk-{}.qcow2".format(storage_path,host.host_id,host.host_id,dcisc_i), hnet.size)
-                dcisc_i = dcisc_i + 1
-            qemu_template.write("ide{}: {}:iso/{},media=cdrom\n".format(
-                dcisc_i, self.configuration.proxmox_iso_storage, os.path.basename(compatible_win_image["path"])))
-            dcisc_i = dcisc_i + 1
+                sata_i = sata_i + 1
+
+            qemu_template.write("ide0: {}:iso/{},media=cdrom\n".format(
+                self.configuration.proxmox_iso_storage, os.path.basename(compatible_win_image["path"])))
+            
             qemu_template.write('scsihw: virtio-scsi-pci\n')
             
             # bootsplash = os.path.join(self.project_path,'..','bootsplash.bmp')
@@ -126,20 +135,35 @@ iface vmbr{} inet static
             # BaseBoard TODO: Extract info
             smbios = smbios + "-smbios type=2,manufacturer={},product={},version={},serial={} ".format(smb("ASUSTEK COMPUTER INC."), smb("TRX40"),smb("Rev 1.2"), smb(uuid.uuid4()))
 
-            qemu_template.write(
-                'args:-bios {} -boot menu=on,once=d,order=c,strict=on -fda {} {}\n'.format(os.path.join(host_path, "bios.bin"), os.path.join(host_path, str(host.host_id) + ".img"), smbios))
+            if host.os.win_type == 'win11':
+                # TODO: Build custom OVMF bios
+                qemu_template.write("bios: ovmf\n")
+                qemu_template.write("machine: pc-q35-6.2\n")
+                qemu_template.write("efidisk0: {}:{}/vm-{}-disk-{}.qcow2,efitype=4m,pre-enrolled-keys=1,size=528K \n".format(self.configuration.proxmox_image_storage, host.host_id, host.host_id, sata_i))
+                sata_i = sata_i + 1
+                # UEFI
+                qemu_template.write(
+                    'args: -boot menu=on,once=d,order=c,strict=on -fda {} {}\n'.format(os.path.join(host_path, str(host.host_id) + ".img"), smbios))
+                qemu_template.write("tpmstate0: {}:{}/vm-{}-disk-{}.raw,size=4M,version=v2.0\n".format(self.configuration.proxmox_image_storage, host.host_id, host.host_id, sata_i))
+                sata_i = sata_i + 1
+            else:
+                qemu_template.write(
+                    'args:-bios {} -boot menu=on,once=d,order=c,strict=on -fda {} {}\n'.format(os.path.join(host_path, "bios.bin"), os.path.join(host_path, str(host.host_id) + ".img"), smbios))
             qemu_template.write("vmstatestorage: {}\n".format(self.configuration.proxmox_image_storage))
 
             # smbios1 = System Information https://en.wikipedia.org/wiki/System_Management_BIOS
-            qemu_template.write("smbios1: uuid={},manufacturer={},product={},version={},serial={},sku={},family={},base64=1 ".format(uuid.uuid4(), b64("ASUS"), b64("All Series"), b64("System Version"),b64(uuid.uuid4()),b64("All"),b64("ASUS MB")))
+            qemu_template.write("smbios1: uuid={},manufacturer={},product={},version={},serial={},sku={},family={},base64=1 \n".format(uuid.uuid4(), b64("ASUS"), b64("All Series"), b64("System Version"),b64(uuid.uuid4()),b64("All"),b64("ASUS MB")))
+
+            
         print('QEMU template for proxmox created: ' + qemu_template_file)
 
     def build_extra_iso(self, host):
-        builder = ScriptIsoBuilder(host, [], [])
+        builder = ScriptIsoBuilder(host,self.project_path, [], [])
         host_path = os.path.join(self.project_path, host.computer_name)
         
         if not os.path.exists(os.path.join(host_path,'iso_file')):
             os.mkdir(os.path.join(host_path,'iso_file'))
+        
         
         # Build Autounattend --------------------------------------------------------
         compatible_win_image = self.configuration.select_win_image(
@@ -167,10 +191,11 @@ iface vmbr{} inet static
                 'fall': 'en-EN'
             }
             win_image = {
-                'image': compatible_win_image['selected_img'] + 1 #Index starts at one
+                'image': compatible_win_image['selected_img'] + 1, #Index starts at one
+                'name' : compatible_win_image['images'][str(compatible_win_image['selected_img'] + 1)]
             }
             host.selected_img_idx = compatible_win_image['selected_img']
-            host.selected_img_pth = compatible_win_image["path"]
+            host.selected_img_md5 = compatible_win_image["md5"]
             principal_disk = None
             disk_list = []
             for disk in host.disks:
@@ -407,3 +432,15 @@ def bios_date(txt):
         
     else:
         "06.19"
+
+def get_win_os(hos):
+    if hos in ["win7", "win2008r2"]:
+        return "win7"
+    if hos in ["win10", "win2016", "win2019"]:
+        return "win10"
+    if hos in ["win11", "win2022"]:
+        return "win11"
+    if hos in ["win81", "win2012r2"]:
+        return "win8"
+    return "win7"
+

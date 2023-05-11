@@ -9,6 +9,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'lib','disguise'))
 sys.path.append(os.path.join(os.path.dirname(__file__), 'lib','scripter'))
 
 from lib.project import CancamusaProject
+from lib.server import start_server
 from lib.configuration import configuration_mode, CancamusaConfiguration
 from lib.win_iso import process_windows_image
 
@@ -20,11 +21,16 @@ parser.add_argument('--config', dest='configuration', action='store_true', defau
                     help='Enter configuration mode to edit cancamusa preferences')
 parser.add_argument('--register-iso', dest='register_iso', action='store',
                     help='Register a Windows Image to use as base image')
+parser.add_argument('--server', dest='server', action='store',
+                    help='Start server that servs binaries, updates and utilities needed by Cancamusa scripts')
 
 args = parser.parse_args()
 
 if args.configuration :
     configuration_mode()
+    exit()
+if args.server:
+    start_server(args.server)
     exit()
 if args.register_iso :
     cancamusa_config = CancamusaConfiguration.load_or_create(None)
