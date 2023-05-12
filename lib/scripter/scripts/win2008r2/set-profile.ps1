@@ -1,0 +1,1 @@
+Copy-Item -Path .\profile.ps1 -Destination $profile -Force

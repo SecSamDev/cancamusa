@@ -114,7 +114,6 @@ class CancamusaConfiguration:
             for name, image in self.win_images.items():
                 if host.selected_img_md5 == image['md5']:
                     selected_image = image
-                    print("SelectedImage=" + image['images'][str(host.selected_img_idx + 1)])
                     return {
                         'path' : image['path'],
                         'win_type' : image['win_type'],

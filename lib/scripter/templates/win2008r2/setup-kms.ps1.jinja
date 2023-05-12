@@ -1,0 +1,18 @@
+cmd.exe /C cscript //nologo C:\Windows\System32\slmgr.vbs /upk
+cmd.exe /C cscript //nologo C:\Windows\System32\slmgr.vbs /skms {{kms_server}}
+
+$original_version = (Get-ComputerInfo).OsName.ToLower()
+if($original_version.Contains("evaluation")) {
+    if($original_version.Contains("server") -and $original_version.Contains("standard")) {
+        cmd.exe /C DISM /online /Set-Edition:ServerStandard /ProductKey:{{product_key}} /AcceptEula /NoRestart
+    }elseif($original_version.Contains("server") -and $original_version.Contains("datacenter")){
+        cmd.exe /C DISM /online /Set-Edition:ServerDatacenter /ProductKey:{{product_key}} /AcceptEula /NoRestart
+    }elseif($original_version.Contains("enterprise") -and $original_version.Contains("10")){
+        reg.exe ADD "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /f /v EditionID  /t REG_SZ /d "Enterprise"
+        reg.exe ADD "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /f /v ProductName  /t REG_SZ /d "Windows 10 Enterprise"
+    }
+}
+cmd.exe /C cscript //nologo C:\Windows\System32\slmgr.vbs /ipk {{product_key}}
+
+timeout /t 10 /nobreak > NUL
+cmd.exe /C cscript //nologo C:\Windows\System32\slmgr.vbs /ato

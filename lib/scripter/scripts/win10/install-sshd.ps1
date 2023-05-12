@@ -1,12 +1,15 @@
-Add-WindowsCapability -Online -Name OpenSSH.Server
+$open_ssh_name = Get-WindowsCapability -Online | Where-Object Name -Like 'OpenSSH.Server*'
+$open_ssh_name = $open_ssh_name[0].Name
+
+Add-WindowsCapability -Online -Name $open_ssh_name
 
 # Copy Authorized_keys
 if (Test-Path -Path authorized_keys -PathType Leaf) {
-    New-Item -ItemType Directory -Path $Env:programdata/.ssh
-    New-Item -ItemType Directory -Path ~/.ssh
+    New-Item -ItemType Directory -Path "$($Env:programdata)\.ssh"
+    New-Item -ItemType Directory -Path "~\.ssh"
 
-    Copy-Item authorized_keys -Destination $Env:programdata/.ssh/authorized_keys
-    Copy-Item authorized_keys -Destination ~/.ssh/authorized_keys
+    Copy-Item authorized_keys -Destination "$($Env:programdata)\.ssh\authorized_keys"
+    Copy-Item authorized_keys -Destination "~\.ssh\authorized_keys"
 }
 
 

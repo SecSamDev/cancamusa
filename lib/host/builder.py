@@ -13,7 +13,7 @@ from lib.configuration import CancamusaConfiguration
 from lib.cancamusa_common import SYSMON_CONFIG_FILE, WINLOGBEAT_CONFIG_FILE
 from lib.scripter.script_iso import ScriptIsoBuilder
 from lib.scripter.rol_selector import generate_rol_files_for_host, ROLE_DNS, ROLE_DOMAIN_CONTROLLER
-
+from lib.scripter.activator import select_license
 
 class WindowsHostBuilder:
     def __init__(self, project):
@@ -184,126 +184,134 @@ iface vmbr{} inet static
                 for dir in dirnames:
                     builder.add_folder(os.path.join(dirpath, dir))
 
-        with open(os.path.join(os.path.dirname(__file__), '..', 'scripter', 'templates', compatible_win_image['win_type'], 'Autounattend.xml.jinja'), 'r') as file_r:
-            template = Template(file_r.read())
-            lang = {
-                'principal': host.language,
-                'fall': 'en-EN'
-            }
-            win_image = {
-                'image': compatible_win_image['selected_img'] + 1, #Index starts at one
-                'name' : compatible_win_image['images'][str(compatible_win_image['selected_img'] + 1)]
-            }
-            host.selected_img_idx = compatible_win_image['selected_img']
-            host.selected_img_md5 = compatible_win_image["md5"]
-            principal_disk = None
-            disk_list = []
-            for disk in host.disks:
-                if disk.device_id == 'C':
-                    principal_disk = disk
-                else:
-                    disk_list.append(disk)
+        file_path = os.path.join(host_path,'iso_file', 'Autounattend.xml')
+        if not os.path.exists(file_path):
+            with open(os.path.join(os.path.dirname(__file__), '..', 'scripter', 'templates', compatible_win_image['win_type'], 'Autounattend.xml.jinja'), 'r') as file_r:
+                template = Template(file_r.read())
+                lang = {
+                    'principal': host.language,
+                    'fall': 'en-EN'
+                }
+                win_image = {
+                    'image': compatible_win_image['selected_img'] + 1, #Index starts at one
+                    'name' : compatible_win_image['images'][str(compatible_win_image['selected_img'] + 1)]
+                }
+                host.selected_img_idx = compatible_win_image['selected_img']
+                host.selected_img_md5 = compatible_win_image["md5"]
+                principal_disk = None
+                disk_list = []
+                for disk in host.disks:
+                    if disk.device_id == 'C':
+                        principal_disk = disk
+                    else:
+                        disk_list.append(disk)
 
-            host_domain = None
-            principal_user = None
-            if host.domain:
-                domains = list(
-                    map(lambda x: x.domain, self.project.domain.domains))
-                host_domain_pos = domains.index(host.domain)
-                host_domain = self.project.domain.domains[host_domain_pos]
+                host_domain = None
+                principal_user = None
+                if host.domain:
+                    domains = list(
+                        map(lambda x: x.domain, self.project.domain.domains))
+                    host_domain_pos = domains.index(host.domain)
+                    host_domain = self.project.domain.domains[host_domain_pos]
+                    
                 
-            
-            if not host_domain:
-                if len(host.accounts) > 0:
-                    principal_user = {
-                        'name': host.accounts[0].name,
-                        'password': host.accounts[0].password,
-                        'group': 'Administrators',
-                        'organization': host.computer_name
-                    }
+                if not host_domain:
+                    if len(host.accounts) > 0:
+                        principal_user = {
+                            'name': host.accounts[0].name,
+                            'password': host.accounts[0].password,
+                            'group': 'Administrators',
+                            'organization': host.computer_name
+                        }
+                    else:
+                        principal_user = {
+                            'name': 'Administrator',
+                            'password': "Cancamusa123Rocks!",
+                            'group': 'Administrators',
+                            'organization': host.computer_name
+                        }
                 else:
-                    principal_user = {
-                        'name': 'Administrator',
-                        'password': "Cancamusa123Rocks!",
-                        'group': 'Administrators',
-                        'organization': host.computer_name
-                    }
-            else:
-                # Account of valid domain
-                if len(host.accounts) > 0:
-                    for acc in host.accounts:
-                        if acc.domain == host_domain.name:
-                            principal_user = {
-                                'name': acc.name,
-                                'password': acc.password,
-                                'group': 'Administrators',
-                                'organization': host.computer_name
-                            }
-                        break
-                if principal_user == None:
-                    # Last resource => use domain account
-                    principal_user = {
-                        'name': host_domain.default_admin,
-                        'password': host_domain.default_admin_password,
-                        'group': 'Administrators',
-                        'organization': host.computer_name #Still not in domain
-                    }
+                    # Account of valid domain
+                    if len(host.accounts) > 0:
+                        for acc in host.accounts:
+                            if acc.domain == host_domain.name:
+                                principal_user = {
+                                    'name': acc.name,
+                                    'password': acc.password,
+                                    'group': 'Administrators',
+                                    'organization': host.computer_name
+                                }
+                            break
+                    if principal_user == None:
+                        # Last resource => use domain account
+                        principal_user = {
+                            'name': host_domain.default_admin,
+                            'password': host_domain.default_admin_password,
+                            'group': 'Administrators',
+                            'organization': host.computer_name #Still not in domain
+                        }
 
-            with open(os.path.join(host_path,'iso_file', 'Autounattend.xml'), 'w') as file_w:
-                file_w.write(template.render(lang=lang, principal_disk=principal_disk, disk_list=disk_list,
-                                             computer_name=host.computer_name, principal_user=principal_user, win_image=win_image))
+                with open(file_path, 'w') as file_w:
+                    file_w.write(template.render(lang=lang, principal_disk=principal_disk, disk_list=disk_list,
+                                                computer_name=host.computer_name, principal_user=principal_user, win_image=win_image))
 
-            builder.add_config(os.path.join(host_path,'iso_file', 'Autounattend.xml'))
+                builder.add_config(file_path)
 
         # Setup Network ----------------------------------------------------
         # O = Nombre de Adaptador, 2 = Direccion Fisica
         #"$headers = (getmac /fo csv /v | Select-Object -First 1).replace('\"','').split(',')"
-        actual_domain = self.project.domain.get_domain(host.domain)
-        with open(os.path.join(os.path.dirname(__file__), '..', 'scripter', 'templates', compatible_win_image['win_type'], 'setup-net.ps1.jinja'), 'r') as file_r:
-            template = Template(file_r.read())
-            dc_server = self.project.primary_dc_config()
-            dc_ip = dc_server['ip'] if not dc_server['ip'] else dc_server['ip']
-            if dc_ip:
-                dc_ip = ipaddress.ip_address(dc_ip)
-                for netw in host.networks:
-                    if dc_ip in ipaddress.ip_network("{}/{}".format(netw.ip_address[0], netw.ip_subnet[0]), False):
-                        netw.dns_servers[0] = str(dc_ip)
 
-            actual_file_out_path = os.path.join(host_path,'iso_file', 'setup-net.ps1')
-            with open(actual_file_out_path, 'w') as file_w:
-                file_w.write(template.render(networks=host.networks))
-            builder.add_script(actual_file_out_path)
+        file_path = os.path.join(host_path,'iso_file', 'setup-net.ps1')
+        actual_domain = self.project.domain.get_domain(host.domain)
+        if not os.path.exists(file_path):
+            with open(os.path.join(os.path.dirname(__file__), '..', 'scripter', 'templates', compatible_win_image['win_type'], 'setup-net.ps1.jinja'), 'r') as file_r:
+                template = Template(file_r.read())
+                dc_server = self.project.primary_dc_config()
+                dc_ip = dc_server['ip'] if not dc_server['ip'] else dc_server['ip']
+                if dc_ip:
+                    dc_ip = ipaddress.ip_address(dc_ip)
+                    for netw in host.networks:
+                        if dc_ip in ipaddress.ip_network("{}/{}".format(netw.ip_address[0], netw.ip_subnet[0]), False):
+                            netw.dns_servers[0] = str(dc_ip)
+
+                with open(file_path, 'w') as file_w:
+                    file_w.write(template.render(networks=host.networks))
+                builder.add_script(file_path)
 
         # Setup Socks Proxy ------------------------------------------------
+        
         if 'proxy' in self.project.config:
-            with open(os.path.join(os.path.dirname(__file__), '..', 'scripter', 'templates', compatible_win_image['win_type'], 'set-proxy.bat.jinja'), 'r') as file_r:
-                template = Template(file_r.read())
-                actual_file_out_path = os.path.join(host_path,'iso_file', 'set-proxy.bat')
-                with open(actual_file_out_path, 'w') as file_w:
-                    file_w.write(template.render(proxy=self.project.config['proxy']))
-                builder.add_script(actual_file_out_path)
+            file_path = os.path.join(host_path,'iso_file', 'set-proxy.bat')
+            if not os.path.exists(file_path):
+                with open(os.path.join(os.path.dirname(__file__), '..', 'scripter', 'templates', compatible_win_image['win_type'], 'set-proxy.bat.jinja'), 'r') as file_r:
+                    template = Template(file_r.read())
+                    with open(file_path, 'w') as file_w:
+                        file_w.write(template.render(proxy=self.project.config['proxy']))
+                    builder.add_script(file_path)
 
         # Join Domain ------------------------------------------------------
         if actual_domain == None:
             print("No domain configuration for: {}".format(host.domain))
         if len(self.project.domain.domains) > 0 and actual_domain and not ROLE_DOMAIN_CONTROLLER in host.roles.roles:
-            # TODO: Improve Join Domain for multiple DomainControllers
-            with open(os.path.join(os.path.dirname(__file__), '..', 'scripter', 'templates', compatible_win_image['win_type'], 'join-domain.ps1.jinja'), 'r') as file_r:
-                template = Template(file_r.read())
-                actual_file_out_path = os.path.join(host_path,'iso_file', 'join-domain.ps1')
-                with open(actual_file_out_path, 'w') as file_w:
-                    acc = host.get_account_for_domain(host.domain)
-                    if acc == None:
-                        username = actual_domain.default_admin
-                        password = actual_domain.default_admin_password
-                    else:
-                        # Use domain account, not the local one
-                        acc = actual_domain.get_user(acc.name)
-                        username = acc['account_name']
-                        password = acc['password']
+            file_path = os.path.join(host_path,'iso_file', 'join-domain.ps1')
+            if not os.path.exists(file_path):
+                # TODO: Improve Join Domain for multiple DomainControllers
+                with open(os.path.join(os.path.dirname(__file__), '..', 'scripter', 'templates', compatible_win_image['win_type'], 'join-domain.ps1.jinja'), 'r') as file_r:
+                    template = Template(file_r.read())
+                    
+                    with open(file_path, 'w') as file_w:
+                        acc = host.get_account_for_domain(host.domain)
+                        if acc == None:
+                            username = actual_domain.default_admin
+                            password = actual_domain.default_admin_password
+                        else:
+                            # Use domain account, not the local one
+                            acc = actual_domain.get_user(acc.name)
+                            username = acc['account_name']
+                            password = acc['password']
 
-                    file_w.write(template.render(domain_dc_ip=actual_domain.dc_ip,username=username,password=password,domain_name=actual_domain.domain))
-                builder.add_script(actual_file_out_path)
+                        file_w.write(template.render(domain_dc_ip=actual_domain.dc_ip,username=username,password=password,domain_name=actual_domain.domain))
+                    builder.add_script(file_path)
 
         # Install sysmon ----------------------------------------------------
         if 'sysmon' in self.project.config:
@@ -348,41 +356,54 @@ iface vmbr{} inet static
             builder.add_config(actual_file_out_path)
 
         # Deception options --------------------------------------------------
-        with open(os.path.join(os.path.dirname(__file__), '..', 'scripter', 'templates', compatible_win_image['win_type'], 'deception.bat.jinja'), 'r') as file_r:
-            template = Template(file_r.read())
-            actual_file_out_path = os.path.join(host_path,'iso_file', 'deception.bat')
-            with open(actual_file_out_path, 'w') as file_w:
-                file_w.write(template.render(cpus=host.cpus, bios=host.bios))
-            builder.add_script(actual_file_out_path)
+        file_path = os.path.join(host_path,'iso_file', 'deception.bat')
+        if not os.path.exists(file_path):
+            with open(os.path.join(os.path.dirname(__file__), '..', 'scripter', 'templates', compatible_win_image['win_type'], 'deception.bat.jinja'), 'r') as file_r:
+                template = Template(file_r.read())
+                with open(file_path, 'w') as file_w:
+                    file_w.write(template.render(cpus=host.cpus, bios=host.bios))
+                builder.add_script(file_path)
 
         # KMS Server ---------------------------------------------------------
+
         kms_server = self.project.primary_kms_config()
         if kms_server == None and actual_domain:
             kms_server = actual_domain.kms_server
         else:
             kms_server = "{}:1688".format(kms_server['ip'])
+            
         if kms_server:
-            with open(os.path.join(os.path.dirname(__file__), '..', 'scripter', 'templates', compatible_win_image['win_type'], 'setup-kms.bat.jinja'), 'r') as file_r:
-                template = Template(file_r.read())
-                actual_file_out_path = os.path.join(host_path,'iso_file', 'setup-kms.bat')
-                with open(actual_file_out_path, 'w') as file_w:
-                    file_w.write(template.render(kms_server=kms_server))
-                builder.add_script(actual_file_out_path)
+            file_path = os.path.join(host_path,'iso_file', 'setup-kms.ps1')
+            if not os.path.exists(file_path):
+                product_key = select_license(compatible_win_image["images"][str(int(host.selected_img_idx) + 1)])
+                with open(os.path.join(os.path.dirname(__file__), '..', 'scripter', 'templates', compatible_win_image['win_type'], 'setup-kms.ps1.jinja'), 'r') as file_r:
+                    template = Template(file_r.read())
+                    with open(file_path, 'w') as file_w:
+                        file_w.write(template.render(kms_server=kms_server, product_key=product_key))
+                    builder.add_script(file_path)
 
         if 'ssh' in self.project.config and self.project.config['ssh']:
-            ssh_path = os.path.join(os.path.dirname(__file__), '..', 'scripter', 'scripts', compatible_win_image['win_type'], 'install-sshd.ps1')
-            if self.project.config['ssh']['enabled'] and os.path.exists(ssh_path):
-                builder.add_script(ssh_path)
-                # Enable SSH
-                if self.project.config['ssh']['copy_public_key']:
-                    public_rsa_key_location = os.path.join(expanduser("~"),".ssh","id_rsa.pub")
-                    with open(public_rsa_key_location, 'rb') as file_r:
-                        actual_file_out_path = os.path.join(host_path,'iso_file', 'authorized_keys')
-                        with open(actual_file_out_path, 'wb') as file_w:
-                            file_w.write(file_r.read())
-                        builder.add_config(actual_file_out_path)
+            try:
+                # SSH not supported for Win7/Win8.1/2008/2012/2016
+                ssh_path = os.path.join(os.path.dirname(__file__), '..', 'scripter', 'scripts', compatible_win_image['win_type'], 'install-sshd.ps1')
+                if self.project.config['ssh']['enabled'] and os.path.exists(ssh_path):
+                    builder.add_script(ssh_path)
+                    # Enable SSH
+                    if self.project.config['ssh']['copy_public_key']:
+                        public_rsa_key_location = os.path.join(expanduser("~"),".ssh","id_rsa.pub")
+                        with open(public_rsa_key_location, 'rb') as file_r:
+                            actual_file_out_path = os.path.join(host_path,'iso_file', 'authorized_keys')
+                            with open(actual_file_out_path, 'wb') as file_w:
+                                file_w.write(file_r.read())
+                            builder.add_config(actual_file_out_path)
+            except:
+                pass
                 
-                
+        # Extra scripts in the same batch of scripts
+        builder.add_scripts([
+            # Set Powershell profile
+            os.path.join(os.path.dirname(__file__),'..', 'scripter', 'scripts', compatible_win_image['win_type'], 'set-profile.ps1')
+        ])
         
         # Build Windows ROLES -> Last to be executed (reboots needed) and need to be in domain
         generate_rol_files_for_host(host,builder,self.project)

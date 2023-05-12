@@ -136,7 +136,8 @@ class ADStructure:
             'name' : self.name,
             'default_admin' : self.default_admin,
             'default_admin_password' : self.default_admin_password,
-            'dc_ip' : self.dc_ip
+            'dc_ip' : self.dc_ip,
+            'kms_server' : self.kms_server,
         }
         for name, ou in self.ou.items():
             ret['ou'][name] = ou.to_json(full=True)

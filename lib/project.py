@@ -696,7 +696,7 @@ class CancamusaProject:
         self.config['ssh']['enabled'] = enabled
         if not enabled:
             return
-        answer = prompt([{'type': 'confirm','name': 'option','message': 'Copy Known Host file?:'}])
+        answer = prompt([{'type': 'confirm','name': 'option','message': 'Copy Public Key to authorized file?:'}])
         self.config['ssh']['copy_public_key'] = bool(answer['option'])
 
     def new_project_in_current_path():
