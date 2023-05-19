@@ -1,7 +1,7 @@
 cmd.exe /C cscript //nologo C:\Windows\System32\slmgr.vbs /upk
 cmd.exe /C cscript //nologo C:\Windows\System32\slmgr.vbs /skms {{kms_server}}
 
-$original_version = (Get-ComputerInfo).OsName.ToLower()
+$original_version = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\' -Name ProductName).ProductName.ToLower()
 if($original_version.Contains("evaluation")) {
     if($original_version.Contains("server") -and $original_version.Contains("standard")) {
         cmd.exe /C DISM /online /Set-Edition:ServerStandard /ProductKey:{{product_key}} /AcceptEula /NoRestart
@@ -16,3 +16,4 @@ cmd.exe /C cscript //nologo C:\Windows\System32\slmgr.vbs /ipk {{product_key}}
 
 timeout /t 10 /nobreak > NUL
 cmd.exe /C cscript //nologo C:\Windows\System32\slmgr.vbs /ato
+

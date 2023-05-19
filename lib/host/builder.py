@@ -255,7 +255,7 @@ iface vmbr{} inet static
                     file_w.write(template.render(lang=lang, principal_disk=principal_disk, disk_list=disk_list,
                                                 computer_name=host.computer_name, principal_user=principal_user, win_image=win_image))
 
-                builder.add_config(file_path)
+        builder.add_config(file_path)
 
         # Setup Network ----------------------------------------------------
         # O = Nombre de Adaptador, 2 = Direccion Fisica
@@ -276,7 +276,7 @@ iface vmbr{} inet static
 
                 with open(file_path, 'w') as file_w:
                     file_w.write(template.render(networks=host.networks))
-                builder.add_script(file_path)
+        builder.add_script(file_path)
 
         # Setup Socks Proxy ------------------------------------------------
         
@@ -287,7 +287,7 @@ iface vmbr{} inet static
                     template = Template(file_r.read())
                     with open(file_path, 'w') as file_w:
                         file_w.write(template.render(proxy=self.project.config['proxy']))
-                    builder.add_script(file_path)
+            builder.add_script(file_path)
 
         # Join Domain ------------------------------------------------------
         if actual_domain == None:
@@ -311,7 +311,7 @@ iface vmbr{} inet static
                             password = acc['password']
 
                         file_w.write(template.render(domain_dc_ip=actual_domain.dc_ip,username=username,password=password,domain_name=actual_domain.domain))
-                    builder.add_script(file_path)
+            builder.add_script(file_path)
 
         # Install sysmon ----------------------------------------------------
         if 'sysmon' in self.project.config:
@@ -362,7 +362,7 @@ iface vmbr{} inet static
                 template = Template(file_r.read())
                 with open(file_path, 'w') as file_w:
                     file_w.write(template.render(cpus=host.cpus, bios=host.bios))
-                builder.add_script(file_path)
+        builder.add_script(file_path)
 
         # KMS Server ---------------------------------------------------------
 
@@ -380,7 +380,7 @@ iface vmbr{} inet static
                     template = Template(file_r.read())
                     with open(file_path, 'w') as file_w:
                         file_w.write(template.render(kms_server=kms_server, product_key=product_key))
-                    builder.add_script(file_path)
+            builder.add_script(file_path)
 
         if 'ssh' in self.project.config and self.project.config['ssh']:
             try:
@@ -391,11 +391,12 @@ iface vmbr{} inet static
                     # Enable SSH
                     if self.project.config['ssh']['copy_public_key']:
                         public_rsa_key_location = os.path.join(expanduser("~"),".ssh","id_rsa.pub")
-                        with open(public_rsa_key_location, 'rb') as file_r:
-                            actual_file_out_path = os.path.join(host_path,'iso_file', 'authorized_keys')
-                            with open(actual_file_out_path, 'wb') as file_w:
-                                file_w.write(file_r.read())
-                            builder.add_config(actual_file_out_path)
+                        actual_file_out_path = os.path.join(host_path,'iso_file', 'authorized_keys')
+                        if not os.path.exists(actual_file_out_path):
+                            with open(public_rsa_key_location, 'rb') as file_r:
+                                with open(actual_file_out_path, 'wb') as file_w:
+                                    file_w.write(file_r.read())
+                        builder.add_config(actual_file_out_path)
             except:
                 pass
                 

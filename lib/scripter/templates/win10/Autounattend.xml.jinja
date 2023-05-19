@@ -383,6 +383,11 @@
                     <Order>30</Order>
                     <Description>Turn Off Store Updates</Description>
                 </SynchronousCommand>
+                <SynchronousCommand wcm:action="add">
+                    <CommandLine>%SystemRoot%\System32\reg.exe ADD "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds" /f /v EnableFeeds /t REG_DWORD /d 0</CommandLine>
+                    <Order>30</Order>
+                    <Description>Turn Off News and Interests</Description>
+                </SynchronousCommand>
                 <!-- WITHOUT WINDOWS UPDATES -->
                 <SynchronousCommand wcm:action="add">
                     <CommandLine>cmd.exe /c C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -File a:\enable-winrm.ps1</CommandLine>

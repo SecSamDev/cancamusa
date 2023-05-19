@@ -4,14 +4,14 @@ $open_ssh_name = $open_ssh_name[0].Name
 Add-WindowsCapability -Online -Name $open_ssh_name
 
 # Copy Authorized_keys
-if (Test-Path -Path authorized_keys -PathType Leaf) {
-    New-Item -ItemType Directory -Path "$($Env:programdata)\.ssh"
-    New-Item -ItemType Directory -Path "~\.ssh"
+if (Test-Path -Path C:\ini\authorized_keys -PathType Leaf) {
+    New-Item -ItemType Directory -Path "$($Env:programdata)\ssh" 2>1& | Out-Null
+    New-Item -ItemType Directory -Path "~\.ssh" 2>1& | Out-Null
 
-    Copy-Item authorized_keys -Destination "$($Env:programdata)\.ssh\authorized_keys"
-    Copy-Item authorized_keys -Destination "~\.ssh\authorized_keys"
+    Copy-Item C:\ini\authorized_keys -Destination "$($Env:programdata)\ssh\administrators_authorized_keys"
+    Copy-Item C:\ini\authorized_keys -Destination "~\.ssh\authorized_keys"
 }
-
+icacls C:\ProgramData\ssh /deny S-1-5-11
 
 
 Start-Service sshd
