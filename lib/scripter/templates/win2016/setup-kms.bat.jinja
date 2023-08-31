@@ -1,8 +1,0 @@
-cmd.exe /C cscript //nologo C:\Windows\System32\slmgr.vbs /upk
-cmd.exe /C cscript //nologo C:\Windows\System32\slmgr.vbs /skms {{kms_server}}
-cmd.exe /C cscript //nologo C:\Windows\System32\slmgr.vbs /ipk {{product_key}}
-
-# if x%{{product_name}}:evaluation=%==x%{{product_name}}% cmd.exe /C DISM /online /Set-Edition:ServerStandard /ProductKey:{{product_key}} /AcceptEula /NoRestart
-
-timeout /t 10 /nobreak > NUL
-cmd.exe /C cscript //nologo C:\Windows\System32\slmgr.vbs /ato

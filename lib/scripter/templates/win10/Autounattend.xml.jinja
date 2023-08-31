@@ -385,7 +385,7 @@
                 </SynchronousCommand>
                 <SynchronousCommand wcm:action="add">
                     <CommandLine>%SystemRoot%\System32\reg.exe ADD "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds" /f /v EnableFeeds /t REG_DWORD /d 0</CommandLine>
-                    <Order>30</Order>
+                    <Order>31</Order>
                     <Description>Turn Off News and Interests</Description>
                 </SynchronousCommand>
                 <!-- WITHOUT WINDOWS UPDATES -->
@@ -557,6 +557,11 @@
                     <CommandLine>%SystemRoot%\System32\reg.exe ADD "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /f /v DisableWindowsConsumerFeatures /t REG_DWORD /d 1</CommandLine>
                     <Order>30</Order>
                     <Description>Turn Off Store Updates</Description>
+                </SynchronousCommand>
+                <SynchronousCommand wcm:action="add">
+                    <CommandLine>%SystemRoot%\System32\reg.exe ADD "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds" /f /v EnableFeeds /t REG_DWORD /d 0</CommandLine>
+                    <Order>31</Order>
+                    <Description>Turn Off News and Interests</Description>
                 </SynchronousCommand>
                 <!-- WITHOUT WINDOWS UPDATES -->
                 <SynchronousCommand wcm:action="add">

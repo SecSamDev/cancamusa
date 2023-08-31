@@ -15,3 +15,6 @@ wget https://download.microsoft.com/download/6/F/5/6F5FF66C-6775-42B0-86C4-47D41
 wget https://download.microsoft.com/download/6/F/5/6F5FF66C-6775-42B0-86C4-47D41F2DA187/Win7-KB3191566-x86.zip
 
 wget https://download.microsoft.com/download/6/F/5/6F5FF66C-6775-42B0-86C4-47D41F2DA187/W2K12-KB3191565-x64.msu
+
+
+# https://support.microsoft.com/es-es/topic/actualizaci%C3%B3n-para-universal-c-runtime-en-windows-c0514201-7fe6-95a3-b0a5-287930f3560c

@@ -131,7 +131,7 @@ def generate_files_for_DHCP(host,builder, project):
             for host in project.hosts:
                 for netw in host.networks:
                     network = str(ipaddress.ip_network('{}/{}'.format(netw.ip_address[0],netw.ip_subnet[0]),False)).split("/")[0]
-                    if network == scope["scope_id"]:
+                    if network == scope["scope_id"] and netw.assign_method == "fixed":
                         fixed_hosts.append({
                             "scope" : scope["scope_id"],
                             "computer_name" : host.computer_name,
